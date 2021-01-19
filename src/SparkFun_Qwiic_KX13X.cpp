@@ -33,16 +33,26 @@ bool QwiicKX13X::begin(uint8_t deviceAddress, TwoWire &wirePort)
 	return(true);
 }
 
-bool QwiicKX13X::beginSPI()
+bool QwiicKX13X::beginSPI(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort)
 {
-
+	_i2cPort = NULL;
+	_spiPortSpeed = spiPortSpeed;
+	if (_spiPortSpeed > 10000000)
+		_spiPortSpeed = 10000000;
+	_cs = CSPin;
+	pinMode(_cs, OUTPUT);
+	digitalWrite(_cs, HIGH);
+	//writeBit(INC1, SPI3E, 1); //Enable SPI
+	//_i2cPort->end();
+	_spiPort->begin();
 }
 
-bool QwiicKX13X::initialize()
+uint8_t QwiicKX13X::initialize()
 {
-	bool returnVal = writeRegister(CNTL1, 0xC0);
+	uint8_t initializationValue = 0xC0;
+	writeRegister(CNTL1, initializationValue);
 	delay(1000);
-	return returnVal;
+	return readRegister(CNTL1);
 }
 
 //Tests functionality of the integrated circuit
@@ -90,7 +100,7 @@ bool QwiicKX13X::waitForSPI()
 
 bool QwiicKX13X::getReadings()
 {
-	return getData(XOUT_L, _accelData, 6);
+	return readMultipleRegisters(XOUT_L, _accelData, 6);
 }
 
 int16_t QwiicKX13X::getAccelX()
@@ -111,19 +121,37 @@ int16_t QwiicKX13X::getAccelZ()
 //Sends multiple requests to sensor until all data bytes are received from sensor
 //The shtpData buffer has max capacity of MAX_PACKET_SIZE. Any bytes over this amount will be lost.
 //Arduino I2C read limit is 32 bytes. Header is 4 bytes, so max data we can read per interation is 28 bytes
-bool QwiicKX13X::getData(uint8_t startingRegister, uint8_t * dataBuffer, uint8_t bytesToGet)
+bool QwiicKX13X::readMultipleRegisters(uint8_t startingRegister, uint8_t * dataBuffer, uint8_t bytesToGet)
 {
-    _i2cPort->beginTransmission(_deviceAddress);
-	_i2cPort->write(startingRegister);
-    if (_i2cPort->endTransmission() != 0)
-      return (false); //Error: Sensor did not ack
-
-	_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), bytesToGet);
-	for (uint8_t i = 0; i < bytesToGet; i++)
+	
+	if (_i2cPort == NULL)
 	{
-		dataBuffer[i] = _i2cPort->read();
+		_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE0));
+		digitalWrite(_cs, LOW);
+		startingRegister |= 0x80; //Must or in 1 on MSB for read
+		_spiPort->transfer(startingRegister);
+		for (uint8_t i = 0; i < bytesToGet; i++)
+		{
+			dataBuffer[i] = _spiPort->transfer(0);
+		}
+		digitalWrite(_cs, HIGH);
+		_spiPort->endTransaction();
+		return true;
 	}
+	else
+	{
+		_i2cPort->beginTransmission(_deviceAddress);
+		_i2cPort->write(startingRegister);
+    	if (_i2cPort->endTransmission() != 0)
+     		return (false); //Error: Sensor did not ack
+
+		_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), bytesToGet);
+		for (uint8_t i = 0; i < bytesToGet; i++)
+		{
+			dataBuffer[i] = _i2cPort->read();
+		}
 	return true;
+	}
 }
 
 bool QwiicKX13X::readBit(uint8_t regAddr, uint8_t bitAddr)
@@ -141,17 +169,31 @@ bool QwiicKX13X::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
 
 uint8_t QwiicKX13X::readRegister(uint8_t addr)
 {
-	_i2cPort->beginTransmission(_deviceAddress);
-	_i2cPort->write(addr);
-	_i2cPort->endTransmission();
+	if (_i2cPort == NULL)
+	{
+		_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE0));
+		digitalWrite(_cs, LOW);
+		addr |= 0x80; //Must or in 1 on MSB for read
+		_spiPort->transfer(addr);
+		uint8_t returnData = _spiPort->transfer(0);
+		digitalWrite(_cs, HIGH);
+		_spiPort->endTransaction();
+		return returnData;
+	}
+	else
+	{
+		_i2cPort->beginTransmission(_deviceAddress);
+		_i2cPort->write(addr);
+		_i2cPort->endTransmission();
 
-    //typecasting the 1 parameter in requestFrom so that the compiler
+    	//typecasting the 1 parameter in requestFrom so that the compiler
     //doesn't give us a warning about multiple candidates
-    if (_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)) != 0)
-    {
-        return _i2cPort->read();
-    }
-	return false;
+    	if (_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)) != 0)
+    	{
+       		return _i2cPort->read();
+    	}
+		return false;
+	}
 }
 //Given the data packet, send the header then the data
 //Returns false if sensor does not ACK
@@ -162,28 +204,17 @@ bool QwiicKX13X::writeRegister(uint8_t startingRegister, uint8_t data)
 	if (_i2cPort == NULL) //Do SPI
 	{
 		//Wait for QwiicKX13X to indicate it is available for communication
-		/*if (waitForSPI() == false)
-			return (false); //Something went wrong
 
 		//QwiicKX13X has max CLK of 3MHz, MSB first,
 		//The QwiicKX13X uses CPOL = 1 and CPHA = 1. This is mode3
-		_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE3));
+		_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE0));
 		digitalWrite(_cs, LOW);
 
-		//Send the 4 byte packet header
-		_spiPort->transfer(packetLength & 0xFF);			 //Packet length LSB
-		_spiPort->transfer(packetLength >> 8);				 //Packet length MSB
-		_spiPort->transfer(channelNumber);					 //Channel number
-		_spiPort->transfer(sequenceNumber[channelNumber]++); //Send the sequence number, increments with each packet sent, different counter for each channel
-
-		//Send the user's data packet
-		for (uint8_t i = 0; i < dataLength; i++)
-		{
-			_spiPort->transfer(shtpData[i]);
-		}
+		_spiPort->transfer(startingRegister);			 //Send the register we want to write to
+		_spiPort->transfer(data); //Send the data
 
 		digitalWrite(_cs, HIGH);
-		_spiPort->endTransaction();*/
+		_spiPort->endTransaction();
 	}
 	else //Do I2C
 	{

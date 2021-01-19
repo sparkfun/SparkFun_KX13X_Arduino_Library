@@ -74,6 +74,11 @@ Distributed as-is; no warranty is given.
 #define ODCNTL 0x21
 #define INC1 0x22 //Controls settings for INT1
 #define INC2 0x23 //Defines behavior for Wake-Up Function and Back To Sleep
+#define IEN1 5 //1:physical interrupt pin is enabled 0: disabled
+#define IEA1 4 //1:active HIGH 0: active LOW
+#define IEL1 3 //1:pulsed interrupt 0:latched interrupt until cleared by reading INT_REL
+#define STPOL 1 //1: positive self test polarity 0: negative
+#define SPI3E 0 //1: SPI Enabled 0: SPI Disabled
 #define INC3 0x24 //Defines which axes can cause a tap based interrupt
 #define INC4 0x25 //Controls which function triggers INT1
 #define INC5 0x26
@@ -152,8 +157,8 @@ class QwiicKX13X
 {
 	public:
 		bool begin(uint8_t deviceAddress = KX13X_DEFAULT_ADDRESS, TwoWire &wirePort = Wire);
-		bool beginSPI();
-		bool initialize();
+		bool beginSPI(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort = SPI);
+		uint8_t initialize();
 		bool runCommandTest();
 
 		bool waitForI2C();
@@ -169,12 +174,13 @@ class QwiicKX13X
 		uint8_t readRegister(uint8_t addr);
 		bool writeRegister(uint8_t startingRegister, uint8_t data);
 
-		bool getData(uint8_t startingRegister, uint8_t * dataBuffer, uint8_t bytesToGet = 1);
+		bool readMultipleRegisters(uint8_t startingRegister, uint8_t * dataBuffer, uint8_t bytesToGet = 1);
 	private:
 		TwoWire *_i2cPort;		//The generic connection to user's chosen I2C hardware
 		uint8_t _deviceAddress; //Keeps track of I2C address. setI2CAddress changes this.	
 		SPIClass *_spiPort;			 //The generic connection to user's chosen SPI hardware
 		unsigned long _spiPortSpeed; //Optional user defined port speed
+		uint8_t _cs;
 
 		uint8_t _accelData[6] = {0};
 };
