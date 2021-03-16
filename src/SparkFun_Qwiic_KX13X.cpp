@@ -20,6 +20,7 @@ Distributed as-is; no warranty is given.
 
 #include "SparkFun_Qwiic_KX13X.h"
 
+
 bool QwiicKX13X::begin(uint8_t deviceAddress, TwoWire &wirePort)
 {
   _deviceAddress = deviceAddress; //If provided, store the I2C address from user
@@ -128,39 +129,6 @@ int16_t QwiicKX13X::getAccelZ()
 	return ((_accelData[ZMSB] << 8) | _accelData[ZLSB]);
 }
 
-//Sends multiple requests to sensor until all data bytes are received from sensor
-//The shtpData buffer has max capacity of MAX_PACKET_SIZE. Any bytes over this amount will be lost.
-//Arduino I2C read limit is 32 bytes. Header is 4 bytes, so max data we can read per interation is 28 bytes
-bool QwiicKX13X::readMultipleRegisters(uint8_t startingRegister, uint8_t * dataBuffer, uint8_t numBytes)
-{
-	
-	if (_i2cPort == NULL) {
-		_spiPort->beginTransaction(kxSPISettings);
-		digitalWrite(_cs, LOW);
-		startingRegister |= 0x80; //Must or in 1 on MSB for read
-		_spiPort->transfer(startingRegister);
-		for(size_t i = 0; i < numBytes; i++) {
-			dataBuffer[i] = _spiPort->transfer(0);
-		}
-		digitalWrite(_cs, HIGH);
-		_spiPort->endTransaction();
-		return true;
-	}
-	else {
-		_i2cPort->beginTransmission(_deviceAddress);
-		_i2cPort->write(startingRegister);
-
-    if (_i2cPort->endTransmission() != 0)
-     		return (false); //Error: Sensor did not ack
-
-		_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), numBytes);
-		for(size_t i = 0; i < numBytes; i++) {
-			dataBuffer[i] = _i2cPort->read();
-		}
-	return true;
-	}
-}
-
 bool QwiicKX13X::readBit(uint8_t regAddr, uint8_t bitAddr)
 {
 	return ((readRegister(regAddr) & (1 << bitAddr)) >> bitAddr);
@@ -202,7 +170,41 @@ uint8_t QwiicKX13X::readRegister(uint8_t reg)
 	}
 }
 
-uint8_t QwiicKX13X::writeRegister(uint8_t reg, uint8_t data)
+//Sends multiple requests to sensor until all data bytes are received from sensor
+//The shtpData buffer has max capacity of MAX_PACKET_SIZE. Any bytes over this amount will be lost.
+//Arduino I2C read limit is 32 bytes. Header is 4 bytes, so max data we can read per interation is 28 bytes
+KX13x_STATUS_t QwiicKX13X::readMultipleRegisters(uint8_t reg, uint8_t *dataBuffer, uint8_t numBytes)
+{
+	
+	if( _i2cPort == NULL ) {
+		_spiPort->beginTransaction(kxSPISettings);
+		digitalWrite(_cs, LOW);
+		reg |= SPI_READ;
+		databuffer[0] = _spiPort->transfer(reg); //first byte on transfer of address and read bit
+		for(size_t i = 1; i < numBytes; i++) {
+			dataBuffer[i] = _spiPort->transfer(0); //Assuming this will initiate auto-increment behavior
+		}
+		digitalWrite(_cs, HIGH);
+		_spiPort->endTransaction();
+		return KX13x_SUCCESS;
+	}
+	else {
+		_i2cPort->beginTransmission(_deviceAddress);
+		_i2cPort->write(reg);
+
+    if( _i2cPort->endTransmission() != 0 )
+      return KX13x_I2C_ERROR; //Error: Sensor did not ack
+
+		_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), numBytes);
+		for(size_t i = 0; i < numBytes; i++) {
+			dataBuffer[i] = _i2cPort->read();
+		}
+
+    return KX13x_SUCCESS;
+	}
+}
+
+KX13x_STATUS_t QwiicKX13X::writeRegister(uint8_t reg, uint8_t data)
 {
 
 	if( _i2cPort == NULL ) {

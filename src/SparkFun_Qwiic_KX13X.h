@@ -156,14 +156,14 @@ typedef enum {
   KX13x_GENERAL_ERROR;
   KX13x_I2C_ERROR;
 
-} KX13x_ERROR_t;
+} KX13x_STATUS_t;
 
 class QwiicKX13X
 {
 	public:
 
 		bool begin(uint8_t deviceAddress = KX13X_DEFAULT_ADDRESS, TwoWire &wirePort = Wire);
-		bool beginSPI(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort = SPI);
+		bool beginSPI(uint8_t, uint32_t, SPIClass &spiPort = SPI);
 		uint8_t initialize();
 		bool runCommandTest();
 
@@ -175,12 +175,12 @@ class QwiicKX13X
 		int16_t getAccelY();
 		int16_t getAccelZ();
 
-		bool readBit(uint8_t regAddr, uint8_t bitAddr);
-		bool writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite);
+		bool readBit(uint8_t, uint8_t);
+		bool writeBit(uint8_t, uint8_t, bool);
 
-		uint8_t readRegister(uint8_t addr);
-		bool writeRegister(uint8_t startingRegister, uint8_t data);
-		bool readMultipleRegisters(uint8_t startingRegister, uint8_t * dataBuffer, uint8_t bytesToGet = 1);
+		uint8_t readRegister(uint8_t);
+		KX13x_STATUS_t writeRegister(uint8_t, uint8_t);
+		KX13x_STATUS_t readMultipleRegisters(uint8_t, uint8_t* , uint8_t);
 
     // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
     // CPOL = 0, CPHA = 0 SPI_MODE0
