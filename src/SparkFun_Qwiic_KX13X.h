@@ -1,15 +1,8 @@
 /******************************************************************************
 SparkFun_Qwiic_KX13X.h
 Andy England @ SparkFun Electronics
-Original Creation Date: 1/8/2021
-
-This file prototypes the QwiicPIR class, implemented in SparkFun_Qwiic_Button.cpp.
-
-Development environment specifics:
-	IDE: Arduino 1.8.12
-	Hardware Platform: Arduino Uno/SparkFun Redboard
-	Qwiic Button Breakout Version: 1.0.0
-    Qwiic Switch Breakout Version: 1.0.0
+Elias Santistevan @ SparkFun Electronics
+Original Creation Date: March 2021
 
 This code is Lemonadeware; if you see me (or any other SparkFun employee) at the
 local, and you've found our code helpful, please buy us a round!
@@ -31,6 +24,7 @@ Distributed as-is; no warranty is given.
 #include <Wire.h>
 
 #define KX13X_DEFAULT_ADDRESS 0x1F
+#define KX13X_ALT_ADDRESS 0x1E
 
 #define MAN_ID 0x00
 #define PART_ID 0x01
@@ -156,6 +150,7 @@ Distributed as-is; no warranty is given.
 class QwiicKX13X
 {
 	public:
+
 		bool begin(uint8_t deviceAddress = KX13X_DEFAULT_ADDRESS, TwoWire &wirePort = Wire);
 		bool beginSPI(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort = SPI);
 		uint8_t initialize();
@@ -171,17 +166,22 @@ class QwiicKX13X
 
 		bool readBit(uint8_t regAddr, uint8_t bitAddr);
 		bool writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite);
+
 		uint8_t readRegister(uint8_t addr);
 		bool writeRegister(uint8_t startingRegister, uint8_t data);
-
 		bool readMultipleRegisters(uint8_t startingRegister, uint8_t * dataBuffer, uint8_t bytesToGet = 1);
+
+    SPISettings mySPISettings;
+
 	private:
+
 		TwoWire *_i2cPort;		//The generic connection to user's chosen I2C hardware
-		uint8_t _deviceAddress; //Keeps track of I2C address. setI2CAddress changes this.	
 		SPIClass *_spiPort;			 //The generic connection to user's chosen SPI hardware
-		unsigned long _spiPortSpeed; //Optional user defined port speed
+
+		uint8_t _deviceAddress; 
+		uint32_t _spiPortSpeed; // max port speed is 10MHz 
 		uint8_t _cs;
 
-		uint8_t _accelData[6] = {0};
+		uint8_t _accelData[6] {};
 };
 #endif /* QWIIC_KX13X */
