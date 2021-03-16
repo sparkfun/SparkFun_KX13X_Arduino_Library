@@ -158,12 +158,12 @@ typedef enum {
 
 } KX13x_STATUS_t;
 
-class QwiicKX13X
+class QwiicKX13xCore
 {
 	public:
 
-		bool begin(uint8_t deviceAddress = KX13X_DEFAULT_ADDRESS, TwoWire &wirePort = Wire);
-		bool beginSPI(uint8_t, uint32_t, SPIClass &spiPort = SPI);
+		bool beginCore(uint8_t deviceAddress = KX13X_DEFAULT_ADDRESS, TwoWire &wirePort = Wire);
+		bool beginSPICore(uint8_t, uint32_t, SPIClass &spiPort = SPI);
 		uint8_t initialize();
 		bool runCommandTest();
 
@@ -197,4 +197,13 @@ class QwiicKX13X
 
 		uint8_t _accelData[6] {};
 };
+
+class QwiicKX132 : public QwiicKX13xCore
+{
+};
+
+class QwiicKX134 : public QwiicKX13xCore
+{
+};
+    
 #endif /* QWIIC_KX13X */

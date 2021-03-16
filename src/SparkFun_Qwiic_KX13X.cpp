@@ -20,8 +20,9 @@ Distributed as-is; no warranty is given.
 
 #include "SparkFun_Qwiic_KX13X.h"
 
+QwiicKX13xCore::QwiicKX13xCore { }; //Constructor
 
-bool QwiicKX13X::begin(uint8_t deviceAddress, TwoWire &wirePort)
+bool QwiicKX13xCore::beginCore(uint8_t deviceAddress, TwoWire &wirePort)
 {
   _deviceAddress = deviceAddress; //If provided, store the I2C address from user
   _i2cPort = &wirePort;
@@ -33,7 +34,7 @@ bool QwiicKX13X::begin(uint8_t deviceAddress, TwoWire &wirePort)
     return true;
 }
 
-bool QwiicKX13X::beginSPI(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort)
+bool QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort)
 {
 	_i2cPort = NULL;
 	_spiPortSpeed = spiPortSpeed;
@@ -61,7 +62,7 @@ bool QwiicKX13X::beginSPI(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPor
 
 }
 
-uint8_t QwiicKX13X::initialize()
+uint8_t QwiicKX13xCore::initialize()
 {
 	uint8_t initializationValue = 0xC0;
 	writeRegister(CNTL1, initializationValue);
@@ -70,7 +71,7 @@ uint8_t QwiicKX13X::initialize()
 }
 
 //Tests functionality of the integrated circuit
-bool QwiicKX13X::runCommandTest()
+bool QwiicKX13xCore::runCommandTest()
 {
 	if( readRegister(COTR) == COTR_DEFAULT ) {
 		writeBit(CNTL2, COTC, true);// Set the COTC bit to tru to start the test
@@ -83,7 +84,7 @@ bool QwiicKX13X::runCommandTest()
 
 //Wait a certain time for incoming I2C bytes before giving up
 //Returns false if failed
-bool QwiicKX13X::waitForI2C()
+bool QwiicKX13xCore::waitForI2C()
 {
 	for(size_t counter = 0; counter < 100; counter++) { //Don't got more than 255 
 		if( _i2cPort->available() > 0 )
@@ -97,7 +98,7 @@ bool QwiicKX13X::waitForI2C()
 //Blocking wait for QwiicKX13X to assert (pull low) the INT pin
 //indicating it's ready for comm. Can take more than 104ms
 //after a hardware reset
-bool QwiicKX13X::waitForSPI()
+bool QwiicKX13xCore::waitForSPI()
 {
 	/*for (uint8_t counter = 0; counter < 125; counter++) //Don't got more than 255
 	{
@@ -109,32 +110,32 @@ bool QwiicKX13X::waitForSPI()
 	return (false);
 }
 
-bool QwiicKX13X::getReadings()
+bool QwiicKX13xCore::getReadings()
 {
 	return readMultipleRegisters(XOUT_L, _accelData, 6);
 }
 
-int16_t QwiicKX13X::getAccelX()
+int16_t QwiicKX13xCore::getAccelX()
 {
 	return ((_accelData[XMSB] << 8) | _accelData[XLSB]);
 }
 
-int16_t QwiicKX13X::getAccelY()
+int16_t QwiicKX13xCore::getAccelY()
 {
 	return ((_accelData[YMSB] << 8) | _accelData[YLSB]);
 }
 
-int16_t QwiicKX13X::getAccelZ()
+int16_t QwiicKX13xCore::getAccelZ()
 {
 	return ((_accelData[ZMSB] << 8) | _accelData[ZLSB]);
 }
 
-bool QwiicKX13X::readBit(uint8_t regAddr, uint8_t bitAddr)
+bool QwiicKX13xCore::readBit(uint8_t regAddr, uint8_t bitAddr)
 {
 	return ((readRegister(regAddr) & (1 << bitAddr)) >> bitAddr);
 }
 
-bool QwiicKX13X::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
+bool QwiicKX13xCore::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
 {
 	uint8_t value = readRegister(regAddr);
 	value &= ~(1 << bitAddr);
@@ -142,7 +143,7 @@ bool QwiicKX13X::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
 	return writeRegister(regAddr, value);
 }
 
-uint8_t QwiicKX13X::readRegister(uint8_t reg)
+uint8_t QwiicKX13xCore::readRegister(uint8_t reg)
 {
 
 	if( _i2cPort == NULL ) {
@@ -173,7 +174,7 @@ uint8_t QwiicKX13X::readRegister(uint8_t reg)
 //Sends multiple requests to sensor until all data bytes are received from sensor
 //The shtpData buffer has max capacity of MAX_PACKET_SIZE. Any bytes over this amount will be lost.
 //Arduino I2C read limit is 32 bytes. Header is 4 bytes, so max data we can read per interation is 28 bytes
-KX13x_STATUS_t QwiicKX13X::readMultipleRegisters(uint8_t reg, uint8_t *dataBuffer, uint8_t numBytes)
+KX13x_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t *dataBuffer, uint8_t numBytes)
 {
 	
 	if( _i2cPort == NULL ) {
@@ -204,7 +205,7 @@ KX13x_STATUS_t QwiicKX13X::readMultipleRegisters(uint8_t reg, uint8_t *dataBuffe
 	}
 }
 
-KX13x_STATUS_t QwiicKX13X::writeRegister(uint8_t reg, uint8_t data)
+KX13x_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
 {
 
 	if( _i2cPort == NULL ) {
@@ -228,3 +229,22 @@ KX13x_STATUS_t QwiicKX13X::writeRegister(uint8_t reg, uint8_t data)
 	}
 
 }
+
+
+//*********************************
+//*********************************
+//*********************************
+//*********************************
+
+QwiicKX132::QwiicKX132 { }
+
+
+//*********************************
+//*********************************
+//*********************************
+//*********************************
+QwiicKX134::QwiicKX134 { }
+
+
+
+
