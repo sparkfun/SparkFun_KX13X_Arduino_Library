@@ -45,14 +45,17 @@ bool QwiicKX13X::beginSPI(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPor
 	digitalWrite(_cs, HIGH);
 	//writeBit(INC1, SPI3E, 1); //Enable SPI
 	//_i2cPort->end();
+ 
+// CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
+// CPOL = 0, CPHA = 0 SPI_MODE0
 #ifdef _AVR_
-  mySPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE1)
+  kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
 #endif
-#ifdef _MK20DX256_
-  mySPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
+#ifdef _MK20DX256_ //Teensy
+  kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
 #endif
 #ifdef ESP32
-  mySPISettings = SPISettings(spiPortSpeed, SPI_MSBFIRST, SPI_MODE1)
+  kxSPISettings = SPISettings(spiPortSpeed, SPI_MSBFIRST, SPI_MODE0)
 #endif
 
 }
@@ -132,7 +135,7 @@ bool QwiicKX13X::readMultipleRegisters(uint8_t startingRegister, uint8_t * dataB
 {
 	
 	if (_i2cPort == NULL) {
-		_spiPort->beginTransaction(mySPISettings);
+		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
 		startingRegister |= 0x80; //Must or in 1 on MSB for read
 		_spiPort->transfer(startingRegister);
@@ -171,64 +174,55 @@ bool QwiicKX13X::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
 	return writeRegister(regAddr, value);
 }
 
-uint8_t QwiicKX13X::readRegister(uint8_t addr)
+uint8_t QwiicKX13X::readRegister(uint8_t reg)
 {
+
 	if( _i2cPort == NULL ) {
-		_spiPort->beginTransaction(mySPISettings);
+
+    uint8_t regData;
+
+		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
-		addr |= 0x80; //Must or in 1 on MSB for read
-		_spiPort->transfer(addr);
-		uint8_t returnData = _spiPort->transfer(0);
+		reg |= SPI_READ; 
+    regData = _spiPort->transfer(reg);
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
-		return returnData;
+		return regData;
 	}
-	else
-	{
+
+	else {
 		_i2cPort->beginTransmission(_deviceAddress);
-		_i2cPort->write(addr);
+		_i2cPort->write(reg);
 		_i2cPort->endTransmission();
 
-    //typecasting the 1 parameter in requestFrom so that the compiler
-    //doesn't give us a warning about multiple candidates
-    if( _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)) != 0 ) {
+    if( _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)) != 0 )
       return _i2cPort->read();
-    }
-    return false;
+    
+    return KX13x_I2C_ERROR;
 	}
 }
-//Given the data packet, send the header then the data
-//Returns false if sensor does not ACK
-//TODO - Arduino has a max 32 byte send. Break sending into multi packets if needed.
-bool QwiicKX13X::writeRegister(uint8_t startingRegister, uint8_t data)
+
+uint8_t QwiicKX13X::writeRegister(uint8_t reg, uint8_t data)
 {
 
 	if( _i2cPort == NULL ) {
 
-		//The QwiicKX13X MSB first, uses CPOL = 1 and CPHA = 1. This is mode3
-		_spiPort->beginTransaction(mySPISettings);
+		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
-
-		_spiPort->transfer(startingRegister);
+		_spiPort->transfer(reg |= SPI_WRITE);
 		_spiPort->transfer(data); 
-
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
+    return KX13x_SUCCESS;
 	}
+
 	else { 
-		//if(packetLength > I2C_BUFFER_LENGTH) return(false); //You are trying to send too much. Break into smaller packets.
-
 		_i2cPort->beginTransmission(_deviceAddress);
-
-		//Send the 4 byte packet header
-		_i2cPort->write(startingRegister);					  //Channel number
+		_i2cPort->write(reg); // Move to register
 		_i2cPort->write(data); 
-
 		uint8_t i2cResult = _i2cPort->endTransmission();
 		if( i2cResult != 0 )
-			return (false);
-		
+			return KX13x_SUCCESS;
 	}
 
-	return (true);
 }

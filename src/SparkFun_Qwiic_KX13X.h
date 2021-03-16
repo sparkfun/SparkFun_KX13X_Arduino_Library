@@ -147,6 +147,17 @@ Distributed as-is; no warranty is given.
 #define ZLSB 4
 #define ZMSB 5
 
+#define SPI_READ 0x01 // OR'ed at most sig BIT with register address
+#define SPI_WRITE 0x00 // OR'ed at most sig BIT with register address
+
+typedef enum {
+
+  KX13x_SUCCESS = 0x00;
+  KX13x_GENERAL_ERROR;
+  KX13x_I2C_ERROR;
+
+} KX13x_ERROR_t;
+
 class QwiicKX13X
 {
 	public:
@@ -171,7 +182,9 @@ class QwiicKX13X
 		bool writeRegister(uint8_t startingRegister, uint8_t data);
 		bool readMultipleRegisters(uint8_t startingRegister, uint8_t * dataBuffer, uint8_t bytesToGet = 1);
 
-    SPISettings mySPISettings;
+    // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
+    // CPOL = 0, CPHA = 0 SPI_MODE0
+    SPISettings kxSPISettings;
 
 	private:
 
