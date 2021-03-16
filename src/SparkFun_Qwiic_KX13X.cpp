@@ -204,20 +204,18 @@ bool QwiicKX13X::writeRegister(uint8_t startingRegister, uint8_t data)
 {
 
 	if( _i2cPort == NULL ) {
-		//Wait for QwiicKX13X to indicate it is available for communication
 
-		//QwiicKX13X has max CLK of 3MHz, MSB first,
-		//The QwiicKX13X uses CPOL = 1 and CPHA = 1. This is mode3
-		_spiPort->beginTransaction(SPISettings(_spiPortSpeed, MSBFIRST, SPI_MODE0));
+		//The QwiicKX13X MSB first, uses CPOL = 1 and CPHA = 1. This is mode3
+		_spiPort->beginTransaction(mySPISettings);
 		digitalWrite(_cs, LOW);
 
-		_spiPort->transfer(startingRegister);			 //Send the register we want to write to
-		_spiPort->transfer(data); //Send the data
+		_spiPort->transfer(startingRegister);
+		_spiPort->transfer(data); 
 
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
 	}
-	else { //Do I2C
+	else { 
 		//if(packetLength > I2C_BUFFER_LENGTH) return(false); //You are trying to send too much. Break into smaller packets.
 
 		_i2cPort->beginTransmission(_deviceAddress);
