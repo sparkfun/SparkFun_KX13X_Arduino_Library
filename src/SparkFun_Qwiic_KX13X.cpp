@@ -22,19 +22,15 @@ Distributed as-is; no warranty is given.
 
 QwiicKX13xCore::QwiicKX13xCore { }; //Constructor
 
-bool QwiicKX13xCore::beginCore(uint8_t deviceAddress, TwoWire &wirePort)
+uint8_t QwiicKX13xCore::beginCore(uint8_t deviceAddress, TwoWire &i2cPort)
 {
   _deviceAddress = deviceAddress; //If provided, store the I2C address from user
-  _i2cPort = &wirePort;
-  _i2cPort->beginTransmission(_deviceAddress);
-	
-  if( _i2cPort->endTransmission() != 0 ) 
-    return false; //Error: Sensor did not ack
-  else	
-    return true;
+  _i2cPort = &i2cPort;
+  uint8_t partID = readRegister(KX13X_PART_ID);
+  return partID;
 }
 
-bool QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort)
+uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort)
 {
 	_i2cPort = NULL;
 	_spiPortSpeed = spiPortSpeed;
@@ -59,6 +55,9 @@ bool QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass
 #ifdef ESP32
   kxSPISettings = SPISettings(spiPortSpeed, SPI_MSBFIRST, SPI_MODE0)
 #endif
+
+  uint8_t partID = readRegister(KX13X_PART_ID);
+  return partID;
 
 }
 
@@ -167,14 +166,14 @@ uint8_t QwiicKX13xCore::readRegister(uint8_t reg)
     if( _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)) != 0 )
       return _i2cPort->read();
     
-    return KX13x_I2C_ERROR;
+    return KX13X_I2C_ERROR;
 	}
 }
 
 //Sends multiple requests to sensor until all data bytes are received from sensor
 //The shtpData buffer has max capacity of MAX_PACKET_SIZE. Any bytes over this amount will be lost.
 //Arduino I2C read limit is 32 bytes. Header is 4 bytes, so max data we can read per interation is 28 bytes
-KX13x_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t *dataBuffer, uint8_t numBytes)
+KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t *dataBuffer, uint8_t numBytes)
 {
 	
 	if( _i2cPort == NULL ) {
@@ -187,25 +186,25 @@ KX13x_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t *dataB
 		}
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
-		return KX13x_SUCCESS;
+		return KX13X_SUCCESS;
 	}
 	else {
 		_i2cPort->beginTransmission(_deviceAddress);
 		_i2cPort->write(reg);
 
     if( _i2cPort->endTransmission() != 0 )
-      return KX13x_I2C_ERROR; //Error: Sensor did not ack
+      return KX13X_I2C_ERROR; //Error: Sensor did not ack
 
 		_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), numBytes);
 		for(size_t i = 0; i < numBytes; i++) {
 			dataBuffer[i] = _i2cPort->read();
 		}
 
-    return KX13x_SUCCESS;
+    return KX13X_SUCCESS;
 	}
 }
 
-KX13x_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
+KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
 {
 
 	if( _i2cPort == NULL ) {
@@ -216,7 +215,7 @@ KX13x_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
 		_spiPort->transfer(data); 
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
-    return KX13x_SUCCESS;
+    return KX13X_SUCCESS;
 	}
 
 	else { 
@@ -225,26 +224,69 @@ KX13x_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
 		_i2cPort->write(data); 
 		uint8_t i2cResult = _i2cPort->endTransmission();
 		if( i2cResult != 0 )
-			return KX13x_SUCCESS;
+			return KX13X_SUCCESS;
 	}
 
 }
 
 
-//*********************************
-//*********************************
-//*********************************
-//*********************************
+
+//*************** KX132 ******************
+//****************************************
+//****************************************
+//****************************************
 
 QwiicKX132::QwiicKX132 { }
 
+bool QwiicKX132::begin(uint8_t kxAddress, TwoWire &i2cPort){
 
-//*********************************
-//*********************************
-//*********************************
-//*********************************
+  if( kxAddress != KX13X_DEFAULT_ADDRESS && kxAddress != KX13X_ALT_ADDRESS )
+    return false;
+
+  uint8_t partID = beginCore(kxAddress, &i2cPort); 
+  if( partID == KX132_WHO_AM_I ) 
+    return true; 
+  else 
+    return false;
+}
+
+bool QwiicKX132::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
+
+  uint8_t partID = beginSPICore(csPin, spiPortSpeed, &spiPort); 
+  if( partID == KX132_WHO_AM_I ) 
+    return true; 
+  else 
+    return false;
+}
+
+
+//*************** KX134 ******************
+//****************************************
+//****************************************
+//****************************************
 QwiicKX134::QwiicKX134 { }
 
+bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
+
+  if( kxAddress != KX13X_DEFAULT_ADDRESS && kxAddress != KX13X_ALT_ADDRESS )
+    return false;
+
+  uint8_t partID = beginCore(kxAddress, &i2cPort); 
+  if( partID == KX134_WHO_AM_I ) 
+    return true; 
+  else 
+    return false;
+}
+
+
+bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
+
+  uint8_t partID = beginSPICore(csPin, spiPortSpeed, &spiPort); 
+  if( partID == KX134_WHO_AM_I ) 
+    return true; 
+  else 
+    return false;
+}
 
 
 

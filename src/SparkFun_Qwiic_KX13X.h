@@ -26,22 +26,28 @@ Distributed as-is; no warranty is given.
 #define KX13X_DEFAULT_ADDRESS 0x1F
 #define KX13X_ALT_ADDRESS 0x1E
 
-#define MAN_ID 0x00
-#define PART_ID 0x01
+#define KX132_WHO_AM_I  0x3D
+#define KX134_WHO_AM_I  0x46
 
 //Accelerometer Data
-#define XADP_L 0x02 //ADP is the output for the Automatic Data PathConfigured in CNTL5, ADP_CNTL1 and ADP_CNTL2
-#define XADP_H 0x03
-#define YADP_L 0x04
-#define YADP_H 0x05
-#define ZADP_L 0x06
-#define ZADP_H 0x07
-#define XOUT_L 0x08
-#define XOUT_H 0x09
-#define YOUT_L 0x0A
-#define YOUT_H 0x0B
-#define ZOUT_L 0x0C
-#define ZOUT_H 0x0D
+enum REGISTERS {
+
+  KX13X_MAN_ID = 0x00,
+  KX13X_PART_ID,
+  KX13X_XADP_L,
+  KX13X_XADP_H,
+  KX13X_YADP_L,
+  KX13X_YADP_H,
+  KX13X_ZADP_L,
+  KX13X_ZADP_H,
+  KX13X_XOUT_L,
+  KX13X_XOUT_H,
+  KX13X_YOUT_L,
+  KX13X_YOUT_H,
+  KX13X_ZOUT_L,
+  KX13X_ZOUT_H
+
+};
 
 //0x0E-0x11 Kionix Reserved
 
@@ -152,18 +158,18 @@ Distributed as-is; no warranty is given.
 
 typedef enum {
 
-  KX13x_SUCCESS = 0x00;
-  KX13x_GENERAL_ERROR;
-  KX13x_I2C_ERROR;
+  KX13X_SUCCESS = 0x00;
+  KX13X_GENERAL_ERROR;
+  KX13X_I2C_ERROR;
 
-} KX13x_STATUS_t;
+} KX13X_STATUS_t;
 
 class QwiicKX13xCore
 {
 	public:
 
-		bool beginCore(uint8_t deviceAddress = KX13X_DEFAULT_ADDRESS, TwoWire &wirePort = Wire);
-		bool beginSPICore(uint8_t, uint32_t, SPIClass &spiPort = SPI);
+		bool beginCore(uint8_t, TwoWire &wirePort);
+		bool beginSPICore(uint8_t, uint32_t, SPIClass &spiPort);
 		uint8_t initialize();
 		bool runCommandTest();
 
@@ -179,8 +185,8 @@ class QwiicKX13xCore
 		bool writeBit(uint8_t, uint8_t, bool);
 
 		uint8_t readRegister(uint8_t);
-		KX13x_STATUS_t writeRegister(uint8_t, uint8_t);
-		KX13x_STATUS_t readMultipleRegisters(uint8_t, uint8_t* , uint8_t);
+		KX13X_STATUS_t writeRegister(uint8_t, uint8_t);
+		KX13X_STATUS_t readMultipleRegisters(uint8_t, uint8_t* , uint8_t);
 
     // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
     // CPOL = 0, CPHA = 0 SPI_MODE0
@@ -200,10 +206,17 @@ class QwiicKX13xCore
 
 class QwiicKX132 : public QwiicKX13xCore
 {
-};
+  public:
+
+    bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
+    bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
 
 class QwiicKX134 : public QwiicKX13xCore
 {
+  public: 
+
+    bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
+    bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
 };
     
 #endif /* QWIIC_KX13X */
