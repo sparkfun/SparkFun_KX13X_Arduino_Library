@@ -38,7 +38,7 @@ struct outputData {
 };
 
 //Accelerometer Data
-enum SHARED_REGISTERS {
+enum KX13X_REGISTERS {
 
   KX13X_MAN_ID = 0x00,//      Retuns "KION" in ASCII
   KX13X_PART_ID,//            Who am I + Silicon specific ID
@@ -59,7 +59,7 @@ enum SHARED_REGISTERS {
   KX13X_WHO_AM_I, //          Who am I: 0x3D-KX132, 0x46-KX134
   KXI3X_TSCP,//        -------Tilt Register---------------------- 
   KXI3X_TSPP,//        -----------^^-----------------------------
-  KXI3X_INS1 //        -------Interrupt Registers ---------------
+  KXI3X_INS1, //        -------Interrupt Registers ---------------
   KXI3X_INS2,
   KXI3X_INS3,
   KXI3X_STATUS_REG, 
@@ -80,7 +80,6 @@ enum SHARED_REGISTERS {
   // 0x28 Reserved
   KXI3X_TILT_TIMER =  0x29, 
   KX13X_TDTRC, // Tap Control Regs ----- 
-  KX13X_TDTC,
   KX13X_TDTC,
   KX13X_TTH,
   KX13X_TTL,
@@ -155,9 +154,9 @@ enum SHARED_REGISTERS {
 
 typedef enum {
 
-  KX13X_SUCCESS = 0x00;
-  KX13X_GENERAL_ERROR;
-  KX13X_I2C_ERROR;
+  KX13X_SUCCESS = 0x00,
+  KX13X_GENERAL_ERROR,
+  KX13X_I2C_ERROR,
 
 } KX13X_STATUS_t;
 
@@ -165,22 +164,24 @@ class QwiicKX13xCore
 {
 	public:
 
-		bool beginCore(uint8_t, TwoWire &wirePort);
-		bool beginSPICore(uint8_t, uint32_t, SPIClass &spiPort);
+    QwiicKX13xCore();
+
+		uint8_t beginCore(uint8_t, TwoWire &wirePort);
+		uint8_t beginSPICore(uint8_t, uint32_t, SPIClass &spiPort);
 		uint8_t initialize();
 		bool runCommandTest();
 
 		bool waitForI2C();
 		bool waitForSPI();
 
-    outputData getAccelData();
+    KX13X_STATUS_t getRawAccelData(outputData);
 
 		bool readBit(uint8_t, uint8_t);
 		bool writeBit(uint8_t, uint8_t, bool);
 
 		KX13X_STATUS_t readRegister(uint8_t*, uint8_t);
 		KX13X_STATUS_t writeRegister(uint8_t, uint8_t);
-		KX13X_STATUS_t readMultipleRegisters(uint8_t, uint8_t* , uint8_t);
+		KX13X_STATUS_t readMultipleRegisters(uint8_t, uint8_t dataBuffer[] , uint8_t);
     KX13X_STATUS_t overBufLenI2CRead(uint8_t, uint8_t* , uint8_t);
 
     // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
@@ -202,14 +203,18 @@ class QwiicKX132 : public QwiicKX13xCore
 {
   public:
 
+    QwiicKX132();
     bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
     bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
 //    bool convAccelData(outputData); 
+
+};
 
 class QwiicKX134 : public QwiicKX13xCore
 {
   public: 
 
+    QwiicKX134();
     bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
     bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
     //bool convAccelData(outputData); 

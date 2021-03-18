@@ -1,18 +1,11 @@
-#include <SparkFun_Qwiic_KX13X.h>
+#include <Wire.h>
+#include "SparkFun_Qwiic_KX13X.h"
 
-QwiicKX13X accel;
+QwiicKX132 accel;
 
 void setup() {
   Serial.begin(115200);
-  while(!Serial);
-  Serial.println(Example 1 - Basic Accelerometer Readings);
-  Wire.begin();
-  if (accel.begin() == false)
-  {
-    Serial.println("Device did not ack, hanging");
-    while(1);
-  }
-  accel.initialize();
+  Serial.println("Welcome.");
 }
 
 void loop() {

@@ -20,7 +20,7 @@ Distributed as-is; no warranty is given.
 
 #include "SparkFun_Qwiic_KX13X.h"
 
-QwiicKX13xCore::QwiicKX13xCore { }; //Constructor
+QwiicKX13xCore::QwiicKX13xCore() { } //Constructor
 
 uint8_t QwiicKX13xCore::beginCore(uint8_t deviceAddress, TwoWire &i2cPort)
 {
@@ -51,9 +51,9 @@ uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPICl
 // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
 // CPOL = 0, CPHA = 0 SPI_MODE0
 #ifdef ESP32
-  kxSPISettings = SPISettings(spiPortSpeed, SPI_MSBFIRST, SPI_MODE0)
+  kxSPISettings = SPISettings(spiPortSpeed, SPI_MSBFIRST, SPI_MODE0);
 #else 
-  kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
+  kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0);
 #endif
 //#ifdef _MK20DX256_ //Teensy
  // kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
@@ -69,22 +69,13 @@ uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPICl
 
 uint8_t QwiicKX13xCore::initialize()
 {
-	uint8_t initializationValue = 0xC0;
-	writeRegister(CNTL1, initializationValue);
-	delay(1000);
-	return readRegister(CNTL1);
+  return true;
 }
 
 //Tests functionality of the integrated circuit
 bool QwiicKX13xCore::runCommandTest()
 {
-	if( readRegister(COTR) == COTR_DEFAULT ) {
-		writeBit(CNTL2, COTC, true);// Set the COTC bit to tru to start the test
-		if( readRegister(COTR) == COTR_SUCCESS )
-			return true;
-	}
-  else
-    return false;
+  return true;
 }
 
 //Wait a certain time for incoming I2C bytes before giving up
@@ -117,31 +108,34 @@ bool QwiicKX13xCore::waitForSPI()
 
 bool QwiicKX13xCore::readBit(uint8_t regAddr, uint8_t bitAddr)
 {
-	return ((readRegister(regAddr) & (1 << bitAddr)) >> bitAddr);
+	return true;
+    //((readRegister(regAddr) & (1 << bitAddr)) >> bitAddr);
 }
 
 bool QwiicKX13xCore::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
 {
-	uint8_t value = readRegister(regAddr);
+	uint8_t value;
+  readRegister(&value, regAddr);
 	value &= ~(1 << bitAddr);
 	value |= bitToWrite << bitAddr;
-	return writeRegister(regAddr, value);
+  writeRegister(regAddr, value);
+	return true;
 }
 
-KX13X_STATUS_t QwiicKX132::getAccelData(outputData){
+KX13X_STATUS_t QwiicKX13xCore::getRawAccelData(outputData userAccel){
 
   uint8_t tempRegData[TOTAL_ACCEL_DATA] {}; 
-  uint8_t returnError;
+  KX13X_STATUS_t returnError;
 
-  returnError = readMultipleRegisters(KX13X_XADP_L, tempRegData, TOTAL_ACCEL_DATA) 
+  returnError = readMultipleRegisters(KX13X_XADP_L, tempRegData, TOTAL_ACCEL_DATA);
   if( returnError == KX13X_SUCCESS ) {
-      outputData.xData = tempRegData[XLSB]; 
-      outputData.xData |= (static_cast<uint16_t>tempRegData[XMSB] << 8); 
-      outputData.yData = tempRegData[YLSB]; 
-      outputData.yData |= (static_cast<uint16_t>tempRegData[YMSB] << 8); 
-      outputData.zData = tempRegData[ZLSB]; 
-      outputData.zData |= (static_cast<uint16_t>tempRegData[ZMSB] << 8); 
-      return returnError
+      userAccel.xData = tempRegData[XLSB]; 
+      userAccel.xData |= (static_cast<uint16_t>(tempRegData[XMSB]) << 8); 
+      userAccel.yData = tempRegData[YLSB]; 
+      userAccel.yData |= (static_cast<uint16_t>(tempRegData[YMSB]) << 8); 
+      userAccel.zData = tempRegData[ZLSB]; 
+      userAccel.zData |= (static_cast<uint16_t>(tempRegData[ZMSB]) << 8); 
+      return returnError;
   }
   else
     return returnError;
@@ -156,7 +150,7 @@ KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
 		reg |= SPI_READ; 
-    &dataPointer = _spiPort->transfer(reg);
+    *dataPointer = _spiPort->transfer(reg);
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
     return KX13X_SUCCESS;
@@ -167,7 +161,7 @@ KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 		_i2cPort->write(reg);
 
     _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1));
-    &dataPointer = _i2cPort->read();
+    *dataPointer = _i2cPort->read();
     uint8_t i2cResult = _i2cPort->endTransmission(); 
     if( i2cResult != 0 )
       return KX13X_I2C_ERROR; //Error: Sensor did not ack
@@ -178,14 +172,14 @@ KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 //Sends multiple requests to sensor until all data bytes are received from sensor
 //The shtpData buffer has max capacity of MAX_PACKET_SIZE. Any bytes over this amount will be lost.
 //Arduino I2C read limit is 32 bytes. Header is 4 bytes, so max data we can read per interation is 28 bytes
-KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t *dataBuffer, uint8_t numBytes)
+KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBuffer[], uint8_t numBytes)
 {
 	
 	if( _i2cPort == NULL ) {
 		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
 		reg |= SPI_READ;
-		databuffer[0] = _spiPort->transfer(reg); //first byte on transfer of address and read bit
+		dataBuffer[0] = _spiPort->transfer(reg); //first byte on transfer of address and read bit
 		for(size_t i = 1; i < numBytes; i++) {
 			dataBuffer[i] = _spiPort->transfer(0); //Assuming this will initiate auto-increment behavior
 		}
@@ -196,9 +190,9 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t *dataB
 	else {
 
     if( numBytes > MAX_BUFFER_LENGTH){
-      uint8_t returnError;
-      returnError = overBufLenI2CRead(reg, databuffer, numBytes);
-      return returnError
+      KX13X_STATUS_t returnError;
+      returnError = overBufLenI2CRead(reg, dataBuffer, numBytes);
+      return returnError;
     }
 
 		_i2cPort->beginTransmission(_deviceAddress);
@@ -221,7 +215,7 @@ KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t *dataBuffe
   uint8_t i2cResult; 
   size_t arrayPlaceHolder = 0;
 
-  i2cPort->beginTransmission(_deviceAddress);
+  _i2cPort->beginTransmission(_deviceAddress);
   _i2cPort->write(reg); 
 
   while(numBytes > 0) 
@@ -270,7 +264,7 @@ KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
 		if( i2cResult != 0 )
 			return KX13X_I2C_ERROR;
     else
-      return KX13X_SUCCESS
+      return KX13X_SUCCESS;
 	}
 
 }
@@ -282,14 +276,14 @@ KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
 //****************************************
 //****************************************
 
-QwiicKX132::QwiicKX132 { }
+QwiicKX132::QwiicKX132() { }
 
 bool QwiicKX132::begin(uint8_t kxAddress, TwoWire &i2cPort){
 
   if( kxAddress != KX13X_DEFAULT_ADDRESS && kxAddress != KX13X_ALT_ADDRESS )
     return false;
 
-  uint8_t partID = beginCore(kxAddress, &i2cPort); 
+  uint8_t partID = beginCore(kxAddress, i2cPort); 
   if( partID == KX132_WHO_AM_I ) 
     return true; 
   else 
@@ -298,7 +292,7 @@ bool QwiicKX132::begin(uint8_t kxAddress, TwoWire &i2cPort){
 
 bool QwiicKX132::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
 
-  uint8_t partID = beginSPICore(csPin, spiPortSpeed, &spiPort); 
+  uint8_t partID = beginSPICore(csPin, spiPortSpeed, spiPort); 
   if( partID == KX132_WHO_AM_I ) 
     return true; 
   else 
@@ -310,14 +304,14 @@ bool QwiicKX132::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPor
 //****************************************
 //****************************************
 //****************************************
-QwiicKX134::QwiicKX134 { }
+QwiicKX134::QwiicKX134() { }
 
 bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
 
   if( kxAddress != KX13X_DEFAULT_ADDRESS && kxAddress != KX13X_ALT_ADDRESS )
     return false;
 
-  uint8_t partID = beginCore(kxAddress, &i2cPort); 
+  uint8_t partID = beginCore(kxAddress, i2cPort); 
   if( partID == KX134_WHO_AM_I ) 
     return true; 
   else 
@@ -327,7 +321,7 @@ bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
 //
 bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
 
-  uint8_t partID = beginSPICore(csPin, spiPortSpeed, &spiPort); 
+  uint8_t partID = beginSPICore(csPin, spiPortSpeed, spiPort); 
   if( partID == KX134_WHO_AM_I ) 
     return true; 
   else 
