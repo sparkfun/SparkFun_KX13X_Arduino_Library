@@ -26,8 +26,12 @@ uint8_t QwiicKX13xCore::beginCore(uint8_t deviceAddress, TwoWire &i2cPort)
 {
   _deviceAddress = deviceAddress; //If provided, store the I2C address from user
   _i2cPort = &i2cPort;
-  uint8_t partID = readRegister(KX13X_PART_ID);
-  return partID;
+  uint8_t partID;
+  KX13X_STATUS_t status = readRegister(&partID, KX13X_WHO_AM_I);
+  if( status != KX13X_SUCCESS ) 
+    return status;
+  else    
+    return partID;
 }
 
 uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort)
@@ -46,19 +50,21 @@ uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPICl
  
 // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
 // CPOL = 0, CPHA = 0 SPI_MODE0
-#ifdef _AVR_
-  kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
-#endif
-#ifdef _MK20DX256_ //Teensy
-  kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
-#endif
 #ifdef ESP32
   kxSPISettings = SPISettings(spiPortSpeed, SPI_MSBFIRST, SPI_MODE0)
+#else 
+  kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
 #endif
+//#ifdef _MK20DX256_ //Teensy
+ // kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
+//#endif
 
-  uint8_t partID = readRegister(KX13X_PART_ID);
-  return partID;
-
+  uint8_t partID;
+  KX13X_STATUS_t status = readRegister(&partID, KX13X_WHO_AM_I);
+  if( status != KX13X_SUCCESS ) 
+    return status;
+  else    
+    return partID;
 }
 
 uint8_t QwiicKX13xCore::initialize()
@@ -109,26 +115,6 @@ bool QwiicKX13xCore::waitForSPI()
 	return (false);
 }
 
-bool QwiicKX13xCore::getReadings()
-{
-	return readMultipleRegisters(XOUT_L, _accelData, 6);
-}
-
-int16_t QwiicKX13xCore::getAccelX()
-{
-	return ((_accelData[XMSB] << 8) | _accelData[XLSB]);
-}
-
-int16_t QwiicKX13xCore::getAccelY()
-{
-	return ((_accelData[YMSB] << 8) | _accelData[YLSB]);
-}
-
-int16_t QwiicKX13xCore::getAccelZ()
-{
-	return ((_accelData[ZMSB] << 8) | _accelData[ZLSB]);
-}
-
 bool QwiicKX13xCore::readBit(uint8_t regAddr, uint8_t bitAddr)
 {
 	return ((readRegister(regAddr) & (1 << bitAddr)) >> bitAddr);
@@ -142,31 +128,50 @@ bool QwiicKX13xCore::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
 	return writeRegister(regAddr, value);
 }
 
-uint8_t QwiicKX13xCore::readRegister(uint8_t reg)
+KX13X_STATUS_t QwiicKX132::getAccelData(outputData){
+
+  uint8_t tempRegData[TOTAL_ACCEL_DATA] {}; 
+  uint8_t returnError;
+
+  returnError = readMultipleRegisters(KX13X_XADP_L, tempRegData, TOTAL_ACCEL_DATA) 
+  if( returnError == KX13X_SUCCESS ) {
+      outputData.xData = tempRegData[XLSB]; 
+      outputData.xData |= (static_cast<uint16_t>tempRegData[XMSB] << 8); 
+      outputData.yData = tempRegData[YLSB]; 
+      outputData.yData |= (static_cast<uint16_t>tempRegData[YMSB] << 8); 
+      outputData.zData = tempRegData[ZLSB]; 
+      outputData.zData |= (static_cast<uint16_t>tempRegData[ZMSB] << 8); 
+      return returnError
+  }
+  else
+    return returnError;
+     
+    
+}
+
+KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 {
 
 	if( _i2cPort == NULL ) {
-
-    uint8_t regData;
-
 		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
 		reg |= SPI_READ; 
-    regData = _spiPort->transfer(reg);
+    &dataPointer = _spiPort->transfer(reg);
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
-		return regData;
+    return KX13X_SUCCESS;
 	}
 
 	else {
 		_i2cPort->beginTransmission(_deviceAddress);
 		_i2cPort->write(reg);
-		_i2cPort->endTransmission();
 
-    if( _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)) != 0 )
-      return _i2cPort->read();
-    
-    return KX13X_I2C_ERROR;
+    _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1));
+    &dataPointer = _i2cPort->read();
+    uint8_t i2cResult = _i2cPort->endTransmission(); 
+    if( i2cResult != 0 )
+      return KX13X_I2C_ERROR; //Error: Sensor did not ack
+    return KX13X_SUCCESS;
 	}
 }
 
@@ -189,19 +194,57 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t *dataB
 		return KX13X_SUCCESS;
 	}
 	else {
+
+    if( numBytes > MAX_BUFFER_LENGTH){
+      uint8_t returnError;
+      returnError = overBufLenI2CRead(reg, databuffer, numBytes);
+      return returnError
+    }
+
 		_i2cPort->beginTransmission(_deviceAddress);
 		_i2cPort->write(reg);
-
-    if( _i2cPort->endTransmission() != 0 )
-      return KX13X_I2C_ERROR; //Error: Sensor did not ack
-
 		_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), numBytes);
 		for(size_t i = 0; i < numBytes; i++) {
 			dataBuffer[i] = _i2cPort->read();
 		}
 
+    uint8_t i2cResult = _i2cPort->endTransmission();
+    if( i2cResult != 0 )
+      return KX13X_I2C_ERROR; //Error: Sensor did not ack
     return KX13X_SUCCESS;
 	}
+}
+
+KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t *dataBuffer, uint8_t numBytes)
+{
+  uint8_t resizedRead; 
+  uint8_t i2cResult; 
+  size_t arrayPlaceHolder = 0;
+
+  i2cPort->beginTransmission(_deviceAddress);
+  _i2cPort->write(reg); 
+
+  while(numBytes > 0) 
+  {
+    if( numBytes > MAX_BUFFER_LENGTH )
+      resizedRead = MAX_BUFFER_LENGTH; 
+    else
+      resizedRead = numBytes; 
+
+		_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), resizedRead, false); //false = repeated start
+
+		for(size_t i = arrayPlaceHolder; i < resizedRead; i++) {
+      arrayPlaceHolder++;
+			dataBuffer[i] = _i2cPort->read();
+    }	
+    numBytes = numBytes - MAX_BUFFER_LENGTH; // end condition
+  }
+
+  i2cResult = _i2cPort->endTransmission();
+  if( i2cResult != 0 )
+    return KX13X_I2C_ERROR; //Error: Sensor did not ack
+  else
+    return KX13X_SUCCESS;
 }
 
 KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
@@ -222,9 +265,12 @@ KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
 		_i2cPort->beginTransmission(_deviceAddress);
 		_i2cPort->write(reg); // Move to register
 		_i2cPort->write(data); 
+
 		uint8_t i2cResult = _i2cPort->endTransmission();
 		if( i2cResult != 0 )
-			return KX13X_SUCCESS;
+			return KX13X_I2C_ERROR;
+    else
+      return KX13X_SUCCESS
 	}
 
 }
@@ -278,7 +324,7 @@ bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
     return false;
 }
 
-
+//
 bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
 
   uint8_t partID = beginSPICore(csPin, spiPortSpeed, &spiPort); 

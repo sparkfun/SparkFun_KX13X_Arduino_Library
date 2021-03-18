@@ -28,13 +28,21 @@ Distributed as-is; no warranty is given.
 
 #define KX132_WHO_AM_I  0x3D
 #define KX134_WHO_AM_I  0x46
+#define TOTAL_ACCEL_DATA 48 //bytes
+#define MAX_BUFFER_LENGTH 32 //bytes
+
+struct outputData { 
+  int16_t xData;
+  int16_t yData;
+  int16_t zData;
+};
 
 //Accelerometer Data
-enum REGISTERS {
+enum SHARED_REGISTERS {
 
-  KX13X_MAN_ID = 0x00,
-  KX13X_PART_ID,
-  KX13X_XADP_L,
+  KX13X_MAN_ID = 0x00,//      Retuns "KION" in ASCII
+  KX13X_PART_ID,//            Who am I + Silicon specific ID
+  KX13X_XADP_L,//     ------- X, Y, and Z - High and Low bytes -----
   KX13X_XADP_H,
   KX13X_YADP_L,
   KX13X_YADP_H,
@@ -45,106 +53,95 @@ enum REGISTERS {
   KX13X_YOUT_L,
   KX13X_YOUT_H,
   KX13X_ZOUT_L,
-  KX13X_ZOUT_H
-
+  KX13X_ZOUT_H, //     --------------^^--------------------------
+  //                          0x0E - 0x11 Reserved
+  KX13X_COTR = 0x12,//        Command Test Register
+  KX13X_WHO_AM_I, //          Who am I: 0x3D-KX132, 0x46-KX134
+  KXI3X_TSCP,//        -------Tilt Register---------------------- 
+  KXI3X_TSPP,//        -----------^^-----------------------------
+  KXI3X_INS1 //        -------Interrupt Registers ---------------
+  KXI3X_INS2,
+  KXI3X_INS3,
+  KXI3X_STATUS_REG, 
+  KXI3X_INT_REL, //    ------------^^----------------------------
+  KXI3X_CNTL1,//       --------Control Registers----------------- 
+  KXI3X_CNTL2,
+  KXI3X_CNTL3,
+  KXI3X_CNTL4,
+  KXI3X_CNTL5,
+  KXI3X_CNTL6,//        -------------^^---------------------------
+  KXI3X_ODCNTL,
+  KXI3X_INC1,//Controls settings for INT1
+  KXI3X_INC2,//Defines behavior for Wake-Up Function and Back To Sleep
+  KXI3X_INC3,//Defines which axes can cause a tap based interrupt
+  KXI3X_INC4,//Controls which function triggers INT1
+  KXI3X_INC5,
+  KXI3X_INC6,//Controls which function triggers INT2
+  // 0x28 Reserved
+  KXI3X_TILT_TIMER =  0x29, 
+  KX13X_TDTRC, // Tap Control Regs ----- 
+  KX13X_TDTC,
+  KX13X_TDTC,
+  KX13X_TTH,
+  KX13X_TTL,
+  KX13X_FTD,
+  KX13X_STD,
+  KX13X_TLT,
+  KX13X_TWS,
+  KX13X_FFTH,
+  KX13X_FFC,
+  KX13X_FFCNTL,
+  // 0x35 - 0x36 Reserved
+  KX13X_TILT_ANGLE_LL = 0x37,
+  KX13X_TILT_ANGLE_HL,
+  KX13X_HYST_SET,
+  KX13X_LP_CNTL1,
+  KX13X_LP_CNTL2,
+  // 0x3C - 0x48 Reserved
+  KX13X_WUFTH,
+  KX13X_BTSWUFTH,
+  KX13X_BTSTH,
+  KX13X_BTSC,
+  KX13X_WUFC,
+  // 0x4E - 0x5C Reserved
+  KX13X_SELF_TEST = 0x5D,
+  KX13X_BUF_CNTL1,
+  KX13X_BUF_CNTL2,
+  KX13X_BUF_STATUS_1,
+  KX13X_BUF_STATUS_2,
+  KX13X_BUF_CLEAR,
+  KX13X_BUF_READ,
+  KX13X_ADP_CNTL1,
+  KX13X_ADP_CNTL2,
+  KX13X_ADP_CNTL3,
+  KX13X_ADP_CNTL4,
+  KX13X_ADP_CNTL5,
+  KX13X_ADP_CNTL6,
+  KX13X_ADP_CNTL7,
+  KX13X_ADP_CNTL8,
+  KX13X_ADP_CNTL9,
+  KX13X_ADP_CNTL10,
+  KX13X_ADP_CNTL11,
+  KX13X_ADP_CNTL12,
+  KX13X_ADP_CNTL13,
+  KX13X_ADP_CNTL14,
+  KX13X_ADP_CNTL15,
+  KX13X_ADP_CNTL16,
+  KX13X_ADP_CNTL17,
+  KX13X_ADP_CNTL18,
+  KX13X_ADP_CNTL19
+  //Reserved 0x77 - 0x7F
 };
 
-//0x0E-0x11 Kionix Reserved
-
-#define COTR 0x12 //Command Test Response
-#define COTR_DEFAULT 0x55 //Default value of COTR Register
-#define COTR_SUCCESS 0xAA //Succesfull COTR Register setting value
-#define WHO_AM_I 0x13
-#define TSCP 0x14 //Current Tilt Position Register
-#define TSPP 0x15 //Current Tilt Position Register
-#define INS1 0x16 //Contains tap and double tap axis specific interrupts
-#define INS2 0x17 //Defines which function causes an interrupt
-#define INS3 0x18 //Reports axis and direction of motion that triggered the wakeup interrupt
-#define STATUS_REG 0x19 //Reports the status of the interrupt
-#define INT_REL 0x1A //Reading will clear INS1-3
-#define CNTL1 0x1B
-#define PC1 7 //1:high performance/low power mode 0: stand by
-#define RES 6 //1:high performance mode 0: Low Power mode
-#define CNTL2 0x1C
-#define COTC 6 //1: Sets COTR to 0xAA to verify proper IC functionality 0: no action
-#define CNTL3 0x1D
-#define CNTL4 0x1E
-#define CNTL5 0x1F
-#define CNTL6 0x2A //I2C Autorelease
-#define ODCNTL 0x21
-#define INC1 0x22 //Controls settings for INT1
-#define INC2 0x23 //Defines behavior for Wake-Up Function and Back To Sleep
-#define IEN1 5 //1:physical interrupt pin is enabled 0: disabled
-#define IEA1 4 //1:active HIGH 0: active LOW
-#define IEL1 3 //1:pulsed interrupt 0:latched interrupt until cleared by reading INT_REL
-#define STPOL 1 //1: positive self test polarity 0: negative
-#define SPI3E 0 //1: SPI Enabled 0: SPI Disabled
-#define INC3 0x24 //Defines which axes can cause a tap based interrupt
-#define INC4 0x25 //Controls which function triggers INT1
-#define INC5 0x26
-#define INC6 0x27 //Controls which function triggers INT2
-#define TILT_TIMER 0x29 //Defines how long the sensor must be in the new tilt state for the tilt state to change.
-
-//Tap/Double Tap Control Registers 0x2A-0x31
-#define TDTRC 0x2A //Tap/Double Tap Report Control
-#define TDTC 0x2B //Minimum time between tap events to determine double tap
-#define TTH 0x2C //Represents the top of the jerk range for a tap
-#define TTH 0x2D //Represents the bottom of the jerk range for a tap
-#define FTD 0x2E //Duration of the tap event itself
-#define STD 0x2F //Sets the total allowable duration of tapping for a full double tap event
-#define TLT 0x30 //Tap detection latency timer
-#define TWS 0x31 //Window for any full tap event
-
-//Free Fall Control Registers
-#define FFTH 0x32 //Free Fall Threshold
-#define FFC 0x33 //Free fall counter, the amount of counts in free fall
-#define FFCNTL 0x34 //Main controls for free fall engine
-
-//Tilt Angle Control Registers 
-#define TILT_ANGLE_LL 0x37 //Low level threshold for tilt detection
-#define TILT_ANGLE_HL 0x38 //High level threshold for tilt detection
-#define HYST_SET 0x39 //Hysteresis between rotations for tilt detection.
-
-#define LP_CNTL1 0x3A //Sets number of averaged samples, affects power consumption as well as noise
-#define LP_CNTL2 0x3B //Reduces the power consumption even further by doing digital shutdown.
-
-//0x3C-0x48 Reserved
-
-#define WUFTH 0x49 //Wake up function threshold <7:0>
-#define BTSWUFTH 0x4A //Back to sleep function <10:8> and wake up function threshold <10:8>
-#define BTSTH 0x4B //Back to sleep function threshold <7:0>
-#define BTSC 0x4C //Back to sleep debounce counter
-#define WUFC 0x4D //Debounce counter for the Qake-Up function engine
-#define SELF_TEST 0x5D //The final step to enabling the self test function
-
-//Output Buffer Registers (0x5E-0x63)
-#define BUF_CNTL1 0x5E //Determines the number of samples that will trigger a watermark interupt
-#define BUF_CNTL2 0x5F //Controls activation, resolution buffer full interrupt of the sample buffer
-#define BUF_STATUS_1 0x60 //Sample Level <7:0>
-#define BUF_STATUS_2 0x61 //The status of th buffer's trigger function <7> and Sample level <1:0>
-#define BUF_CLEAR 0x62 //Clears buffer status and buffer
-#define BUF_READ 0x63 //Reads data from the buffer according to setting in BUF_CNTL2
-
-//Advanced Data Path Control Registers (0x64-0x76)
-#define ADP_CNTL1 0x64 //Number of samples used to calculate RMS output as well as the output data rate
-#define ADP_CNTL2 0x65 //Vwake up/back to sleep engine inputs
-#define ADP_CNTL3 0x66 //Filter settings
-#define ADP_CNTL4 0x67 //Filter settings
-#define ADP_CNTL5 0x68 //Filter settings
-#define ADP_CNTL6 0x69 //Filter settings
-#define ADP_CNTL7 0x6A //Filter settings
-#define ADP_CNTL8 0x6B //Filter settings
-#define ADP_CNTL9 0x6C //Filter settings
-#define ADP_CNTL10 0x6D //Filter settings
-#define ADP_CNTL11 0x6E //Filter settings
-#define ADP_CNTL12 0x6F //Filter settings
-#define ADP_CNTL13 0x70 //Filter settings
-#define ADP_CNTL14 0x71 //Filter settings
-#define ADP_CNTL15 0x72 //Filter settings
-#define ADP_CNTL16 0x73 //Filter settings
-#define ADP_CNTL17 0x74 //Filter settings
-#define ADP_CNTL18 0x75 //Filter settings
-#define ADP_CNTL19 0x76 //Filter settings
+#define  COTR_SUCCESS 0xAA //Succesfull COTR Register setting value
+#define  PC1 7 //1:high performance/low power mode 0: stand by
+#define  COTC 6 //1: Sets COTR to 0xAA to verify proper IC functionality 0: no action
+#define  RES 6 //1:high performance mode 0: Low Power mode
+#define  IEN1 5 //1:physical interrupt pin is enabled 0: disabled
+#define  IEA1 4 //1:active HIGH 0: active LOW
+#define  IEL1 3 //1:pulsed interrupt 0:latched interrupt until cleared by reading INT_REL
+#define  STPOL 1 //1: positive self test polarity 0: negative
+#define  SPI3E 0 //1: SPI Enabled 0: SPI Disabled
 
 #define XLSB 0
 #define XMSB 1
@@ -176,17 +173,15 @@ class QwiicKX13xCore
 		bool waitForI2C();
 		bool waitForSPI();
 
-		bool getReadings();
-		int16_t getAccelX();
-		int16_t getAccelY();
-		int16_t getAccelZ();
+    outputData getAccelData();
 
 		bool readBit(uint8_t, uint8_t);
 		bool writeBit(uint8_t, uint8_t, bool);
 
-		uint8_t readRegister(uint8_t);
+		KX13X_STATUS_t readRegister(uint8_t*, uint8_t);
 		KX13X_STATUS_t writeRegister(uint8_t, uint8_t);
 		KX13X_STATUS_t readMultipleRegisters(uint8_t, uint8_t* , uint8_t);
+    KX13X_STATUS_t overBufLenI2CRead(uint8_t, uint8_t* , uint8_t);
 
     // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
     // CPOL = 0, CPHA = 0 SPI_MODE0
@@ -200,8 +195,7 @@ class QwiicKX13xCore
 		uint8_t _deviceAddress; 
 		uint32_t _spiPortSpeed; // max port speed is 10MHz 
 		uint8_t _cs;
-
-		uint8_t _accelData[6] {};
+    
 };
 
 class QwiicKX132 : public QwiicKX13xCore
@@ -210,6 +204,7 @@ class QwiicKX132 : public QwiicKX13xCore
 
     bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
     bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
+//    bool convAccelData(outputData); 
 
 class QwiicKX134 : public QwiicKX13xCore
 {
@@ -217,6 +212,7 @@ class QwiicKX134 : public QwiicKX13xCore
 
     bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
     bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
+    //bool convAccelData(outputData); 
 };
     
 #endif /* QWIIC_KX13X */
