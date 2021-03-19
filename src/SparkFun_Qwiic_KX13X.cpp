@@ -67,16 +67,80 @@ uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPICl
     return partID;
 }
 
-uint8_t QwiicKX13xCore::initialize()
+bool QwiicKX13xCore::initialize(uint8_t settings)
 {
-  return true;
+
+  KX13X_STATUS_t returnError;
+  accelControl(false);
+  returnError = writeRegister(KX13X_CNTL1, MASK_VAL_ZERO, settings, 0);
+  if( returnError == KX13X_SUCCESS )
+    return true;
+  else
+    return false;
 }
 
+bool QwiicKX13xCore::accelControl(bool standby){
+
+  if( standby != true && standby != false )
+    return false;
+  
+  KX13X_STATUS_t returnError;
+  returnError = writeRegister(KX13X_CNTL1, MASK_VAL_EIGHT, standby, 7);
+  if( returnError == KX13X_SUCCESS )
+    return true;
+  else
+    return false;
+  
+}
+
+uint8_t QwiicKX13xCore::readAccelState(){
+
+  uint8_t tempRegVal;
+  readRegister(&tempRegVal, KX13X_CNTL1);
+  return (tempRegVal & MASK_VAL_EIGHT) >> 7;
+
+}
+
+bool QwiicKX13xCore::setRange(uint8_t range){
+
+  if( range < 0 | range > 3)
+    return false;
+
+  KX13X_STATUS_t returnError;
+  returnError = writeRegister(KX13X_CNTL1, MASK_VAL_18, range, 3);
+  if( returnError == KX13X_SUCCESS )
+    return true;
+  else
+    return false;
+  
+}
+
+
+bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
+
+  if( rate < 0 | rate > 15 )
+    return false;
+
+  uint8_t accelState = readAccelState(); // Put it back where we found it.
+  accelControl(false); // Can't adjust without putting to sleep
+
+  KX13X_STATUS_t returnError;
+  returnError = writeRegister(KX13X_ODCNTL, MASK_VAL_40, rate, 0);
+  if( returnError == KX13X_SUCCESS ){
+    accelControl(accelState);
+    return true;
+  }
+  else
+    return false;
+
+}
 //Tests functionality of the integrated circuit
 bool QwiicKX13xCore::runCommandTest()
 {
   return true;
 }
+
+
 
 //Wait a certain time for incoming I2C bytes before giving up
 //Returns false if failed
@@ -118,7 +182,7 @@ bool QwiicKX13xCore::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
   readRegister(&value, regAddr);
 	value &= ~(1 << bitAddr);
 	value |= bitToWrite << bitAddr;
-  writeRegister(regAddr, value);
+  //writeRegister(regAddr, value);
 	return true;
 }
 
@@ -241,15 +305,24 @@ KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t *dataBuffe
     return KX13X_SUCCESS;
 }
 
-KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
+KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t mask, uint8_t data, uint8_t bitPos)
 {
 
-	if( _i2cPort == NULL ) {
+  uint8_t tempRegVal; 
+  KX13X_STATUS_t returnError;
 
+  returnError = readRegister(&tempRegVal, reg);
+  if( returnError != KX13X_SUCCESS )
+    return KX13X_I2C_ERROR;
+  tempRegVal &= mask;
+  tempRegVal |= (data << bitPos); 
+
+	if( _i2cPort == NULL ) {
+    
 		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
 		_spiPort->transfer(reg |= SPI_WRITE);
-		_spiPort->transfer(data); 
+		_spiPort->transfer(tempRegVal); 
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
     return KX13X_SUCCESS;
@@ -258,7 +331,7 @@ KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t data)
 	else { 
 		_i2cPort->beginTransmission(_deviceAddress);
 		_i2cPort->write(reg); // Move to register
-		_i2cPort->write(data); 
+		_i2cPort->write(tempRegVal); 
 
 		uint8_t i2cResult = _i2cPort->endTransmission();
 		if( i2cResult != 0 )
@@ -326,7 +399,7 @@ bool QwiicKX132::convAccelData(outputData kxAccelContain){
   if( (kxAccelContain.zData & 0x8000) == 0x8000 )
     kxAccelContain.zData = ~(kxAccelContain.zData + 1) * -1;
 
-  range = (regVal & BIT_VAL_18) >> POS_THREE; 
+  range = (regVal & MASK_VAL_18) >> 3;
 
   switch( range ) {
     case KX132_RANGE2G:
@@ -348,6 +421,8 @@ bool QwiicKX132::convAccelData(outputData kxAccelContain){
       kxAccelContain.xData *= convRange16G;
       kxAccelContain.yData *= convRange16G;
       kxAccelContain.zData *= convRange16G;
+      break;
+    default: 
       break;
 
   }

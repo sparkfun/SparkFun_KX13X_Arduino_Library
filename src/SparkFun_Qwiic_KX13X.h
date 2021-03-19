@@ -51,6 +51,13 @@ Distributed as-is; no warranty is given.
 
 #define SPI_READ 0x01 // OR'ed at most sig BIT with register address
 #define SPI_WRITE 0x00 // OR'ed at most sig BIT with register address
+
+#define DEFAULT_SETTINGS 0xC0  
+#define TILT_SETTINGS 0xC0  
+#define INT_SETTINGS 0xC0  
+#define SOFT_INT_SETTINGS 0xC0  
+#define BUFFER_SETTINGS 0xC0  
+
 struct outputData { 
   int16_t xData;
   int16_t yData;
@@ -154,29 +161,17 @@ enum KX13X_REGISTERS {
 
 enum BIT_VAL_MASKS { 
 
-  BIT_VAL_ZERO = 0x00,
-  BIT_VAL_ONE,
-  BIT_VAL_TWO,
-  BIT_VAL_THREE,
-  BIT_VAL_FOUR,
-  BIT_VAL_FIVE,
-  BIT_VAL_SIX,
-  BIT_VAL_SEVEN,
-  BIT_VAL_EIGHT,
-  BIT_VAL_18 = 0x18 
-
-};
-
-enum BIT_POS {
-
-  POS_ZERO,
-  POS_ONE,
-  POS_TWO,
-  POS_THREE,
-  POS_FOUR,
-  POS_FIVE,
-  POS_SIX,
-  POS_SEVEN
+  MASK_VAL_ZERO = 0x00,
+  MASK_VAL_ONE,
+  MASK_VAL_TWO,
+  MASK_VAL_THREE,
+  MASK_VAL_FOUR,
+  MASK_VAL_FIVE,
+  MASK_VAL_SIX,
+  MASK_VAL_SEVEN,
+  MASK_VAL_EIGHT,
+  MASK_VAL_18 = 0x18,
+  MASK_VAL_40 = 0x40 
 
 };
 
@@ -196,8 +191,12 @@ class QwiicKX13xCore
 
 		uint8_t beginCore(uint8_t, TwoWire &wirePort);
 		uint8_t beginSPICore(uint8_t, uint32_t, SPIClass &spiPort);
-		uint8_t initialize();
+		bool initialize(uint8_t settings = DEFAULT_SETTINGS);
 		bool runCommandTest();
+    bool accelControl(bool);
+    uint8_t readAccelState();
+    bool setRange(uint8_t);
+    bool setOutputDataRate(uint8_t);
 
 		bool waitForI2C();
 		bool waitForSPI();
@@ -208,7 +207,7 @@ class QwiicKX13xCore
 		bool writeBit(uint8_t, uint8_t, bool);
 
 		KX13X_STATUS_t readRegister(uint8_t*, uint8_t);
-		KX13X_STATUS_t writeRegister(uint8_t, uint8_t);
+		KX13X_STATUS_t writeRegister(uint8_t, uint8_t, uint8_t, uint8_t);
 		KX13X_STATUS_t readMultipleRegisters(uint8_t, uint8_t dataBuffer[] , uint8_t);
     KX13X_STATUS_t overBufLenI2CRead(uint8_t, uint8_t* , uint8_t);
 
