@@ -72,7 +72,16 @@ bool QwiicKX13xCore::initialize(uint8_t settings)
 
   KX13X_STATUS_t returnError;
   accelControl(false);
-  returnError = writeRegister(KX13X_CNTL1, MASK_VAL_ZERO, settings, 0);
+
+  if( settings == DEFAULT_SETTINGS )
+    returnError = writeRegister(KX13X_CNTL1, 0x00, settings, 0);
+  if( settings == INT_SETTINGS ){
+    setInterruptPin(true);
+    hardwareDataReady();
+    returnError = writeRegister(KX13X_CNTL1, 0x00, settings, 0);
+  }
+
+
   if( returnError == KX13X_SUCCESS )
     return true;
   else
@@ -85,7 +94,7 @@ bool QwiicKX13xCore::accelControl(bool standby){
     return false;
   
   KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_CNTL1, MASK_VAL_EIGHT, standby, 7);
+  returnError = writeRegister(KX13X_CNTL1, 0x80, standby, 7);
   if( returnError == KX13X_SUCCESS )
     return true;
   else
@@ -97,7 +106,7 @@ uint8_t QwiicKX13xCore::readAccelState(){
 
   uint8_t tempRegVal;
   readRegister(&tempRegVal, KX13X_CNTL1);
-  return (tempRegVal & MASK_VAL_EIGHT) >> 7;
+  return (tempRegVal & 0x80) >> 7;
 
 }
 
@@ -106,8 +115,11 @@ bool QwiicKX13xCore::setRange(uint8_t range){
   if( range < 0 | range > 3)
     return false;
 
+  uint8_t accelState = readAccelState();
+  accelControl(false);
+
   KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_CNTL1, MASK_VAL_18, range, 3);
+  returnError = writeRegister(KX13X_CNTL1, 0x18, range, 3);
   if( returnError == KX13X_SUCCESS )
     return true;
   else
@@ -116,6 +128,9 @@ bool QwiicKX13xCore::setRange(uint8_t range){
 }
 
 
+//Address: 0x21, bits[3:0] - default value is 50Hz: 0b0110
+//Sets the refresh rate of the accelerometer's data. 
+// 0.781 * (2 * (n)) derived from pg. 26 of Techincal Reference Manual
 bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
 
   if( rate < 0 | rate > 15 )
@@ -125,11 +140,63 @@ bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
   accelControl(false); // Can't adjust without putting to sleep
 
   KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_ODCNTL, MASK_VAL_40, rate, 0);
+  returnError = writeRegister(KX13X_ODCNTL, 0x40, rate, 0);
   if( returnError == KX13X_SUCCESS ){
     accelControl(accelState);
     return true;
   }
+  else
+    return false;
+}
+
+float QwiicKX13xCore::readOutputDataRate(){
+  
+  uint8_t tempRegVal;
+  readRegister(&tempRegVal, KX13X_ODCNTL);
+  tempRegVal &= 0x40;
+  tempRegVal = (float)tempRegVal;
+  return (0.78 * (2 * tempRegVal));
+
+}
+
+
+
+// Address: 0x22, bit[7:4] default value is 0000.
+// This register controls the various interrupt settings, all of which can be
+// set here. Note: trying to set just one will set the others to their default
+// state.
+bool QwiicKX13xCore::setInterruptPin(bool enable, uint8_t polarity, uint8_t pulseWidth, bool latchControl){
+  
+  if( enable != true && enable != false ) 
+    return false;
+  else if( polarity != 1 && polarity != 0 ) 
+    return false;
+  else if( pulseWidth != 1 && pulseWidth != 0 ) 
+    return false;
+  else if( latchControl < 0 | latchControl > 4 )
+    return false;
+
+  uint8_t combinedArguments = ((pulseWidth << 6) | (enable << 5) | (polarity << 4) | (latchControl << 3));
+  KX13X_STATUS_t returnError;
+  returnError = writeRegister(KX13X_INC1, 0x07, combinedArguments, 3);
+  if( returnError == KX13X_SUCCESS )
+    return true;
+  else
+    return false;
+}
+
+
+// Address: 0x25, bit[4]: default value is 0: disabled
+// Enables the data ready bit to be reported on the hardware interrupt. 
+bool QwiicKX13xCore::hardwareDataReady(bool enable){
+
+  if( enable != true and enable != false)
+    return false;
+  
+  KX13X_STATUS_t returnError;
+  returnError = writeRegister(KX13X_INC4, 0xF7, enable, 4);
+  if( returnError == KX13X_SUCCESS )
+    return true;
   else
     return false;
 
@@ -399,7 +466,7 @@ bool QwiicKX132::convAccelData(outputData kxAccelContain){
   if( (kxAccelContain.zData & 0x8000) == 0x8000 )
     kxAccelContain.zData = ~(kxAccelContain.zData + 1) * -1;
 
-  range = (regVal & MASK_VAL_18) >> 3;
+  range = (regVal & 0x18) >> 3;
 
   switch( range ) {
     case KX132_RANGE2G:

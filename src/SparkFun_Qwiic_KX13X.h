@@ -53,8 +53,8 @@ Distributed as-is; no warranty is given.
 #define SPI_WRITE 0x00 // OR'ed at most sig BIT with register address
 
 #define DEFAULT_SETTINGS 0xC0  
+#define INT_SETTINGS 0xE0  
 #define TILT_SETTINGS 0xC0  
-#define INT_SETTINGS 0xC0  
 #define SOFT_INT_SETTINGS 0xC0  
 #define BUFFER_SETTINGS 0xC0  
 
@@ -159,22 +159,6 @@ enum KX13X_REGISTERS {
   //Reserved 0x77 - 0x7F
 };
 
-enum BIT_VAL_MASKS { 
-
-  MASK_VAL_ZERO = 0x00,
-  MASK_VAL_ONE,
-  MASK_VAL_TWO,
-  MASK_VAL_THREE,
-  MASK_VAL_FOUR,
-  MASK_VAL_FIVE,
-  MASK_VAL_SIX,
-  MASK_VAL_SEVEN,
-  MASK_VAL_EIGHT,
-  MASK_VAL_18 = 0x18,
-  MASK_VAL_40 = 0x40 
-
-};
-
 typedef enum {
 
   KX13X_SUCCESS = 0x00,
@@ -197,6 +181,9 @@ class QwiicKX13xCore
     uint8_t readAccelState();
     bool setRange(uint8_t);
     bool setOutputDataRate(uint8_t);
+    float readOutputDataRate();
+    bool setInterruptPin(bool enable, uint8_t polarity = 0, uint8_t pulseWidth = 0, bool latchControl = false);
+    bool hardwareDataReady(bool enable = true);
 
 		bool waitForI2C();
 		bool waitForSPI();
