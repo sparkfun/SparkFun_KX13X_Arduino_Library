@@ -80,6 +80,9 @@ bool QwiicKX13xCore::initialize(uint8_t settings)
     hardwareDataReady();
     returnError = writeRegister(KX13X_CNTL1, 0x00, settings, 0);
   }
+  if( settings == SOFT_INT_SETTINGS ){
+    returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
+  }
 
 
   if( returnError == KX13X_SUCCESS )
@@ -160,7 +163,6 @@ float QwiicKX13xCore::readOutputDataRate(){
 }
 
 
-
 // Address: 0x22, bit[7:4] default value is 0000.
 // This register controls the various interrupt settings, all of which can be
 // set here. Note: trying to set just one will set the others to their default
@@ -194,13 +196,26 @@ bool QwiicKX13xCore::hardwareDataReady(bool enable){
     return false;
   
   KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_INC4, 0xF7, enable, 4);
+  returnError = writeRegister(KX13X_INC4, 0xEF, enable, 4);
   if( returnError == KX13X_SUCCESS )
     return true;
   else
     return false;
 
 }
+
+// Address: 0x17 , bit[4]: default value is: 0
+// This function triggers collection of data by the KX13X.
+bool QwiicKX13xCore::dataTrigger(){
+  
+  KX13X_STATUS_t returnError;
+  returnError = writeRegister(KX13X_INS2, 0xEF, true, 0);
+  if( returnError == KX13X_SUCCESS )
+    return true;
+  else
+    return false;
+}
+
 //Tests functionality of the integrated circuit
 bool QwiicKX13xCore::runCommandTest()
 {

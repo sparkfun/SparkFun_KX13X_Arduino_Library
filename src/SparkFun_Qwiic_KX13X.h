@@ -54,8 +54,8 @@ Distributed as-is; no warranty is given.
 
 #define DEFAULT_SETTINGS 0xC0  
 #define INT_SETTINGS 0xE0  
+#define SOFT_INT_SETTINGS 0xE1  
 #define TILT_SETTINGS 0xC0  
-#define SOFT_INT_SETTINGS 0xC0  
 #define BUFFER_SETTINGS 0xC0  
 
 struct outputData { 
@@ -184,6 +184,7 @@ class QwiicKX13xCore
     float readOutputDataRate();
     bool setInterruptPin(bool enable, uint8_t polarity = 0, uint8_t pulseWidth = 0, bool latchControl = false);
     bool hardwareDataReady(bool enable = true);
+    bool dataTrigger();
 
 		bool waitForI2C();
 		bool waitForSPI();
