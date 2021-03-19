@@ -299,7 +299,61 @@ bool QwiicKX132::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPor
     return false;
 }
 
+bool QwiicKX132::getAccelData(outputData kxAccelContain){
 
+  KX13X_STATUS_t returnError;
+  returnError = getRawAccelData(kxAccelContain);
+  if( returnError == KX13X_SUCCESS )
+    if( convAccelData(kxAccelContain))
+      return true; 
+  else
+    return false;
+}
+
+bool QwiicKX132::convAccelData(outputData kxAccelContain){
+
+  uint8_t regVal;
+  uint8_t range; 
+  KX13X_STATUS_t returnError;
+  returnError = readRegister(&regVal, KX13X_CNTL1);
+  if( returnError != KX13X_SUCCESS )
+    return false;
+
+  if( (kxAccelContain.xData & 0x8000) == 0x8000 )
+    kxAccelContain.xData = ~(kxAccelContain.xData + 1) * -1;
+  if( (kxAccelContain.yData & 0x8000) == 0x8000 )
+    kxAccelContain.yData = ~(kxAccelContain.yData + 1) * -1;
+  if( (kxAccelContain.zData & 0x8000) == 0x8000 )
+    kxAccelContain.zData = ~(kxAccelContain.zData + 1) * -1;
+
+  range = (regVal & BIT_VAL_18) >> POS_THREE; 
+
+  switch( range ) {
+    case KX132_RANGE2G:
+      kxAccelContain.xData *= convRange2G;
+      kxAccelContain.yData *= convRange2G;
+      kxAccelContain.zData *= convRange2G;
+      break;
+    case KX132_RANGE4G:
+      kxAccelContain.xData *= convRange4G;
+      kxAccelContain.yData *= convRange4G;
+      kxAccelContain.zData *= convRange4G;
+      break;
+    case KX132_RANGE8G:
+      kxAccelContain.xData *= convRange8G;
+      kxAccelContain.yData *= convRange8G;
+      kxAccelContain.zData *= convRange8G;
+      break;
+    case KX132_RANGE16G:
+      kxAccelContain.xData *= convRange16G;
+      kxAccelContain.yData *= convRange16G;
+      kxAccelContain.zData *= convRange16G;
+      break;
+
+  }
+
+  return true; 
+}
 //*************** KX134 ******************
 //****************************************
 //****************************************

@@ -30,7 +30,27 @@ Distributed as-is; no warranty is given.
 #define KX134_WHO_AM_I  0x46
 #define TOTAL_ACCEL_DATA 48 //bytes
 #define MAX_BUFFER_LENGTH 32 //bytes
+#define MAX_BUFFER_LENGTH 32 //bytes
 
+#define  COTR_SUCCESS 0xAA //Succesfull COTR Register setting value
+#define  PC1 7 //1:high performance/low power mode 0: stand by
+#define  COTC 6 //1: Sets COTR to 0xAA to verify proper IC functionality 0: no action
+#define  RES 6 //1:high performance mode 0: Low Power mode
+#define  IEN1 5 //1:physical interrupt pin is enabled 0: disabled
+#define  IEA1 4 //1:active HIGH 0: active LOW
+#define  IEL1 3 //1:pulsed interrupt 0:latched interrupt until cleared by reading INT_REL
+#define  STPOL 1 //1: positive self test polarity 0: negative
+#define  SPI3E 0 //1: SPI Enabled 0: SPI Disabled
+
+#define XLSB 0
+#define XMSB 1
+#define YLSB 2
+#define YMSB 3
+#define ZLSB 4
+#define ZMSB 5
+
+#define SPI_READ 0x01 // OR'ed at most sig BIT with register address
+#define SPI_WRITE 0x00 // OR'ed at most sig BIT with register address
 struct outputData { 
   int16_t xData;
   int16_t yData;
@@ -58,27 +78,27 @@ enum KX13X_REGISTERS {
   KX13X_COTR = 0x12,//        Command Test Register
   KX13X_WHO_AM_I, //          Who am I: 0x3D-KX132, 0x46-KX134
   KXI3X_TSCP,//        -------Tilt Register---------------------- 
-  KXI3X_TSPP,//        -----------^^-----------------------------
-  KXI3X_INS1, //        -------Interrupt Registers ---------------
-  KXI3X_INS2,
-  KXI3X_INS3,
-  KXI3X_STATUS_REG, 
-  KXI3X_INT_REL, //    ------------^^----------------------------
-  KXI3X_CNTL1,//       --------Control Registers----------------- 
-  KXI3X_CNTL2,
-  KXI3X_CNTL3,
-  KXI3X_CNTL4,
-  KXI3X_CNTL5,
-  KXI3X_CNTL6,//        -------------^^---------------------------
-  KXI3X_ODCNTL,
-  KXI3X_INC1,//Controls settings for INT1
-  KXI3X_INC2,//Defines behavior for Wake-Up Function and Back To Sleep
-  KXI3X_INC3,//Defines which axes can cause a tap based interrupt
-  KXI3X_INC4,//Controls which function triggers INT1
-  KXI3X_INC5,
-  KXI3X_INC6,//Controls which function triggers INT2
+  KX13X_TSPP,//        -----------^^-----------------------------
+  KX13X_INS1, //        -------Interrupt Registers ---------------
+  KX13X_INS2,
+  KX13X_INS3,
+  KX13X_STATUS_REG, 
+  KX13X_INT_REL, //    ------------^^----------------------------
+  KX13X_CNTL1,//       --------Control Registers----------------- 
+  KX13X_CNTL2,
+  KX13X_CNTL3,
+  KX13X_CNTL4,
+  KX13X_CNTL5,
+  KX13X_CNTL6,//        -------------^^---------------------------
+  KX13X_ODCNTL,
+  KX13X_INC1,//Controls settings for INT1
+  KX13X_INC2,//Defines behavior for Wake-Up Function and Back To Sleep
+  KX13X_INC3,//Defines which axes can cause a tap based interrupt
+  KX13X_INC4,//Controls which function triggers INT1
+  KX13X_INC5,
+  KX13X_INC6,//Controls which function triggers INT2
   // 0x28 Reserved
-  KXI3X_TILT_TIMER =  0x29, 
+  KX13X_TILT_TIMER =  0x29, 
   KX13X_TDTRC, // Tap Control Regs ----- 
   KX13X_TDTC,
   KX13X_TTH,
@@ -132,25 +152,33 @@ enum KX13X_REGISTERS {
   //Reserved 0x77 - 0x7F
 };
 
-#define  COTR_SUCCESS 0xAA //Succesfull COTR Register setting value
-#define  PC1 7 //1:high performance/low power mode 0: stand by
-#define  COTC 6 //1: Sets COTR to 0xAA to verify proper IC functionality 0: no action
-#define  RES 6 //1:high performance mode 0: Low Power mode
-#define  IEN1 5 //1:physical interrupt pin is enabled 0: disabled
-#define  IEA1 4 //1:active HIGH 0: active LOW
-#define  IEL1 3 //1:pulsed interrupt 0:latched interrupt until cleared by reading INT_REL
-#define  STPOL 1 //1: positive self test polarity 0: negative
-#define  SPI3E 0 //1: SPI Enabled 0: SPI Disabled
+enum BIT_VAL_MASKS { 
 
-#define XLSB 0
-#define XMSB 1
-#define YLSB 2
-#define YMSB 3
-#define ZLSB 4
-#define ZMSB 5
+  BIT_VAL_ZERO = 0x00,
+  BIT_VAL_ONE,
+  BIT_VAL_TWO,
+  BIT_VAL_THREE,
+  BIT_VAL_FOUR,
+  BIT_VAL_FIVE,
+  BIT_VAL_SIX,
+  BIT_VAL_SEVEN,
+  BIT_VAL_EIGHT,
+  BIT_VAL_18 = 0x18 
 
-#define SPI_READ 0x01 // OR'ed at most sig BIT with register address
-#define SPI_WRITE 0x00 // OR'ed at most sig BIT with register address
+};
+
+enum BIT_POS {
+
+  POS_ZERO,
+  POS_ONE,
+  POS_TWO,
+  POS_THREE,
+  POS_FOUR,
+  POS_FIVE,
+  POS_SIX,
+  POS_SEVEN
+
+};
 
 typedef enum {
 
@@ -206,7 +234,20 @@ class QwiicKX132 : public QwiicKX13xCore
     QwiicKX132();
     bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
     bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
-//    bool convAccelData(outputData); 
+    bool getAccelData(outputData);
+    bool convAccelData(outputData); 
+
+  private: 
+
+    const double convRange2G = .00006103518784142582;
+    const double convRange4G = .0001220703756828516;
+    const double convRange8G = .0002441407513657033;
+    const double convRange16G = .0004882811975463118;
+
+#define KX132_RANGE2G  0x00
+#define KX132_RANGE4G  0x01
+#define KX132_RANGE8G  0x02
+#define KX132_RANGE16G 0x03
 
 };
 
