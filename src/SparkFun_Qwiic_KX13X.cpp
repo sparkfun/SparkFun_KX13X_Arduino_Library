@@ -74,13 +74,20 @@ bool QwiicKX13xCore::initialize(uint8_t settings)
   accelControl(false);
 
   if( settings == DEFAULT_SETTINGS )
-    returnError = writeRegister(KX13X_CNTL1, 0x00, settings, 0);
+    returnError = writeRegister(KX13X_CNTL1, 0x00, DEFAULT_SETTINGS, 0);
   if( settings == INT_SETTINGS ){
     setInterruptPin(true);
-    hardwareDataReady();
-    returnError = writeRegister(KX13X_CNTL1, 0x00, settings, 0);
+    routeHardwareInterrupt(HI_DATA_READY);
+    returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
   if( settings == SOFT_INT_SETTINGS ){
+    returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
+  }
+  if( settings == BUFFER_SETTINGS ){
+    setInterruptPin(true);
+    routeHardwareInterrupt(HI_WATERMARK);
+    enableBuffer(true, true);
+    setBufferOperation(BUFFER_MODE_FIFO, BUFFER_16BIT_SAMPLES);
     returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
 
@@ -190,13 +197,13 @@ bool QwiicKX13xCore::setInterruptPin(bool enable, uint8_t polarity, uint8_t puls
 
 // Address: 0x25, bit[4]: default value is 0: disabled
 // Enables the data ready bit to be reported on the hardware interrupt. 
-bool QwiicKX13xCore::hardwareDataReady(bool enable){
+bool QwiicKX13xCore::routeHardwareInterrupt(uint8_t rdr){
 
-  if( enable != true and enable != false)
+  if( rdr < 0 | rdr > 6 )
     return false;
   
   KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_INC4, 0xEF, enable, 4);
+  returnError = writeRegister(KX13X_INC4, 0xEF, rdr, 4);
   if( returnError == KX13X_SUCCESS )
     return true;
   else
@@ -210,6 +217,77 @@ bool QwiicKX13xCore::dataTrigger(){
   
   KX13X_STATUS_t returnError;
   returnError = writeRegister(KX13X_INS2, 0xEF, true, 0);
+  if( returnError == KX13X_SUCCESS )
+    return true;
+  else
+    return false;
+}
+
+// Address: 0x5E , bit[7:0]: default value is: unknown
+// This function sets the number of samples (not bytes) that are held in the
+// buffer. Each sample is one full word of X,Y,Z data and the minimum that this
+// can be set to is two. The maximum is dependent on the resolution: 8 or 16bit,
+// set in the BUF_CNTL2 (0x5F) register (see "setBufferOperation" below).  
+bool QwiicKX13xCore::setBufferThreshold(uint8_t threshold){
+
+  if( threshold < 2 | threshold > 171 )
+    return false;
+
+  
+  uint8_t tempRegVal;
+  uint8_t resolution;
+  KX13X_STATUS_t returnError;
+  returnError = readRegister(&tempRegVal, KX13X_BUF_CNTL2);
+  resolution = (tempRegVal & 0x40) >> 6; 
+  if( returnError != KX13X_SUCCESS )
+    return false;
+
+  if( threshold > 86 && resolution == 1 ) // 1 = 16bit resolution, max samples: 86
+    threshold == 86; 
+  else if( threshold > 171 ) // None the less, can't have more than 171 samples
+    threshold == 171; 
+  
+  returnError = writeRegister(KX13X_BUF_CNTL1, 0x00, threshold, 0);
+  if( returnError == KX13X_SUCCESS )
+    return true;
+  else 
+    return false;
+
+}
+
+// Address: 0x5F, bits[6] and bits[1:0]: default value is: 0x00
+// This functions sets the resolution and operation mode of the buffer. This does not include
+// the threshold - see "setBufferThreshold". This is a "On-the-fly" register, accel does not need
+// to be powered own to adjust settings.
+bool QwiicKX13xCore::setBufferOperation(uint8_t operationMode, uint8_t resolution){
+
+  if( resolution < 0 | resolution > 1 )
+    return false;
+  if( operationMode < 0 | operationMode > 2 )
+    return false; 
+
+
+  uint8_t combinedSettings = (resolution << 6) | operationMode;
+  KX13X_STATUS_t returnError;
+  returnError = writeRegister(KX13X_BUF_CNTL2, 0xBC, combinedSettings, 0);
+  if( returnError == KX13X_SUCCESS )
+    return true;
+  else
+    return false;
+}
+
+// Address: 0x5F, bit[7] and bit[5]: default values is: 0x00
+// This functions enables the buffer and also whether the buffer triggers an
+// interrupt when full. This is a "On-the-fly" register, accel does not need
+// to be powered down to adjust settings.
+bool QwiicKX13xCore::enableBuffer(bool enable, bool enableInterrupt){
+
+  if( ( enable != true && enable != false)  && (enableInterrupt != true && enableInterrupt != false) )
+    return false;
+
+  uint8_t combinedSettings = (enable << 7) | (enableInterrupt << 5); 
+  KX13X_STATUS_t returnError;
+  returnError = writeRegister(KX13X_BUF_CNTL2, 0x5F, combinedSettings, 0);
   if( returnError == KX13X_SUCCESS )
     return true;
   else

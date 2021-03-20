@@ -55,8 +55,14 @@ Distributed as-is; no warranty is given.
 #define DEFAULT_SETTINGS 0xC0  
 #define INT_SETTINGS 0xE0  
 #define SOFT_INT_SETTINGS 0xE1  
+#define BUFFER_SETTINGS 0xE2  
 #define TILT_SETTINGS 0xC0  
-#define BUFFER_SETTINGS 0xC0  
+
+#define BUFFER_16BIT_SAMPLES 0x01
+#define BUFFER_8BIT_SAMPLES 0x00
+#define BUFFER_MODE_FIFO 0x00
+#define BUFFER_MODE_STREAM 0x01
+#define BUFFER_MODE_TRIGGER 0x02
 
 struct outputData { 
   int16_t xData;
@@ -167,6 +173,17 @@ typedef enum {
 
 } KX13X_STATUS_t;
 
+enum HARDWARE_INTERRUPT {
+  HI_FREEFALL = 0x00,
+  HI_WATERMARK, 
+  HI_DATA_READY,
+  HI_BACK_TO_SLEEP,
+  HI_TAP_DOUBLE_TAP,
+  HI_WAKE_UP, 
+  HI_TILT_POSITION
+};
+
+
 class QwiicKX13xCore
 {
 	public:
@@ -183,8 +200,11 @@ class QwiicKX13xCore
     bool setOutputDataRate(uint8_t);
     float readOutputDataRate();
     bool setInterruptPin(bool enable, uint8_t polarity = 0, uint8_t pulseWidth = 0, bool latchControl = false);
-    bool hardwareDataReady(bool enable = true);
+    bool routeHardwareInterrupt(uint8_t);
     bool dataTrigger();
+    bool setBufferThreshold(uint8_t);
+    bool setBufferOperation(uint8_t, uint8_t);
+    bool enableBuffer(bool, bool);
 
 		bool waitForI2C();
 		bool waitForSPI();
