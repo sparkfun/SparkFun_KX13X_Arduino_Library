@@ -56,7 +56,7 @@ Distributed as-is; no warranty is given.
 #define INT_SETTINGS 0xE0  
 #define SOFT_INT_SETTINGS 0xE1  
 #define BUFFER_SETTINGS 0xE2  
-#define TILT_SETTINGS 0xC0  
+#define TILT_SETTINGS 0xE3  
 
 #define BUFFER_16BIT_SAMPLES 0x01
 #define BUFFER_8BIT_SAMPLES 0x00
@@ -130,7 +130,7 @@ enum KX13X_REGISTERS {
   KX13X_LP_CNTL1,
   KX13X_LP_CNTL2,
   // 0x3C - 0x48 Reserved
-  KX13X_WUFTH,
+  KX13X_WUFTH = 0x49,
   KX13X_BTSWUFTH,
   KX13X_BTSTH,
   KX13X_BTSC,
@@ -216,8 +216,8 @@ class QwiicKX13xCore
 
 		KX13X_STATUS_t readRegister(uint8_t*, uint8_t);
 		KX13X_STATUS_t writeRegister(uint8_t, uint8_t, uint8_t, uint8_t);
-		KX13X_STATUS_t readMultipleRegisters(uint8_t, uint8_t dataBuffer[] , uint8_t);
-    KX13X_STATUS_t overBufLenI2CRead(uint8_t, uint8_t* , uint8_t);
+		KX13X_STATUS_t readMultipleRegisters(uint8_t, uint8_t dataBuffer[] , int16_t);
+    KX13X_STATUS_t overBufLenI2CRead(uint8_t, uint8_t dataBuffer[] , int16_t);
 
     // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
     // CPOL = 0, CPHA = 0 SPI_MODE0
@@ -246,9 +246,9 @@ class QwiicKX132 : public QwiicKX13xCore
 
   private: 
 
-    const double convRange2G = .00006103518784142582;
-    const double convRange4G = .0001220703756828516;
-    const double convRange8G = .0002441407513657033;
+    const double convRange2G =  .00006103518784142582;
+    const double convRange4G =  .0001220703756828516;
+    const double convRange8G =  .0002441407513657033;
     const double convRange16G = .0004882811975463118;
 
 #define KX132_RANGE2G  0x00
@@ -265,7 +265,20 @@ class QwiicKX134 : public QwiicKX13xCore
     QwiicKX134();
     bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
     bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
-    //bool convAccelData(outputData); 
+    bool getAccelData(outputData);
+    bool convAccelData(outputData); 
+
+  private: 
+
+    const double convRange8G =  .000244140751365703299;
+    const double convRange16G = .000488281197546311838;
+    const double convRange32G = .000976523950926236762;
+    const double convRange64G = .001953125095370342112;
+
+#define KX134_RANGE8G  0x00
+#define KX134_RANGE16G 0x01
+#define KX134_RANGE32G 0x02
+#define KX134_RANGE64G 0x03
 };
     
 #endif /* QWIIC_KX13X */

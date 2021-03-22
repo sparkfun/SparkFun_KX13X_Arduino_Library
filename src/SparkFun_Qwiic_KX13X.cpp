@@ -71,8 +71,10 @@ bool QwiicKX13xCore::initialize(uint8_t settings)
 {
 
   KX13X_STATUS_t returnError;
-  accelControl(false);
-
+  if( !accelControl(false) ){
+    return false; 
+  }
+  
   if( settings == DEFAULT_SETTINGS )
     returnError = writeRegister(KX13X_CNTL1, 0x00, DEFAULT_SETTINGS, 0);
   if( settings == INT_SETTINGS ){
@@ -396,7 +398,7 @@ KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 //Sends multiple requests to sensor until all data bytes are received from sensor
 //The shtpData buffer has max capacity of MAX_PACKET_SIZE. Any bytes over this amount will be lost.
 //Arduino I2C read limit is 32 bytes. Header is 4 bytes, so max data we can read per interation is 28 bytes
-KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBuffer[], uint8_t numBytes)
+KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBuffer[], int16_t numBytes)
 {
 	
 	if( _i2cPort == NULL ) {
@@ -413,7 +415,7 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBu
 	}
 	else {
 
-    if( numBytes > MAX_BUFFER_LENGTH){
+    if( numBytes > MAX_BUFFER_LENGTH ){
       KX13X_STATUS_t returnError;
       returnError = overBufLenI2CRead(reg, dataBuffer, numBytes);
       return returnError;
@@ -433,7 +435,7 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBu
 	}
 }
 
-KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t *dataBuffer, uint8_t numBytes)
+KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t dataBuffer[], int16_t numBytes)
 {
   uint8_t resizedRead; 
   uint8_t i2cResult; 
@@ -441,6 +443,9 @@ KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t *dataBuffe
 
   _i2cPort->beginTransmission(_deviceAddress);
   _i2cPort->write(reg); 
+  i2cResult = _i2cPort->endTransmission(false);
+  if( i2cResult != 0 )
+    return KX13X_I2C_ERROR; //Error: Sensor did not ack
 
   while(numBytes > 0) 
   {
@@ -450,10 +455,9 @@ KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t *dataBuffe
       resizedRead = numBytes; 
 
 		_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), resizedRead, false); //false = repeated start
-
-		for(size_t i = arrayPlaceHolder; i < resizedRead; i++) {
+		for(size_t i = 0; i < resizedRead; i++) {
+			dataBuffer[arrayPlaceHolder] = _i2cPort->read();
       arrayPlaceHolder++;
-			dataBuffer[i] = _i2cPort->read();
     }	
     numBytes = numBytes - MAX_BUFFER_LENGTH; // end condition
   }
@@ -601,13 +605,15 @@ bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
     return false;
 
   uint8_t partID = beginCore(kxAddress, i2cPort); 
+  Serial.print("Part ID: ");
+  Serial.println(partID);
   if( partID == KX134_WHO_AM_I ) 
     return true; 
   else 
     return false;
 }
 
-//
+
 bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
 
   uint8_t partID = beginSPICore(csPin, spiPortSpeed, spiPort); 
@@ -617,5 +623,62 @@ bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPor
     return false;
 }
 
+bool QwiicKX134::getAccelData(outputData kxAccelContain){
+
+  KX13X_STATUS_t returnError;
+  returnError = getRawAccelData(kxAccelContain);
+  if( returnError == KX13X_SUCCESS )
+    if( convAccelData(kxAccelContain))
+      return true; 
+  else
+    return false;
+}
+
+bool QwiicKX134::convAccelData(outputData kxAccelContain){
+
+  uint8_t regVal;
+  uint8_t range; 
+  KX13X_STATUS_t returnError;
+  returnError = readRegister(&regVal, KX13X_CNTL1);
+  if( returnError != KX13X_SUCCESS )
+    return false;
+
+  if( (kxAccelContain.xData & 0x8000) == 0x8000 )
+    kxAccelContain.xData = ~(kxAccelContain.xData + 1) * -1;
+  if( (kxAccelContain.yData & 0x8000) == 0x8000 )
+    kxAccelContain.yData = ~(kxAccelContain.yData + 1) * -1;
+  if( (kxAccelContain.zData & 0x8000) == 0x8000 )
+    kxAccelContain.zData = ~(kxAccelContain.zData + 1) * -1;
+
+  range = (regVal & 0x18) >> 3;
+
+  switch( range ) {
+    case KX134_RANGE8G:
+      kxAccelContain.xData *= convRange8G;
+      kxAccelContain.yData *= convRange8G;
+      kxAccelContain.zData *= convRange8G;
+      break;
+    case KX134_RANGE16G:
+      kxAccelContain.xData *= convRange16G;
+      kxAccelContain.yData *= convRange16G;
+      kxAccelContain.zData *= convRange16G;
+      break;
+    case KX134_RANGE32G:
+      kxAccelContain.xData *= convRange32G;
+      kxAccelContain.yData *= convRange32G;
+      kxAccelContain.zData *= convRange32G;
+      break;
+    case KX134_RANGE64G:
+      kxAccelContain.xData *= convRange64G;
+      kxAccelContain.yData *= convRange64G;
+      kxAccelContain.zData *= convRange64G;
+      break;
+    default: 
+      break;
+
+  }
+
+  return true; 
+}
 
 
