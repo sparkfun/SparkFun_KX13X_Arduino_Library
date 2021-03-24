@@ -24,17 +24,26 @@ void setup() {
   }
   else
     Serial.println("Initialized...");
+
+  if( !accel.setRange(3) ) {
+    Serial.println("Could not set range.");
+    while(1);
+  }
+
 }
 
 void loop() {
 
-  accel.getAccelData(myData);
+  myData = accel.getAccelData();
   Serial.print("X: ");
-  Serial.print(myData.xData);
-  Serial.print("Y: ");
-  Serial.print(myData.zData);
-  Serial.print("Z: ");
-  Serial.println(myData.zData);
+  Serial.print(myData.xData, 4);
+  Serial.print("g ");
+  Serial.print(" Y: ");
+  Serial.print(myData.zData, 4);
+  Serial.print("g ");
+  Serial.print(" Z: ");
+  Serial.print(myData.zData, 4);
+  Serial.println("g ");
 
   delay(20);
 

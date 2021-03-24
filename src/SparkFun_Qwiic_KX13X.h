@@ -28,8 +28,7 @@ Distributed as-is; no warranty is given.
 
 #define KX132_WHO_AM_I  0x3D
 #define KX134_WHO_AM_I  0x46
-#define TOTAL_ACCEL_DATA 48 //bytes
-#define MAX_BUFFER_LENGTH 32 //bytes
+#define TOTAL_ACCEL_DATA 6 //bytes
 #define MAX_BUFFER_LENGTH 32 //bytes
 
 #define  COTR_SUCCESS 0xAA //Succesfull COTR Register setting value
@@ -65,6 +64,12 @@ Distributed as-is; no warranty is given.
 #define BUFFER_MODE_TRIGGER 0x02
 
 struct outputData { 
+  float xData;
+  float yData;
+  float zData;
+};
+
+struct rawOutputData {
   int16_t xData;
   int16_t yData;
   int16_t zData;
@@ -209,7 +214,7 @@ class QwiicKX13xCore
 		bool waitForI2C();
 		bool waitForSPI();
 
-    KX13X_STATUS_t getRawAccelData(outputData);
+    bool getRawAccelData(rawOutputData*);
 
 		bool readBit(uint8_t, uint8_t);
 		bool writeBit(uint8_t, uint8_t, bool);
@@ -222,6 +227,9 @@ class QwiicKX13xCore
     // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
     // CPOL = 0, CPHA = 0 SPI_MODE0
     SPISettings kxSPISettings;
+    rawOutputData rawAccelData;
+    outputData userAccel;
+    
 
 	private:
 
@@ -231,6 +239,7 @@ class QwiicKX13xCore
 		uint8_t _deviceAddress; 
 		uint32_t _spiPortSpeed; // max port speed is 10MHz 
 		uint8_t _cs;
+
     
 };
 
@@ -241,8 +250,8 @@ class QwiicKX132 : public QwiicKX13xCore
     QwiicKX132();
     bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
     bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
-    bool getAccelData(outputData);
-    bool convAccelData(outputData); 
+    outputData getAccelData();
+    bool convAccelData(outputData*, rawOutputData*); 
 
   private: 
 
@@ -265,8 +274,8 @@ class QwiicKX134 : public QwiicKX13xCore
     QwiicKX134();
     bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
     bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
-    bool getAccelData(outputData);
-    bool convAccelData(outputData); 
+    outputData getAccelData();
+    bool convAccelData(outputData*, rawOutputData*); 
 
   private: 
 
