@@ -1,6 +1,5 @@
 /******************************************************************************
 SparkFun_Qwiic_KX13X.h
-Andy England @ SparkFun Electronics
 Elias Santistevan @ SparkFun Electronics
 Original Creation Date: March 2021
 

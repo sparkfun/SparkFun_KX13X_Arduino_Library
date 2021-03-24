@@ -1,16 +1,13 @@
 /******************************************************************************
 SparkFun_Qwiic_KX13X.cpp
 SparkFun Qwiic KX13X Library Source File
-Andy England @ SparkFun Electronics
-Original Creation Date: January 8, 2021
+Elias Santistevan @ SparkFun Electronics
+Original Creation Date: March, 2021
 
-This file implements the QwiicKX13X class, prototyped in SparkFun_Qwiic_KX13X.h
+This file implements the QwiicKX13XCore, QwiicKX132, and QwiicKX134 class
 
 Development environment specifics:
 	IDE: Arduino 1.8.12
-	Hardware Platform: Arduino Uno/SparkFun Redboard
-	Qwiic Button Version: 1.0.0
-    Qwiic Switch Version: 1.0.0
 
 This code is Lemonadeware; if you see me (or any other SparkFun employee) at the
 local, and you've found our code helpful, please buy us a round!
@@ -519,10 +516,10 @@ KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t mask, uint8_t 
 
 
 
-//*************** KX132 ******************
-//****************************************
-//****************************************
-//****************************************
+//***************************************** KX132 ******************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
 
 QwiicKX132::QwiicKX132() { }
 
@@ -602,10 +599,11 @@ bool QwiicKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
   return true;
 }
 
-//*************** KX134 ******************
-//****************************************
-//****************************************
-//****************************************
+//***************************************** KX134 ******************************************
+//******************************************************************************************
+//******************************************************************************************
+//******************************************************************************************
+
 QwiicKX134::QwiicKX134() { }
 
 bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
