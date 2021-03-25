@@ -216,6 +216,19 @@ bool QwiicKX13xCore::routeHardwareInterrupt(uint8_t rdr){
 
 }
 
+
+
+bool QwiicKX13xCore::clearInterrupt(){
+  
+  uint8_t tempRegVal;
+  KX13X_STATUS_t returnError;
+  returnError = readRegister(&tempRegVal, KX13X_INT_REL);
+  if( returnError == KX13X_SUCCESS )
+    return true;
+  else 
+    return false;
+}
+
 // Address: 0x17 , bit[4]: default value is: 0
 // This function triggers collection of data by the KX13X.
 bool QwiicKX13xCore::dataTrigger(){
@@ -302,7 +315,19 @@ bool QwiicKX13xCore::enableBuffer(bool enable, bool enableInterrupt){
 //Tests functionality of the integrated circuit
 bool QwiicKX13xCore::runCommandTest()
 {
-  return true;
+  
+  uint8_t tempRegVal;
+  KX13X_STATUS_t returnError;
+
+  returnError = writeRegister(KX13X_CNTL2, 0xBF, 1, 6);
+  if( returnError != KX13X_SUCCESS )
+    return false;
+
+  returnError = readRegister(&tempRegVal, KX13X_COTR);
+  if( returnError == KX13X_SUCCESS && tempRegVal == COTR_POS_STATE)
+    return true;
+  else 
+    return false;
 }
 
 

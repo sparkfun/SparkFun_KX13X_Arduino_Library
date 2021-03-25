@@ -27,18 +27,8 @@ Distributed as-is; no warranty is given.
 
 #define KX132_WHO_AM_I  0x3D
 #define KX134_WHO_AM_I  0x46
-#define TOTAL_ACCEL_DATA 6 //bytes
-#define MAX_BUFFER_LENGTH 32 //bytes
-
-#define  COTR_SUCCESS 0xAA //Succesfull COTR Register setting value
-#define  PC1 7 //1:high performance/low power mode 0: stand by
-#define  COTC 6 //1: Sets COTR to 0xAA to verify proper IC functionality 0: no action
-#define  RES 6 //1:high performance mode 0: Low Power mode
-#define  IEN1 5 //1:physical interrupt pin is enabled 0: disabled
-#define  IEA1 4 //1:active HIGH 0: active LOW
-#define  IEL1 3 //1:pulsed interrupt 0:latched interrupt until cleared by reading INT_REL
-#define  STPOL 1 //1: positive self test polarity 0: negative
-#define  SPI3E 0 //1: SPI Enabled 0: SPI Disabled
+#define TOTAL_ACCEL_DATA 6 
+#define MAX_BUFFER_LENGTH 32 
 
 #define XLSB 0
 #define XMSB 1
@@ -55,6 +45,9 @@ Distributed as-is; no warranty is given.
 #define SOFT_INT_SETTINGS 0xE1  
 #define BUFFER_SETTINGS 0xE2  
 #define TILT_SETTINGS 0xE3  
+
+#define COTR_DEF_STATE 0x55
+#define COTR_POS_STATE 0xAA
 
 #define BUFFER_16BIT_SAMPLES 0x01
 #define BUFFER_8BIT_SAMPLES 0x00
@@ -205,6 +198,7 @@ class QwiicKX13xCore
     float readOutputDataRate();
     bool setInterruptPin(bool enable, uint8_t polarity = 0, uint8_t pulseWidth = 0, bool latchControl = false);
     bool routeHardwareInterrupt(uint8_t);
+    bool clearInterrupt();
     bool dataTrigger();
     bool setBufferThreshold(uint8_t);
     bool setBufferOperation(uint8_t, uint8_t);
