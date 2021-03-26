@@ -75,7 +75,7 @@ bool QwiicKX13xCore::initialize(uint8_t settings)
   if( settings == DEFAULT_SETTINGS )
     returnError = writeRegister(KX13X_CNTL1, 0x00, DEFAULT_SETTINGS, 0);
   if( settings == INT_SETTINGS ){
-    setInterruptPin(true);
+    setInterruptPin(true, 1);
     routeHardwareInterrupt(HI_DATA_READY);
     returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
@@ -190,29 +190,51 @@ bool QwiicKX13xCore::setInterruptPin(bool enable, uint8_t polarity, uint8_t puls
   else if( latchControl < 0 | latchControl > 4 )
     return false;
 
+  uint8_t accelState = readAccelState(); // Put it back where we found it.
+  accelControl(false); // Can't adjust without putting to sleep
+
   uint8_t combinedArguments = ((pulseWidth << 6) | (enable << 5) | (polarity << 4) | (latchControl << 3));
   KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_INC1, 0x07, combinedArguments, 3);
-  if( returnError == KX13X_SUCCESS )
+  returnError = writeRegister(KX13X_INC1, 0x07, combinedArguments, 0);
+  if( returnError == KX13X_SUCCESS ){
+    accelControl(accelState); 
     return true;
+  }
   else
     return false;
 }
 
 
-// Address: 0x25, bit[4]: default value is 0: disabled
-// Enables the data ready bit to be reported on the hardware interrupt. 
-bool QwiicKX13xCore::routeHardwareInterrupt(uint8_t rdr){
+// Address: 0x25, bits[7:0]: default value is 0: disabled
+// Enables anyone of the various interrupt settings to be routed to hardware
+// interrupt pin one or pin two.
+bool QwiicKX13xCore::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
 
-  if( rdr < 0 | rdr > 6 )
+  if( rdr < 0 | rdr > 128 )
+    return false;
+  if( pin != 1 && pin != 2)
     return false;
   
+  uint8_t accelState = readAccelState(); // Put it back where we found it.
+  accelControl(false); // Can't adjust without putting to sleep
+
   KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_INC4, 0xEF, rdr, 4);
-  if( returnError == KX13X_SUCCESS )
-    return true;
+
+  if( pin == 1 ){
+    returnError = writeRegister(KX13X_INC4, 0x00, rdr, 0);
+    if( returnError == KX13X_SUCCESS ){
+      accelControl(accelState); 
+      return true;
+    }
   else
-    return false;
+    returnError = writeRegister(KX13X_INC6, 0x00, rdr, 0);
+    if( returnError == KX13X_SUCCESS ){
+      accelControl(accelState);
+      return true;
+    }
+  }
+
+  return false;
 
 }
 
@@ -513,6 +535,7 @@ KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t mask, uint8_t 
     return KX13X_I2C_ERROR;
   tempRegVal &= mask;
   tempRegVal |= (data << bitPos); 
+  Serial.println(tempRegVal, HEX);
 
 	if( _i2cPort == NULL ) {
     

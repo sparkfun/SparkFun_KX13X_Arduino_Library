@@ -4,13 +4,10 @@
 QwiicKX132 kxAccel;
 outputData myData; // This will hold the accelerometer's output. 
 int dataReadyPin = D1;
-int timeThen;
-int timeNow; 
 
 void setup() {
 
-  pinMode(dataReadyPin, OUTPUT);
-  digitalWrite(dataReadyPin, HIGH);
+  pinMode(dataReadyPin, INPUT);
 
   while(!Serial){
     delay(50);
@@ -30,40 +27,35 @@ void setup() {
 
 
   if( !kxAccel.initialize(INT_SETTINGS)){
-    Serial.println("Could not initialize the chip.");
+    Serial.println("Could not initialize the chip. Freezing.");
     while(1);
   }
   else
     Serial.println("Initialized...");
 
   // kxAccel.setRange(KX132_RANGE16G);
-  timeThen = millis();
 
 }
 
 void loop() {
 
-  timeNow = millis();
+  if( digitalRead(dataReadyPin) == HIGH ){ // Wait for new data to be ready.
 
-  if(timeNow - timeThen > 1000){
-    timeThen = timeNow;
-    digitalWrite(dataReadyPin, LOW);
-    Serial.println("click.");
+    myData = kxAccel.getAccelData();
+    digitalWrite(dataReadyPin, HIGH);
+    Serial.print("X: ");
+    Serial.print(myData.xData, 4);
+    Serial.print("g ");
+    Serial.print(" Y: ");
+    Serial.print(myData.zData, 4);
+    Serial.print("g ");
+    Serial.print(" Z: ");
+    Serial.print(myData.zData, 4);
+    Serial.println("g ");
+    
+     //kxAccel.clearInterrupt();// Because the data is being read in "burst"
+     //mode, meaning that all the acceleration data is being read at once, we don't
+     //need to clear the interrupt.
   }
-
-  myData = kxAccel.getAccelData();
-  //digitalWrite(dataReadyPin, HIGH);
-  //Serial.print("X: ");
-  //Serial.print(myData.xData, 4);
-  //Serial.print("g ");
-  //Serial.print(" Y: ");
-  //Serial.print(myData.zData, 4);
-  //Serial.print("g ");
-  //Serial.print(" Z: ");
-  //Serial.print(myData.zData, 4);
-  //Serial.println("g ");
-  
-  // kxAccel.clearInterrupt();
-
   delay(20); // Delay should be 1/ODR (Output Data Rate), default is 50Hz
 }

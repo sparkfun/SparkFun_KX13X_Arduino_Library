@@ -171,13 +171,16 @@ typedef enum {
 } KX13X_STATUS_t;
 
 enum HARDWARE_INTERRUPT {
-  HI_FREEFALL = 0x00,
-  HI_WATERMARK, 
-  HI_DATA_READY,
-  HI_BACK_TO_SLEEP,
-  HI_TAP_DOUBLE_TAP,
-  HI_WAKE_UP, 
-  HI_TILT_POSITION
+
+  HI_TILT_POSITION = 0x01,
+  HI_WAKE_UP = 0x02, 
+  HI_TAP_DOUBLE_TAP = 0x04,
+  HI_BACK_TO_SLEEP = 0x08,
+  HI_DATA_READY = 0x10,
+  HI_WATERMARK = 0x20, 
+  HI_BUFFER_FULL = 0x40,
+  HI_FREEFALL = 0x80
+
 };
 
 
@@ -197,7 +200,7 @@ class QwiicKX13xCore
     bool setOutputDataRate(uint8_t);
     float readOutputDataRate();
     bool setInterruptPin(bool enable, uint8_t polarity = 0, uint8_t pulseWidth = 0, bool latchControl = false);
-    bool routeHardwareInterrupt(uint8_t);
+    bool routeHardwareInterrupt(uint8_t, uint8_t pin = 1);
     bool clearInterrupt();
     bool dataTrigger();
     bool setBufferThreshold(uint8_t);
