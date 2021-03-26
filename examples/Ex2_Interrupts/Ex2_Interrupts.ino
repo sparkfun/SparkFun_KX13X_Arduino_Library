@@ -42,7 +42,6 @@ void loop() {
   if( digitalRead(dataReadyPin) == HIGH ){ // Wait for new data to be ready.
 
     myData = kxAccel.getAccelData();
-    digitalWrite(dataReadyPin, HIGH);
     Serial.print("X: ");
     Serial.print(myData.xData, 4);
     Serial.print("g ");

@@ -261,6 +261,8 @@ bool QwiicKX13xCore::dataTrigger(){
   if( returnError == KX13X_SUCCESS ){
     if( tempRegVal & 0x10 )
       return true;
+    else
+      return false;
   }
   else 
     return false;
@@ -539,7 +541,6 @@ KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t mask, uint8_t 
     return KX13X_I2C_ERROR;
   tempRegVal &= mask;
   tempRegVal |= (data << bitPos); 
-  Serial.println(tempRegVal, HEX);
 
 	if( _i2cPort == NULL ) {
     
