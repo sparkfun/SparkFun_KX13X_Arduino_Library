@@ -83,8 +83,8 @@ bool QwiicKX13xCore::initialize(uint8_t settings)
     returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
   if( settings == BUFFER_SETTINGS ){
-    setInterruptPin(true);
-    routeHardwareInterrupt(HI_WATERMARK);
+    setInterruptPin(true, 1);
+    routeHardwareInterrupt(HI_BUFFER_FULL);
     enableBuffer(true, true);
     setBufferOperation(BUFFER_MODE_FIFO, BUFFER_16BIT_SAMPLES);
     returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
@@ -406,10 +406,23 @@ bool QwiicKX13xCore::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
 
 bool QwiicKX13xCore::getRawAccelData(rawOutputData *rawAccelData){
 
-  uint8_t tempRegData[TOTAL_ACCEL_DATA] {}; 
+  
+  uint8_t tempRegVal;
   KX13X_STATUS_t returnError;
+  uint8_t tempRegData[TOTAL_ACCEL_DATA_16BIT] {}; 
 
-  returnError = readMultipleRegisters(KX13X_XOUT_L, tempRegData, TOTAL_ACCEL_DATA);
+  returnError = readRegister(&tempRegVal, KX13X_INC4);
+  if( returnError != KX13X_SUCCESS )
+    return false;
+
+  if( tempRegVal & 0x40 ){ // If Buffer interrupt is enabled, then we'll read accelerometer data from buffer register.
+    returnError = readMultipleRegisters(KX13X_BUF_READ, tempRegData, TOTAL_ACCEL_DATA_16BIT);
+  }
+  else
+    returnError = readMultipleRegisters(KX13X_XOUT_L, tempRegData, TOTAL_ACCEL_DATA_16BIT);
+
+
+
   if( returnError == KX13X_SUCCESS ) {
     rawAccelData->xData = tempRegData[XLSB]; 
     rawAccelData->xData |= (static_cast<uint16_t>(tempRegData[XMSB]) << 8); 
@@ -422,6 +435,7 @@ bool QwiicKX13xCore::getRawAccelData(rawOutputData *rawAccelData){
 
   return false;
 }
+
 
 KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 {

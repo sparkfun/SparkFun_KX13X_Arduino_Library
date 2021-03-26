@@ -27,7 +27,8 @@ Distributed as-is; no warranty is given.
 
 #define KX132_WHO_AM_I  0x3D
 #define KX134_WHO_AM_I  0x46
-#define TOTAL_ACCEL_DATA 6 
+#define TOTAL_ACCEL_DATA_16BIT 6 
+#define TOTAL_ACCEL_DATA_8BIT 3 
 #define MAX_BUFFER_LENGTH 32 
 
 #define XLSB 0
