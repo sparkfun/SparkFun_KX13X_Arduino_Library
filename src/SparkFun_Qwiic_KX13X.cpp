@@ -255,12 +255,16 @@ bool QwiicKX13xCore::clearInterrupt(){
 // This function triggers collection of data by the KX13X.
 bool QwiicKX13xCore::dataTrigger(){
   
+  uint8_t tempRegVal;
   KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_INS2, 0xEF, true, 0);
-  if( returnError == KX13X_SUCCESS )
-    return true;
-  else
+  returnError = readRegister(&tempRegVal, KX13X_INS2);
+  if( returnError == KX13X_SUCCESS ){
+    if( tempRegVal & 0x10 )
+      return true;
+  }
+  else 
     return false;
+
 }
 
 // Address: 0x5E , bit[7:0]: default value is: unknown
