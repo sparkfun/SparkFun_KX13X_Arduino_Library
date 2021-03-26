@@ -208,13 +208,7 @@ class QwiicKX13xCore
     bool setBufferOperation(uint8_t, uint8_t);
     bool enableBuffer(bool, bool);
 
-		bool waitForI2C();
-		bool waitForSPI();
-
     bool getRawAccelData(rawOutputData*);
-
-		bool readBit(uint8_t, uint8_t);
-		bool writeBit(uint8_t, uint8_t, bool);
 
 		KX13X_STATUS_t readRegister(uint8_t*, uint8_t);
 		KX13X_STATUS_t writeRegister(uint8_t, uint8_t, uint8_t, uint8_t);

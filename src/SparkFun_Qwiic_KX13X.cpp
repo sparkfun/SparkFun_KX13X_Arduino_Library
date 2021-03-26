@@ -358,52 +358,6 @@ bool QwiicKX13xCore::runCommandTest()
     return false;
 }
 
-
-
-//Wait a certain time for incoming I2C bytes before giving up
-//Returns false if failed
-bool QwiicKX13xCore::waitForI2C()
-{
-	for(size_t counter = 0; counter < 100; counter++) { //Don't got more than 255 
-		if( _i2cPort->available() > 0 )
-			return true;
-    delay(1);
-	}
-
-	return false;
-}
-
-//Blocking wait for QwiicKX13X to assert (pull low) the INT pin
-//indicating it's ready for comm. Can take more than 104ms
-//after a hardware reset
-bool QwiicKX13xCore::waitForSPI()
-{
-	/*for (uint8_t counter = 0; counter < 125; counter++) //Don't got more than 255
-	{
-		if (digitalRead(_int) == LOW)
-			return (true);
-		delay(1);
-	}*/
-
-	return (false);
-}
-
-bool QwiicKX13xCore::readBit(uint8_t regAddr, uint8_t bitAddr)
-{
-	return true;
-    //((readRegister(regAddr) & (1 << bitAddr)) >> bitAddr);
-}
-
-bool QwiicKX13xCore::writeBit(uint8_t regAddr, uint8_t bitAddr, bool bitToWrite)
-{
-	uint8_t value;
-  readRegister(&value, regAddr);
-	value &= ~(1 << bitAddr);
-	value |= bitToWrite << bitAddr;
-  //writeRegister(regAddr, value);
-	return true;
-}
-
 bool QwiicKX13xCore::getRawAccelData(rawOutputData *rawAccelData){
 
   
