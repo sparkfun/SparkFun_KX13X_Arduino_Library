@@ -7,7 +7,7 @@ Original Creation Date: March, 2021
 This file implements the QwiicKX13XCore, QwiicKX132, and QwiicKX134 class
 
 Development environment specifics:
-	IDE: Arduino 1.8.12
+IDE: Arduino 1.8.12
 
 This code is Lemonadeware; if you see me (or any other SparkFun employee) at the
 local, and you've found our code helpful, please buy us a round!
@@ -64,6 +64,9 @@ uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPICl
     return partID;
 }
 
+// This function sets various register with regards to these pre-determined
+// settings. These settings are set according to "AN092 Getting Started" guide and can easily
+// have additional presets added.
 bool QwiicKX13xCore::initialize(uint8_t settings)
 {
 
@@ -97,6 +100,9 @@ bool QwiicKX13xCore::initialize(uint8_t settings)
     return false;
 }
 
+// Address: 0x1B, bit[7]: default value is: 0x00
+// This function sets the accelerometer into stand-by mode or
+// an active mode depending on the given argument.
 bool QwiicKX13xCore::accelControl(bool standby){
 
   if( standby != true && standby != false )
@@ -111,6 +117,9 @@ bool QwiicKX13xCore::accelControl(bool standby){
   
 }
 
+// Address: 0x1B, bit[7]: default value is: 0x00
+// This function reads whether the accelerometer is in stand by or an active
+// mode. 
 uint8_t QwiicKX13xCore::readAccelState(){
 
   uint8_t tempRegVal;
@@ -118,7 +127,10 @@ uint8_t QwiicKX13xCore::readAccelState(){
   return (tempRegVal & 0x80) >> 7;
 
 }
-
+// Address: 0x1B, bit[1:0]: default value is: 0x00 (2g)
+// This function sets the acceleration range of the accelerometer outputs.
+// Possible KX132 arguments: 0x00 (2g), 0x01 (4g), 0x02 (8g), 0x03 (16g)
+// Possible KX134 arguments: 0x00 (8g), 0x01 (16g), 0x02 (32g), 0x03 (64g)
 bool QwiicKX13xCore::setRange(uint8_t range){
 
   if( range < 0 | range > 3)
@@ -139,7 +151,7 @@ bool QwiicKX13xCore::setRange(uint8_t range){
 }
 
 
-//Address: 0x21, bits[3:0] - default value is 50Hz: 0b0110
+//Address: 0x21, bits[3:0] - default value is 0x06 (50Hz)
 //Sets the refresh rate of the accelerometer's data. 
 // 0.781 * (2 * (n)) derived from pg. 26 of Techincal Reference Manual
 bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
@@ -151,7 +163,7 @@ bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
   accelControl(false); // Can't adjust without putting to sleep
 
   KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_ODCNTL, 0x40, rate, 0);
+  returnError = writeRegister(KX13X_ODCNTL, 0xF0, rate, 0);
   if( returnError == KX13X_SUCCESS )
     return true;
   else 
@@ -164,11 +176,13 @@ bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
     return false;
 }
 
+// Address:0x21 , bit[3:0]: default value is: 0x06 (50Hz)
+// Gets the accelerometer's output data rate. 
 float QwiicKX13xCore::readOutputDataRate(){
   
   uint8_t tempRegVal;
   readRegister(&tempRegVal, KX13X_ODCNTL);
-  tempRegVal &= 0x40;
+  tempRegVal &= 0x0F;
   tempRegVal = (float)tempRegVal;
   return (0.78 * (2 * tempRegVal));
 
@@ -238,8 +252,9 @@ bool QwiicKX13xCore::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
 
 }
 
-
-
+// Address: 0x1A , bit[7:0]: default value is: 0x00
+// This function reads the interrupt latch release register, thus clearing any
+// interrupts. 
 bool QwiicKX13xCore::clearInterrupt(){
   
   uint8_t tempRegVal;
@@ -340,7 +355,10 @@ bool QwiicKX13xCore::enableBuffer(bool enable, bool enableInterrupt){
     return false;
 }
 
-//Tests functionality of the integrated circuit
+// Address: 0x1C, bit[6]: default value is: 0x00 
+//Tests functionality of the integrated circuit by setting the command test
+//control bit, then checks the results in the COTR register (0x12): 0xAA is a
+//successful read, 0x55 is the default state. 
 bool QwiicKX13xCore::runCommandTest()
 {
   
@@ -358,6 +376,9 @@ bool QwiicKX13xCore::runCommandTest()
     return false;
 }
 
+// Address:0x08 - 0x0D or 0x63 , bit[7:0]
+// Reads acceleration data from either the buffer or the output registers
+// depending on if the user specified buffer usage.
 bool QwiicKX13xCore::getRawAccelData(rawOutputData *rawAccelData){
 
   

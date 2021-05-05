@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include "SparkFun_Qwiic_KX13X.h"
 
-QwiicKX134 kxAccel;
+QwiicKX132 kxAccel;
 outputData myData; // This will hold the accelerometer's output. 
 
 void setup() {
