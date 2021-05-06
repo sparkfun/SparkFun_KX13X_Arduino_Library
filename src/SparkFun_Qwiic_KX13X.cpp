@@ -412,6 +412,7 @@ bool QwiicKX13xCore::getRawAccelData(rawOutputData *rawAccelData){
 }
 
 
+// Reads a single register using the selected bus. 
 KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 {
 
@@ -485,6 +486,8 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBu
 	}
 }
 
+// This function is used when more than 32 bytes (TwoWire maximum buffer
+// length) of data are requested.
 KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t dataBuffer[], int16_t numBytes)
 {
   uint8_t resizedRead; 
@@ -519,6 +522,8 @@ KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t dataBuffer
     return KX13X_SUCCESS;
 }
 
+// Writes the given value to the given register, using the provided mask and
+// bit position. 
 KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t mask, uint8_t data, uint8_t bitPos)
 {
 
@@ -563,8 +568,11 @@ KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t mask, uint8_t 
 //******************************************************************************************
 //******************************************************************************************
 
+// Constructor
 QwiicKX132::QwiicKX132() { }
 
+// Uses the beginCore function to check that the part ID from the "who am I"
+// register matches the correct value. Uses I2C for data transfer.
 bool QwiicKX132::begin(uint8_t kxAddress, TwoWire &i2cPort){
 
   if( kxAddress != KX13X_DEFAULT_ADDRESS && kxAddress != KX13X_ALT_ADDRESS )
@@ -578,6 +586,8 @@ bool QwiicKX132::begin(uint8_t kxAddress, TwoWire &i2cPort){
   
 }
 
+// Uses the beginCore function to check that the part ID from the "who am I"
+// register matches the correct value. Uses SPI for data transfer.
 bool QwiicKX132::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
 
   uint8_t partID = beginSPICore(csPin, spiPortSpeed, spiPort); 
@@ -587,8 +597,9 @@ bool QwiicKX132::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPor
     return false;
 }
 
+// Grabs raw accel data and passes it to the following function to be
+// converted.
 outputData QwiicKX132::getAccelData(){
-
   
   uint8_t tempRegVal;
   KX13X_STATUS_t returnError;
@@ -603,6 +614,7 @@ outputData QwiicKX132::getAccelData(){
   }
 }
 
+// Converts acceleration data according to the set range value. 
 bool QwiicKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelData){
 
   uint8_t regVal;
@@ -646,8 +658,11 @@ bool QwiicKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
 //******************************************************************************************
 //******************************************************************************************
 
+//Constructor
 QwiicKX134::QwiicKX134() { }
 
+// Uses the beginCore function to check that the part ID from the "who am I"
+// register matches the correct value. Uses I2C for data transfer.
 bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
 
   if( kxAddress != KX13X_DEFAULT_ADDRESS && kxAddress != KX13X_ALT_ADDRESS )
@@ -661,6 +676,8 @@ bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
 }
 
 
+// Uses the beginCore function to check that the part ID from the "who am I"
+// register matches the correct value. Uses SPI for data transfer.
 bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
 
   uint8_t partID = beginSPICore(csPin, spiPortSpeed, spiPort); 
@@ -670,6 +687,8 @@ bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPor
     return false;
 }
 
+// Grabs raw accel data and passes it to the following function to be
+// converted.
 outputData QwiicKX134::getAccelData(){
 
   uint8_t tempRegVal;
@@ -686,6 +705,7 @@ outputData QwiicKX134::getAccelData(){
 
 }
 
+// Converts acceleration data according to the set range value. 
 bool QwiicKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelData){
 
   uint8_t regVal;
