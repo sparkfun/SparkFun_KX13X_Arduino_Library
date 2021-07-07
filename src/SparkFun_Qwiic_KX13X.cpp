@@ -603,15 +603,14 @@ outputData QwiicKX132::getAccelData(){
   
   uint8_t tempRegVal;
   KX13X_STATUS_t returnError;
-  if( getRawAccelData(&rawAccelData) )
-    if( convAccelData(&userAccel, &rawAccelData) )
+  if( getRawAccelData(&rawAccelData) &&
+    convAccelData(&userAccel, &rawAccelData) )
       return userAccel;
-  else {
-    userAccel.xData = 0xFF;
-    userAccel.yData = 0xFF;
-    userAccel.zData = 0xFF;
-    return userAccel;
-  }
+
+  userAccel.xData = 0xFF;
+  userAccel.yData = 0xFF;
+  userAccel.zData = 0xFF;
+  return userAccel;
 }
 
 // Converts acceleration data according to the set range value. 
@@ -693,16 +692,14 @@ outputData QwiicKX134::getAccelData(){
 
   uint8_t tempRegVal;
   KX13X_STATUS_t returnError;
-  if( getRawAccelData(&rawAccelData) )
-    if( convAccelData(&userAccel, &rawAccelData) )
+  if( getRawAccelData(&rawAccelData) &&
+    convAccelData(&userAccel, &rawAccelData) )
       return userAccel;
-  else {
-    userAccel.xData = 0xFF;
-    userAccel.yData = 0xFF;
-    userAccel.zData = 0xFF;
-    return userAccel;
-  }
 
+  userAccel.xData = 0xFF;
+  userAccel.yData = 0xFF;
+  userAccel.zData = 0xFF;
+  return userAccel;
 }
 
 // Converts acceleration data according to the set range value. 
