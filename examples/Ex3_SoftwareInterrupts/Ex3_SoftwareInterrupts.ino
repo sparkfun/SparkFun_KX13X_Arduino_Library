@@ -63,7 +63,7 @@ void loop() {
     Serial.print(myData.xData, 4);
     Serial.print("g ");
     Serial.print(" Y: ");
-    Serial.print(myData.zData, 4);
+    Serial.print(myData.yData, 4);
     Serial.print("g ");
     Serial.print(" Z: ");
     Serial.print(myData.zData, 4);
