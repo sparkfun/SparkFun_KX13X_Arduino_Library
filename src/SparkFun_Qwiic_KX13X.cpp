@@ -434,12 +434,12 @@ KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
     i2cResult = _i2cPort->endTransmission(false); 
     if( i2cResult != 0 )
       return KX13X_I2C_ERROR; //Error: Sensor did not ack
-    _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1));
-    *dataPointer = _i2cPort->read();
-    i2cResult = _i2cPort->endTransmission(); 
-    if( i2cResult != 0 )
-      return KX13X_I2C_ERROR; //Error: Sensor did not ack
-    return KX13X_SUCCESS;
+    i2cResult = _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)); //returns number of bytes
+    if( i2cResult != 0) {
+      *dataPointer = _i2cPort->read();
+      return KX13X_SUCCESS;
+    }
+    return KX13X_I2C_ERROR; //Error: Sensor did not ack
 	}
 }
 
@@ -474,14 +474,12 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBu
     if( i2cResult != 0 )
       return KX13X_I2C_ERROR; //Error: Sensor did not ack
 
-		_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), numBytes, false);
+		i2cResult = _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), numBytes, false);
+    if( i2cResult == 0 ) 
+      return KX13X_I2C_ERROR;
 		for(size_t i = 0; i < numBytes; i++) {
 			dataBuffer[i] = _i2cPort->read();
 		}
-
-    i2cResult = _i2cPort->endTransmission();
-    if( i2cResult != 0 )
-      return KX13X_I2C_ERROR; //Error: Sensor did not ack
     return KX13X_SUCCESS;
 	}
 }
@@ -507,19 +505,16 @@ KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t dataBuffer
     else
       resizedRead = numBytes; 
 
-		_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), resizedRead, false); //false = repeated start
+		i2cResult = _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), resizedRead, false); //false = repeated start
+    if( i2cResult == 0 )
+      return KX13X_I2C_ERROR;
 		for(size_t i = 0; i < resizedRead; i++) {
 			dataBuffer[arrayPlaceHolder] = _i2cPort->read();
       arrayPlaceHolder++;
     }	
     numBytes = numBytes - MAX_BUFFER_LENGTH; // end condition
   }
-
-  i2cResult = _i2cPort->endTransmission();
-  if( i2cResult != 0 )
-    return KX13X_I2C_ERROR; //Error: Sensor did not ack
-  else
-    return KX13X_SUCCESS;
+  return KX13X_SUCCESS;
 }
 
 // Writes the given value to the given register, using the provided mask and
