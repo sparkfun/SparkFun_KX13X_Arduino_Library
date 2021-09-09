@@ -301,8 +301,6 @@ bool QwiicKX13xCore::setBufferThreshold(uint8_t threshold){
 
   if( threshold > 86 && resolution == 1 ) // 1 = 16bit resolution, max samples: 86
     threshold == 86; 
-  else if( threshold > 171 ) // None the less, can't have more than 171 samples
-    threshold == 171; 
   
   returnError = writeRegister(KX13X_BUF_CNTL1, 0x00, threshold, 0);
   if( returnError == KX13X_SUCCESS )
