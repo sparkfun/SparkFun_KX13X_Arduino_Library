@@ -164,10 +164,6 @@ bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
 
   KX13X_STATUS_t returnError;
   returnError = writeRegister(KX13X_ODCNTL, 0xF0, rate, 0);
-  if( returnError == KX13X_SUCCESS )
-    return true;
-  else 
-    return false;
   if( returnError == KX13X_SUCCESS ){
     accelControl(accelState);
     return true;
