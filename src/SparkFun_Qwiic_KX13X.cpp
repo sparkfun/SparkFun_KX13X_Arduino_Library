@@ -180,7 +180,7 @@ float QwiicKX13xCore::readOutputDataRate(){
   readRegister(&tempRegVal, KX13X_ODCNTL);
   tempRegVal &= 0x0F;
   tempRegVal = (float)tempRegVal;
-  return (0.78 * (2 * tempRegVal));
+  return (0.78 * (pow(2,tempRegVal));
 
 }
 
