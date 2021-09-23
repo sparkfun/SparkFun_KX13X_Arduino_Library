@@ -180,7 +180,7 @@ float QwiicKX13xCore::readOutputDataRate(){
   readRegister(&tempRegVal, KX13X_ODCNTL);
   tempRegVal &= 0x0F;
   tempRegVal = (float)tempRegVal;
-  return (0.78 * (pow(2,tempRegVal));
+  return (0.78 * (pow(2,tempRegVal)));
 
 }
 
@@ -468,7 +468,7 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBu
     if( i2cResult != 0 )
       return KX13X_I2C_ERROR; //Error: Sensor did not ack
 
-		i2cResult = _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), numBytes, false);
+		i2cResult = _i2cPort->requestFrom(_deviceAddress, uint8_t(numBytes), uint8_t(false));
     if( i2cResult == 0 ) 
       return KX13X_I2C_ERROR;
 		for(size_t i = 0; i < numBytes; i++) {
@@ -499,7 +499,7 @@ KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t dataBuffer
     else
       resizedRead = numBytes; 
 
-		i2cResult = _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), resizedRead, false); //false = repeated start
+		i2cResult = _i2cPort->requestFrom(_deviceAddress, resizedRead, uint8_t(false)); //false = repeated start
     if( i2cResult == 0 )
       return KX13X_I2C_ERROR;
 		for(size_t i = 0; i < resizedRead; i++) {
