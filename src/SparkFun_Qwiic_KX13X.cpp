@@ -468,7 +468,7 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBu
     if( i2cResult != 0 )
       return KX13X_I2C_ERROR; //Error: Sensor did not ack
 
-		i2cResult = _i2cPort->requestFrom(_deviceAddress, uint8_t(numBytes), uint8_t(false));
+		i2cResult = _i2cPort->requestFrom(_deviceAddress, uint8_t(numBytes), uint8_t(true));
     if( i2cResult == 0 ) 
       return KX13X_I2C_ERROR;
 		for(size_t i = 0; i < numBytes; i++) {
