@@ -212,7 +212,7 @@ class QwiicKX13xCore
 
 		KX13X_STATUS_t readRegister(uint8_t*, uint8_t);
 		KX13X_STATUS_t writeRegister(uint8_t, uint8_t, uint8_t, uint8_t);
-		KX13X_STATUS_t readMultipleRegisters(uint8_t, uint8_t dataBuffer[] , int16_t);
+		KX13X_STATUS_t readMultipleRegisters(uint8_t, uint8_t dataBuffer[] , uint16_t);
     KX13X_STATUS_t overBufLenI2CRead(uint8_t, uint8_t dataBuffer[] , int16_t);
 
     // CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  

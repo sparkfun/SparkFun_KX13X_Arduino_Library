@@ -35,6 +35,7 @@ uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPICl
 {
 	_i2cPort = NULL;
 	_spiPortSpeed = spiPortSpeed;
+  _spiPort = &spiPort;
 
 	if( _spiPortSpeed > 10000000 )
     _spiPortSpeed = 10000000;
@@ -70,7 +71,7 @@ uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPICl
 bool QwiicKX13xCore::initialize(uint8_t settings)
 {
 
-  KX13X_STATUS_t returnError;
+  KX13X_STATUS_t returnError = KX13X_GENERAL_ERROR;
   if( !accelControl(false) ){
     return false; 
   }
@@ -133,7 +134,7 @@ uint8_t QwiicKX13xCore::readAccelState(){
 // Possible KX134 arguments: 0x00 (8g), 0x01 (16g), 0x02 (32g), 0x03 (64g)
 bool QwiicKX13xCore::setRange(uint8_t range){
 
-  if( range < 0 | range > 3)
+  if( range > 3)
     return false;
 
   uint8_t accelState = readAccelState();
@@ -156,7 +157,7 @@ bool QwiicKX13xCore::setRange(uint8_t range){
 // 0.781 * (2 * (n)) derived from pg. 26 of Techincal Reference Manual
 bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
 
-  if( rate < 0 | rate > 15 )
+  if( rate > 15 )
     return false;
 
   uint8_t accelState = readAccelState(); // Put it back where we found it.
@@ -197,8 +198,6 @@ bool QwiicKX13xCore::setInterruptPin(bool enable, uint8_t polarity, uint8_t puls
     return false;
   else if( pulseWidth != 1 && pulseWidth != 0 ) 
     return false;
-  else if( latchControl < 0 | latchControl > 4 )
-    return false;
 
   uint8_t accelState = readAccelState(); // Put it back where we found it.
   accelControl(false); // Can't adjust without putting to sleep
@@ -220,7 +219,7 @@ bool QwiicKX13xCore::setInterruptPin(bool enable, uint8_t polarity, uint8_t puls
 // interrupt pin one or pin two.
 bool QwiicKX13xCore::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
 
-  if( rdr < 0 | rdr > 128 )
+  if(  rdr > 128 )
     return false;
   if( pin != 1 && pin != 2)
     return false;
@@ -287,7 +286,7 @@ bool QwiicKX13xCore::dataTrigger(){
 // set in the BUF_CNTL2 (0x5F) register (see "setBufferOperation" below).  
 bool QwiicKX13xCore::setBufferThreshold(uint8_t threshold){
 
-  if( threshold < 2 | threshold > 171 )
+  if( threshold < 2 || threshold > 171 )
     return false;
 
   
@@ -300,7 +299,7 @@ bool QwiicKX13xCore::setBufferThreshold(uint8_t threshold){
     return false;
 
   if( threshold > 86 && resolution == 1 ) // 1 = 16bit resolution, max samples: 86
-    threshold == 86; 
+    threshold = 86; 
   
   returnError = writeRegister(KX13X_BUF_CNTL1, 0x00, threshold, 0);
   if( returnError == KX13X_SUCCESS )
@@ -316,9 +315,9 @@ bool QwiicKX13xCore::setBufferThreshold(uint8_t threshold){
 // to be powered own to adjust settings.
 bool QwiicKX13xCore::setBufferOperation(uint8_t operationMode, uint8_t resolution){
 
-  if( resolution < 0 | resolution > 1 )
+  if( resolution > 1 )
     return false;
-  if( operationMode < 0 | operationMode > 2 )
+  if( operationMode > 2 )
     return false; 
 
 
@@ -438,7 +437,7 @@ KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 }
 
 //Sends a request to read a number of registers
-KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBuffer[], int16_t numBytes)
+KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBuffer[], uint16_t numBytes)
 {
 	
 	if( _i2cPort == NULL ) {
@@ -590,8 +589,6 @@ bool QwiicKX132::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPor
 // converted.
 outputData QwiicKX132::getAccelData(){
   
-  uint8_t tempRegVal;
-  KX13X_STATUS_t returnError;
   if( getRawAccelData(&rawAccelData) &&
     convAccelData(&userAccel, &rawAccelData) )
       return userAccel;
@@ -679,8 +676,6 @@ bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPor
 // converted.
 outputData QwiicKX134::getAccelData(){
 
-  uint8_t tempRegVal;
-  KX13X_STATUS_t returnError;
   if( getRawAccelData(&rawAccelData) &&
     convAccelData(&userAccel, &rawAccelData) )
       return userAccel;
