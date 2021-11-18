@@ -38,7 +38,7 @@ Distributed as-is; no warranty is given.
 #define ZLSB 4
 #define ZMSB 5
 
-#define SPI_READ 0x01 // OR'ed at most sig BIT with register address
+#define SPI_READ 0x80 // OR'ed at most sig BIT with register address
 #define SPI_WRITE 0x00 // OR'ed at most sig BIT with register address
 
 #define DEFAULT_SETTINGS 0xC0  

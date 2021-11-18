@@ -63,6 +63,7 @@ uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPICl
     return status;
   else    
     return partID;
+  
 }
 
 // This function sets various register with regards to these pre-determined
@@ -413,7 +414,8 @@ KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
 		reg |= SPI_READ; 
-    *dataPointer = _spiPort->transfer(reg);
+    _spiPort->transfer(reg);
+    *dataPointer = _spiPort->transfer(0x00);
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
     return KX13X_SUCCESS;
@@ -444,9 +446,10 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBu
 		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
 		reg |= SPI_READ;
-		dataBuffer[0] = _spiPort->transfer(reg); //first byte on transfer of address and read bit
+    _spiPort->transfer(reg);
+		dataBuffer[0] = _spiPort->transfer(0x00); //first byte on transfer of address and read bit
 		for(size_t i = 1; i < numBytes; i++) {
-			dataBuffer[i] = _spiPort->transfer(0); //Assuming this will initiate auto-increment behavior
+			dataBuffer[i] = _spiPort->transfer(0x00); //Assuming this will initiate auto-increment behavior
 		}
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
@@ -528,7 +531,7 @@ KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t mask, uint8_t 
     
 		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
-		_spiPort->transfer(reg |= SPI_WRITE);
+		_spiPort->transfer(reg | SPI_WRITE);
 		_spiPort->transfer(tempRegVal); 
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
