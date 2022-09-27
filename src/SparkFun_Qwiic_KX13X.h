@@ -240,7 +240,7 @@ class QwiicKX132 : public QwiicKX13xCore
 
     QwiicKX132();
     bool begin(uint8_t kxAddress = KX13X_DEFAULT_ADDRESS, TwoWire &i2cPort = Wire);
-    bool beginSPI(uint8_t, uint32_t spiPortSpeed = 10000000, SPIClass &spiPort = SPI);
+    bool beginSPI(uint8_t, uint32_t spiPortSpeed = 2000000, SPIClass &spiPort = SPI);
     outputData getAccelData();
     bool convAccelData(outputData*, rawOutputData*); 
 

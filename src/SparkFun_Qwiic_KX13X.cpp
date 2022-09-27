@@ -33,37 +33,32 @@ uint8_t QwiicKX13xCore::beginCore(uint8_t deviceAddress, TwoWire &i2cPort)
 
 uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort)
 {
+  uint8_t partID;
+
 	_i2cPort = NULL;
-	_spiPortSpeed = spiPortSpeed;
   _spiPort = &spiPort;
+	_cs = CSPin;
 
 	if( _spiPortSpeed > 10000000 )
     _spiPortSpeed = 10000000;
 
-	_cs = CSPin;
-	pinMode(_cs, OUTPUT);
-	digitalWrite(_cs, HIGH);
-	//writeBit(INC1, SPI3E, 1); //Enable SPI
-	//_i2cPort->end();
+	_spiPortSpeed = spiPortSpeed;
+
  
-// CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
-// CPOL = 0, CPHA = 0 SPI_MODE0
+	// CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
+	// CPOL = 0, CPHA = 0 SPI_MODE0
 #ifdef ESP32
   kxSPISettings = SPISettings(spiPortSpeed, SPI_MSBFIRST, SPI_MODE0);
 #else 
   kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0);
 #endif
-//#ifdef _MK20DX256_ //Teensy
- // kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0)
-//#endif
 
-  uint8_t partID;
   KX13X_STATUS_t status = readRegister(&partID, KX13X_WHO_AM_I);
+
   if( status != KX13X_SUCCESS ) 
     return status;
-  else    
-    return partID;
-  
+
+	return partID;
 }
 
 // This function sets various register with regards to these pre-determined
@@ -411,31 +406,36 @@ KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 {
 
 	if( _i2cPort == NULL ) {
+
 		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
-		reg |= SPI_READ; 
+
+		reg = (reg | SPI_READ); 
     _spiPort->transfer(reg);
-    *dataPointer = _spiPort->transfer(0x00);
+
+		*dataPointer = _spiPort->transfer(0x00);
+
 		digitalWrite(_cs, HIGH);
 		_spiPort->endTransaction();
+
     return KX13X_SUCCESS;
 	}
 
-	else {
 
-		uint8_t i2cResult;
-    _i2cPort->beginTransmission(_deviceAddress);
-		_i2cPort->write(reg);
-    i2cResult = _i2cPort->endTransmission(false); 
-    if( i2cResult != 0 )
-      return KX13X_I2C_ERROR; //Error: Sensor did not ack
-    i2cResult = _i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)); //returns number of bytes
-    if( i2cResult != 0) {
-      *dataPointer = _i2cPort->read();
-      return KX13X_SUCCESS;
-    }
-    return KX13X_I2C_ERROR; //Error: Sensor did not ack
-	}
+	uint8_t i2cResult;
+
+	_i2cPort->beginTransmission(_deviceAddress);
+	_i2cPort->write(reg);
+	i2cResult = _i2cPort->endTransmission(false); 
+	
+	if( i2cResult != 0 )
+		return KX13X_I2C_ERROR; //Error: Sensor did not ack
+														//
+	_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)); //returns number of bytes
+																																																		//
+	*dataPointer = _i2cPort->read();
+	return KX13X_SUCCESS;
+	
 }
 
 //Sends a request to read a number of registers
@@ -445,7 +445,7 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBu
 	if( _i2cPort == NULL ) {
 		_spiPort->beginTransaction(kxSPISettings);
 		digitalWrite(_cs, LOW);
-		reg |= SPI_READ;
+		reg = (reg | SPI_READ);
     _spiPort->transfer(reg);
 		dataBuffer[0] = _spiPort->transfer(0x00); //first byte on transfer of address and read bit
 		for(size_t i = 1; i < numBytes; i++) {
@@ -581,11 +581,14 @@ bool QwiicKX132::begin(uint8_t kxAddress, TwoWire &i2cPort){
 // register matches the correct value. Uses SPI for data transfer.
 bool QwiicKX132::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
 
-  uint8_t partID = beginSPICore(csPin, spiPortSpeed, spiPort); 
+  uint8_t partID; 
+
+	partID =	beginSPICore(csPin, spiPortSpeed, spiPort); 
+	
   if( partID == KX132_WHO_AM_I ) 
     return true; 
-  else 
-    return false;
+
+	return false;
 }
 
 // Grabs raw accel data and passes it to the following function to be
@@ -668,11 +671,13 @@ bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
 // register matches the correct value. Uses SPI for data transfer.
 bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
 
-  uint8_t partID = beginSPICore(csPin, spiPortSpeed, spiPort); 
+  uint8_t partID; 
+	partID = beginSPICore(csPin, spiPortSpeed, spiPort); 
+
   if( partID == KX134_WHO_AM_I ) 
     return true; 
-  else 
-    return false;
+
+	return false;
 }
 
 // Grabs raw accel data and passes it to the following function to be
