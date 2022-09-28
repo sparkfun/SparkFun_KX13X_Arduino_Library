@@ -168,14 +168,111 @@ typedef struct
 } sfe_kx13x_ins3_t;
 
 #define SFE_KX13X_STATUS_REG 0x19 
-#define SFE_KX13X_INT_REL 0x1A //    ------------^^----------------------------
-#define SFE_KX13X_CNTL1 0x1B//       --------Control Registers----------------- 
+// Reports the combined status of the interrupts and the wake/back to sleep state
+typedef struct
+{
+	uint8_t reserved_one :  3;
+	uint8_t combined_int :  1;
+	uint8_t reserved_two :  3;
+	uint8_t wake         :  1;
+} sfe_kx13x_status_reg_t;
+
+#define SFE_KX13X_INT_REL 0x1A 
+// Interrupt latch release: when an interrupt is flipped read this status to clear
+// interrupt. 
+typedef struct
+{
+	uint8_t latch_release : 8;
+} sfe_kx13x_int_rel_t;
+
+#define SFE_KX13X_CNTL1 0x1B
+// Read/write control register that controls the "main feature" set.
+// To change these values PC1 (bit 8) must be set to zero (stand-by mode).
+typedef struct
+{
+	uint8_t pc1          :  1;
+	uint8_t res          :  1;
+	uint8_t drdye        :  1;
+	uint8_t gsel         :  2;
+	uint8_t tdte         :  1;
+	uint8_t reserved_one :  1;
+	uint8_t tpe          :  1;
+} sfe_kx13x_cntl1_t;
+
 #define SFE_KX13X_CNTL2 0x1C
+// Read/Write control register that controls tilt position state enabling
+// Default value: 0b00111111
+typedef struct
+{
+	uint8_t srst :  1; //Software reset
+	uint8_t cotc :  1; //Command Test Control bit
+										 // The following bits control when an interrupt is generated
+										 // for tilt: 1 = enabled
+	uint8_t lem  :  1; // Left state (X-)
+	uint8_t rim  :  2; // Right state (X+)
+	uint8_t dom  :  1; // Down state (Y-)
+	uint8_t upm  :  1; // Up state (Y+)
+	uint8_t fdm  :  1; // Face-Down state (Z-)
+	uint8_t fum  :  1; // Face-Up state (Z+)
+} sfe_kx13x_cntl2_t;
+
 #define SFE_KX13X_CNTL3 0x1D
+// Read/Write control register that provides control of the Output Data Rate (ODR)
+// for tilt, tap, wake-up registers.
+typedef struct
+{
+	uint8_t opt  :  2; // ODR tilt position
+	uint8_t otdt :  3; // ODR tap/double-tap
+	uint8_t owuf :  3; // ORR wake-up
+} sfe_kx13x_cntl3_t;
+
 #define SFE_KX13X_CNTL4 0x1E
+// Read/write control register that provides more feature set control.
+// To changes these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t c_mode  :  1; 
+	uint8_t th_mode :  1; 
+	uint8_t wufe    :  1; 
+	uint8_t btse    :  1;
+	uint8_t pr_mode :  1;
+	uint8_t obts    :  3; 
+} sfe_kx13x_cntl4_t;
+
 #define SFE_KX13X_CNTL5 0x1F
-#define SFE_KX13X_CNTL6 0x20//        -------------^^---------------------------
+// Read/Write control register that providers more feature set control. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t reserved_one :  3;
+	uint8_t adpe         :  1;
+	uint8_t reserved_two :  2;
+	uint8_t man_wake     :  1;
+	uint8_t man_sleep    :  1;
+} sfe_kx13x_cntl5_t;
+
+#define SFE_KX13X_CNTL6 0x20
+// Read/Write control register that providers more feature set control. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t i2c_ale :  1; 
+	uint8_t reserved_one :  5;
+	uint8_t i2c_alc     :  2;
+} sfe_kx13x_cntl6_t;
+
 #define SFE_KX13X_ODCNTL 0x21
+// Control registers that contorls acceleration outputs. 
+// To changes these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t iir_bypass   :  1;
+	uint8_t lpro         :  1;
+	uint8_t fstup        :  1;
+	uint8_t reserved_one :  1;
+	uint8_t osa          :  4;
+} sfe_kx13x_odcntl_t;
+
 #define SFE_KX13X_INC1 0x22//Controls settings for INT1
 #define SFE_KX13X_INC2 0x23//Defines behavior for Wake-Up Function and Back To Sleep
 #define SFE_KX13X_INC3 0x24//Defines which axes can cause a tap based interrupt
