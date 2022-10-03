@@ -17,9 +17,8 @@ Distributed as-is; no warranty is given.
 
 #include "SparkFun_Qwiic_KX13X.h"
 
-QwiicKX13xCore::QwiicKX13xCore() { } //Constructor
 
-uint8_t QwiicKX13xCore::beginCore(uint8_t deviceAddress, TwoWire &i2cPort)
+uint8_t QwDevKX13X::init(uint8_t deviceAddress, TwoWire &i2cPort)
 {
   _deviceAddress = deviceAddress; //If provided, store the I2C address from user
   _i2cPort = &i2cPort;
@@ -29,42 +28,13 @@ uint8_t QwiicKX13xCore::beginCore(uint8_t deviceAddress, TwoWire &i2cPort)
     return status;
   else    
     return partID;
-}
-
-uint8_t QwiicKX13xCore::beginSPICore(uint8_t CSPin, uint32_t spiPortSpeed, SPIClass &spiPort)
-{
-  uint8_t partID;
-
-	_i2cPort = NULL;
-  _spiPort = &spiPort;
-	_cs = CSPin;
-
-	if( _spiPortSpeed > 10000000 )
-    _spiPortSpeed = 10000000;
-
-	_spiPortSpeed = spiPortSpeed;
-
- 
-	// CPOL and CPHA are demonstrated on pg 25 of Specification Data sheet  
-	// CPOL = 0, CPHA = 0 SPI_MODE0
-#ifdef ESP32
-  kxSPISettings = SPISettings(spiPortSpeed, SPI_MSBFIRST, SPI_MODE0);
-#else 
-  kxSPISettings = SPISettings(spiPortSpeed, MSBFIRST, SPI_MODE0);
-#endif
-
   KX13X_STATUS_t status = readRegister(&partID, KX13X_WHO_AM_I);
-
-  if( status != KX13X_SUCCESS ) 
-    return status;
-
-	return partID;
 }
 
 // This function sets various register with regards to these pre-determined
 // settings. These settings are set according to "AN092 Getting Started" guide and can easily
 // have additional presets added.
-bool QwiicKX13xCore::initialize(uint8_t settings)
+bool QwDevKX13X::initialize(uint8_t settings)
 {
 
   KX13X_STATUS_t returnError = KX13X_GENERAL_ERROR;
@@ -100,7 +70,7 @@ bool QwiicKX13xCore::initialize(uint8_t settings)
 // Address: 0x1B, bit[7]: default value is: 0x00
 // This function sets the accelerometer into stand-by mode or
 // an active mode depending on the given argument.
-bool QwiicKX13xCore::accelControl(bool standby){
+bool QwDevKX13X::accelControl(bool standby){
 
   if( standby != true && standby != false )
     return false;
@@ -117,7 +87,7 @@ bool QwiicKX13xCore::accelControl(bool standby){
 // Address: 0x1B, bit[7]: default value is: 0x00
 // This function reads whether the accelerometer is in stand by or an active
 // mode. 
-uint8_t QwiicKX13xCore::readAccelState(){
+uint8_t QwDevKX13X::readAccelState(){
 
   uint8_t tempRegVal;
   readRegister(&tempRegVal, KX13X_CNTL1);
@@ -128,7 +98,7 @@ uint8_t QwiicKX13xCore::readAccelState(){
 // This function sets the acceleration range of the accelerometer outputs.
 // Possible KX132 arguments: 0x00 (2g), 0x01 (4g), 0x02 (8g), 0x03 (16g)
 // Possible KX134 arguments: 0x00 (8g), 0x01 (16g), 0x02 (32g), 0x03 (64g)
-bool QwiicKX13xCore::setRange(uint8_t range){
+bool QwDevKX13X::setRange(uint8_t range){
 
   if( range > 3)
     return false;
@@ -151,7 +121,7 @@ bool QwiicKX13xCore::setRange(uint8_t range){
 //Address: 0x21, bits[3:0] - default value is 0x06 (50Hz)
 //Sets the refresh rate of the accelerometer's data. 
 // 0.781 * (2 * (n)) derived from pg. 26 of Techincal Reference Manual
-bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
+bool QwDevKX13X::setOutputDataRate(uint8_t rate){
 
   if( rate > 15 )
     return false;
@@ -171,7 +141,7 @@ bool QwiicKX13xCore::setOutputDataRate(uint8_t rate){
 
 // Address:0x21 , bit[3:0]: default value is: 0x06 (50Hz)
 // Gets the accelerometer's output data rate. 
-float QwiicKX13xCore::readOutputDataRate(){
+float QwDevKX13X::readOutputDataRate(){
   
   uint8_t tempRegVal;
   readRegister(&tempRegVal, KX13X_ODCNTL);
@@ -186,7 +156,7 @@ float QwiicKX13xCore::readOutputDataRate(){
 // This register controls the various interrupt settings, all of which can be
 // set here. Note: trying to set just one will set the others to their default
 // state.
-bool QwiicKX13xCore::setInterruptPin(bool enable, uint8_t polarity, uint8_t pulseWidth, bool latchControl){
+bool QwDevKX13X::setInterruptPin(bool enable, uint8_t polarity, uint8_t pulseWidth, bool latchControl){
   
   if( enable != true && enable != false ) 
     return false;
@@ -213,7 +183,7 @@ bool QwiicKX13xCore::setInterruptPin(bool enable, uint8_t polarity, uint8_t puls
 // Address: 0x25, bits[7:0]: default value is 0: disabled
 // Enables anyone of the various interrupt settings to be routed to hardware
 // interrupt pin one or pin two.
-bool QwiicKX13xCore::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
+bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
 
   if(  rdr > 128 )
     return false;
@@ -246,7 +216,7 @@ bool QwiicKX13xCore::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
 // Address: 0x1A , bit[7:0]: default value is: 0x00
 // This function reads the interrupt latch release register, thus clearing any
 // interrupts. 
-bool QwiicKX13xCore::clearInterrupt(){
+bool QwDevKX13X::clearInterrupt(){
   
   uint8_t tempRegVal;
   KX13X_STATUS_t returnError;
@@ -259,7 +229,7 @@ bool QwiicKX13xCore::clearInterrupt(){
 
 // Address: 0x17 , bit[4]: default value is: 0
 // This function triggers collection of data by the KX13X.
-bool QwiicKX13xCore::dataTrigger(){
+bool QwDevKX13X::dataTrigger(){
   
   uint8_t tempRegVal;
   KX13X_STATUS_t returnError;
@@ -280,7 +250,7 @@ bool QwiicKX13xCore::dataTrigger(){
 // buffer. Each sample is one full word of X,Y,Z data and the minimum that this
 // can be set to is two. The maximum is dependent on the resolution: 8 or 16bit,
 // set in the BUF_CNTL2 (0x5F) register (see "setBufferOperation" below).  
-bool QwiicKX13xCore::setBufferThreshold(uint8_t threshold){
+bool QwDevKX13X::setBufferThreshold(uint8_t threshold){
 
   if( threshold < 2 || threshold > 171 )
     return false;
@@ -309,7 +279,7 @@ bool QwiicKX13xCore::setBufferThreshold(uint8_t threshold){
 // This functions sets the resolution and operation mode of the buffer. This does not include
 // the threshold - see "setBufferThreshold". This is a "On-the-fly" register, accel does not need
 // to be powered own to adjust settings.
-bool QwiicKX13xCore::setBufferOperation(uint8_t operationMode, uint8_t resolution){
+bool QwDevKX13X::setBufferOperation(uint8_t operationMode, uint8_t resolution){
 
   if( resolution > 1 )
     return false;
@@ -330,7 +300,7 @@ bool QwiicKX13xCore::setBufferOperation(uint8_t operationMode, uint8_t resolutio
 // This functions enables the buffer and also whether the buffer triggers an
 // interrupt when full. This is a "On-the-fly" register, accel does not need
 // to be powered down to adjust settings.
-bool QwiicKX13xCore::enableBuffer(bool enable, bool enableInterrupt){
+bool QwDevKX13X::enableBuffer(bool enable, bool enableInterrupt){
 
   if( ( enable != true && enable != false)  && (enableInterrupt != true && enableInterrupt != false) )
     return false;
@@ -348,7 +318,7 @@ bool QwiicKX13xCore::enableBuffer(bool enable, bool enableInterrupt){
 //Tests functionality of the integrated circuit by setting the command test
 //control bit, then checks the results in the COTR register (0x12): 0xAA is a
 //successful read, 0x55 is the default state. 
-bool QwiicKX13xCore::runCommandTest()
+bool QwDevKX13X::runCommandTest()
 {
   
   uint8_t tempRegVal;
@@ -368,7 +338,7 @@ bool QwiicKX13xCore::runCommandTest()
 // Address:0x08 - 0x0D or 0x63 , bit[7:0]
 // Reads acceleration data from either the buffer or the output registers
 // depending on if the user specified buffer usage.
-bool QwiicKX13xCore::getRawAccelData(rawOutputData *rawAccelData){
+bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
 
   
   uint8_t tempRegVal;
@@ -402,7 +372,7 @@ bool QwiicKX13xCore::getRawAccelData(rawOutputData *rawAccelData){
 
 
 // Reads a single register using the selected bus. 
-KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
+KX13X_STATUS_t QwDevKX13X::readRegister(uint8_t *dataPointer, uint8_t reg)
 {
 
 	if( _i2cPort == NULL ) {
@@ -439,7 +409,7 @@ KX13X_STATUS_t QwiicKX13xCore::readRegister(uint8_t *dataPointer, uint8_t reg)
 }
 
 //Sends a request to read a number of registers
-KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBuffer[], uint16_t numBytes)
+KX13X_STATUS_t QwDevKX13X::readMultipleRegisters(uint8_t reg, uint8_t dataBuffer[], uint16_t numBytes)
 {
 	
 	if( _i2cPort == NULL ) {
@@ -482,7 +452,7 @@ KX13X_STATUS_t QwiicKX13xCore::readMultipleRegisters(uint8_t reg, uint8_t dataBu
 
 // This function is used when more than 32 bytes (TwoWire maximum buffer
 // length) of data are requested.
-KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t dataBuffer[], int16_t numBytes)
+KX13X_STATUS_t QwDevKX13X::overBufLenI2CRead(uint8_t reg, uint8_t dataBuffer[], int16_t numBytes)
 {
   uint8_t resizedRead; 
   uint8_t i2cResult; 
@@ -515,7 +485,7 @@ KX13X_STATUS_t QwiicKX13xCore::overBufLenI2CRead(uint8_t reg, uint8_t dataBuffer
 
 // Writes the given value to the given register, using the provided mask and
 // bit position. 
-KX13X_STATUS_t QwiicKX13xCore::writeRegister(uint8_t reg, uint8_t mask, uint8_t data, uint8_t bitPos)
+KX13X_STATUS_t QwDevKX13X::writeRegister(uint8_t reg, uint8_t mask, uint8_t data, uint8_t bitPos)
 {
 
   uint8_t tempRegVal; 

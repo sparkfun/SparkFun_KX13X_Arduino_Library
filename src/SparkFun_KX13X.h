@@ -40,7 +40,7 @@ class SparkFun_KX13X : public QwDevKX13X
         _i2cBus.init();
 
         // Initialize the system - return results
-        return this->QwDevISM330DHCX::init();
+        return this->QwDevKX13X::init();
 		}
 
 		//Version 2:
@@ -54,7 +54,7 @@ class SparkFun_KX13X : public QwDevKX13X
         _i2cBus.init(wirePort, true);
 
         // Initialize the system - return results
-        return this->QwDevISM330DHCX::init();
+        return this->QwDevKX13X::init();
     }
 
 	private: 
@@ -64,7 +64,7 @@ class SparkFun_KX13X : public QwDevKX13X
 
 };
 	
-class SparkFun_KX13X_SPI : public QwDevISM330DHCX
+class SparkFun_KX13X_SPI : public QwDevKX13X
 {
 		public:
 
@@ -103,7 +103,7 @@ class SparkFun_KX13X_SPI : public QwDevISM330DHCX
         _spiBus.init(cs, true);
 
         // Initialize the system - return results
-        return this->QwDevISM330DHCX::init();
+        return this->QwDevKX13X::init();
     }
 
     bool begin(SPIClass &spiPort, SPISettings ismSettings, uint8_t cs)
@@ -115,7 +115,7 @@ class SparkFun_KX13X_SPI : public QwDevISM330DHCX
         _spiBus.init(spiPort, ismSettings, cs, true);
 
         // Initialize the system - return results
-        return this->QwDevISM330DHCX::init();
+        return this->QwDevKX13X::init();
     }
 
 		private:
