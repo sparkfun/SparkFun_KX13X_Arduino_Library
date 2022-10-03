@@ -228,7 +228,7 @@ typedef struct
 
 #define SFE_KX13X_CNTL4 0x1E
 // Read/write control register that provides more feature set control.
-// To changes these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
 	uint8_t c_mode  :  1; 
@@ -263,75 +263,509 @@ typedef struct
 
 #define SFE_KX13X_ODCNTL 0x21
 // Control registers that contorls acceleration outputs. 
-// To changes these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t iir_bypass   :  1;
-	uint8_t lpro         :  1;
+	uint8_t iir_bypass   :  1; // 0 - not bypassed : 1 - bypassed	
+	uint8_t lpro         :  1; // 0 - Filter ODR/9 : 1 - Filter ODR/2
 	uint8_t fstup        :  1;
 	uint8_t reserved_one :  1;
 	uint8_t osa          :  4;
 } sfe_kx13x_odcntl_t;
 
-#define SFE_KX13X_INC1 0x22//Controls settings for INT1
-#define SFE_KX13X_INC2 0x23//Defines behavior for Wake-Up Function and Back To Sleep
-#define SFE_KX13X_INC3 0x24//Defines which axes can cause a tap based interrupt
-#define SFE_KX13X_INC4 0x25 //Controls which function triggers INT1
+#define SFE_KX13X_INC1 0x22
+// Controls settings for physical interrupt pin 
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t pw1          :  2;
+	uint8_t ien1         :  1; // Enable/disable physical interrupt pin
+	uint8_t iea1         :  1; // Interrupt active level control, 0 - LOW : 1 - HIGH
+	uint8_t iel1         :  1; // Interrupt lactch control, 0 - latched : 1 - pulsed
+	uint8_t reserved_one :  1;
+	uint8_t stpol        :  1;
+	uint8_t spi3e        :  1;
+} sfe_kx13x_inc1_t;
+													 
+#define SFE_KX13X_INC2 0x23
+// Defines behavior for Wake-Up Function and Back To Sleep
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t reserved_one :  1;
+	uint8_t aoi          :  1;
+	uint8_t xnwue        :  1; //X-
+	uint8_t xpwue        :  1; //X+
+	uint8_t ynwue        :  1; //Y-
+	uint8_t ypwue        :  1; //Y+
+	uint8_t znwue        :  1; //Z-
+	uint8_t zpwue        :  1; //Z+
+} sfe_kx13x_inc2_t;
+
+#define SFE_KX13X_INC3 0x24
+// Defines which axes can cause a tap based interrupt
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t undefined :  1;
+	uint8_t tmen      :  1;
+	uint8_t tlem      :  1; //X-
+	uint8_t trim      :  1; //X+
+	uint8_t tdom      :  1; //Y-
+	uint8_t tpum      :  1; //Y+
+	uint8_t tfdm      :  1; //Z-
+	uint8_t tfum      :  1; //Z+
+} sfe_kx13x_inc3_t;
+
+#define SFE_KX13X_INC4 0x25 
+// Controls which function triggers INT1
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t ffi1   :  1;
+	uint8_t bfi1   :  1;
+	uint8_t wmi1   :  1;
+	uint8_t drdyi1 :  1;
+	uint8_t btsi1  :  1;
+	uint8_t tdti1  :  1;
+	uint8_t wufi1  :  1;
+	uint8_t tpi1   :  1;
+} sfe_kx13x_inc4_t;
+
 #define SFE_KX13X_INC5 0x26
-#define SFE_KX13X_INC6 0x27//Controls which function triggers INT2
-// 0x28 Reserved
+// Controls the settings for the physical interrupt pin INT2.
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t pw2          :  2;
+	uint8_t ien2         :  1;
+	uint8_t iea2         :  1;
+	uint8_t iel2         :  1;
+	uint8_t reserved_one :  1;
+	uint8_t aclr2        :  1;
+	uint8_t aclr1        :  1;
+} sfe_kx13x_inc5_t;
+
+#define SFE_KX13X_INC6 0x27
+// Controls which function triggers INT2
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t ffi2   :  1;
+	uint8_t bfi2   :  1;
+	uint8_t wmi2   :  1;
+	uint8_t drdyi2 :  1;
+	uint8_t btsi2  :  1;
+	uint8_t tdti2  :  1;
+	uint8_t wufi2  :  1;
+	uint8_t tpi2   :  1;
+} sfe_kx13x_inc6_t;
+
 #define SFE_KX13X_TILT_TIMER 0x29 
-#define SFE_KX13X_TDTRC 0x2A // Tap Control Regs ----- 
+// Initial Count Registers for the tilt position state time (0 to 255 counts)
+// Count is calculated as 1/ODR
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t tsc : 8; 
+} sfe_kx13x_tilt_timer_t;
+
+#define SFE_KX13X_TDTRC 0x2A 
+// Double tap report control
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t undefined :  6;
+	uint8_t dtre      :  1;
+	uint8_t stre      :  1;
+} sfe_kx13x_tdtrc_t;
+
 #define SFE_KX13X_TDTC 0x2B
+// Double tap time counter - see datashet for more specifics. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t tdtc : 8; 
+} sfe_kx13x_tdtc_t;
+
 #define SFE_KX13X_TTH 0x2C
+// Double tap "jerk high" threshold to determine if a tap is detected. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t tth : 8; 
+} sfe_kx13x_tth_t;
+
 #define SFE_KX13X_TTL 0x2D
+// Double tap "jerk low" threshold to determine if a tap is detected. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t ttl : 8; 
+} sfe_kx13x_ttl_t;
+
 #define SFE_KX13X_FTD 0x2E
+// This register contains counter information for any single tap event. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+// Check datasheet for conversion information.
+typedef struct
+{
+	uint8_t ftdh : 5;  //Default high limit is .05 seconds 
+	uint8_t ftdl : 3;  //Default low limits is .05 seconds 
+} sfe_kx13x_ftd_t;
+
 #define SFE_KX13X_STD 0x2F
+// This register contains counter information for any double tap event. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+// Check datasheet for conversion information.
+typedef struct
+{
+	uint8_t std: 8;  
+} sfe_kx13x_std_t;
+
 #define SFE_KX13X_TLT 0x30
+// This register contains counter information for a tap event. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+// Check datasheet for conversion information.
+typedef struct
+{
+	uint8_t tlt : 8;  
+} sfe_kx13x_tlt_t;
+
 #define SFE_KX13X_TWS 0x31
+// This register contains counter information for of single and double taps. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+// Check datasheet for conversion information.
+typedef struct
+{
+	uint8_t tws : 8;  
+} sfe_kx13x_tws_t;
+
 #define SFE_KX13X_FFTH 0x32
+// This register configures the threshold for free fall detection. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t ffth : 8;  
+} sfe_kx13x_ffth_t;
+
 #define SFE_KX13X_FFC 0x33
+// This register configures the counter for free fall detection.
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t ffc : 8;  
+} sfe_kx13x_ffc_t;
+
 #define SFE_KX13X_FFCNTL 0x34
-// 0x35 - 0x36 Reserved
+// This register configures the "main control" of the free fall engine i.e. 
+// engine enable, free fall latch, debouce, etc. 
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t ffie : 1;  
+	uint8_t ulmode : 1;  
+	uint8_t ffdc : 2;  
+	uint8_t dcrm : 1;  
+	uint8_t offl : 3;  
+} sfe_kx13x_ffcntl_t;
+
 #define SFE_KX13X_TILT_ANGLE_LL 0x37
+// This register sets the low-level threshold for tilt angle detection.
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t ll : 8;  
+} sfe_kx13x_ll_t;
+
 #define SFE_KX13X_TILT_ANGLE_HL 0x38
+// This register sets the high-level threshold for tilt angle detection.
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t hl : 8;  
+} sfe_kx13x_hl_t;
+
 #define SFE_KX13X_HYST_SET 0x39
+// This register sets hysteresis that is placed in between the Screen Rotation states. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t reserved : 2;  
+	uint8_t hyst : 6;  
+} sfe_kx13x_hyst_t;
+
 #define SFE_KX13X_LP_CNTL1 0x3A
+// This register sets the Averging Filter Contrl which determines both -
+// the number of internal aceleration samples to be averaged in low power mode
+// and the number of internal acceleration samples to be averaged for digital engines 
+// operation: tap, double tap.
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t reserved_one :  1;
+	uint8_t avc          :  3;
+	uint8_t reserved_one :  4;
+} sfe_kx13x_lp_cntl1_t;
+
 #define SFE_KX13X_LP_CNTL2 0x3B
-// 0x3C - 0x48 Reserved
+// This register controls the advanced low power settings which can reduce 
+// the power consumption even more than low power and stand-by modes.
+// To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
+typedef struct
+{
+	uint8_t reserved : 7;  
+	uint8_t lpstpsel : 1;  
+} sfe_kx13x_lpcntl2_t;
+
 #define SFE_KX13X_WUFTH 0x49
+// This register sets seven of the ten bits for the wake up threshold. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t wufth : 8;  
+} sfe_kx13x_wufth_t;
+
 #define SFE_KX13X_BTSWUFTH 0x4A
+// This register contains final three of the ten bits of the  back to sleep the threshold and 
+// the final three of ten bits of the wakup threshold. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t undefined_one : 1;  
+	uint8_t btsth : 3;  
+	uint8_t undefined_two : 1;  
+	uint8_t wufth : 3;  
+} sfe_kx13x_btswufth_t;
+
 #define SFE_KX13X_BTSTH 0x4B
+// This register sets seven of the ten bits for the back to sleep threshold. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t btsth : 8;  
+} sfe_kx13x_btsth_t;
+
 #define SFE_KX13X_BTSC 0x4C
+// This register debounce counter register for the Back-To-Sleep engine.
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t btsc : 8;  
+} sfe_kx13x_btsc_t;
+
 #define SFE_KX13X_WUFC 0x4D
-// 0x4E - 0x5C Reserved
+// This register debounce counter register for the Wake-Up Function engine.
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t wufc : 8;  
+} sfe_kx13x_wufc_t;
+
 #define SFE_KX13X_SELF_TEST 0x5D
+// The self test enable register.
+// Check datasheet for more information.
+typedef struct
+{
+	uint8_t self_test : 8;  
+} sfe_kx13x_self_test_t;
+
 #define SFE_KX13X_BUF_CNTL1 0x5E
+// This register controls the buffer sample threshold. 
+// The total samples set in this register is dependent on the "BRES" bits in
+// BUF_CNTL2.
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t smp_th : 8;  
+} sfe_kx13x_buf_cntl1_t;
+
 #define SFE_KX13X_BUF_CNTL2 0x5F
+// This register controls the buffer sample operation. 
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t bufe      :  1; // Activation of sample buffer
+	uint8_t bres      :  1; // Resolution - 8 or 16 bit samples
+	uint8_t bfie      :  1; // Full interrupt enable bit
+	uint8_t undefined :  3;
+	uint8_t bm        :  2; //FIFO, Stream, Trigger
+} sfe_kx13x_buf_cntl2_t;
+
 #define SFE_KX13X_BUF_STATUS_1 0x60
+// The buffer status registers (buff status one and two) report the number of 
+// data bytes in the sample buffer.
+// The smp_lev word is 10 bits, you can find the remaining three bits in buf_status2.
+typedef struct
+{
+	uint8_t smp_lev : 8;  
+} sfe_kx13x_buf_status1_t;
+
 #define SFE_KX13X_BUF_STATUS_2 0x61
+// The buffer status registers (buf_status_1/2) report the number of 
+// data bytes in the sample buffer.
+// The smp_lev word is 10 bits, you can find the remaining first seven bits in 
+// buf_status1.
+typedef struct
+{
+	uint8_t buf_trig  :  1;
+	uint8_t undefined :  5;
+	uint8_t smp_lev   :  2;
+} sfe_kx13x_buf_status2_t;
+
 #define SFE_KX13X_BUF_CLEAR 0x62
+// This register clears the sample level bits found in the previous buf_status_1/2 
+// register. This can be done by writing anything to this register.
+// These settings can be changed on the fly - no need to put IC in stand-by.
+typedef struct
+{
+	uint8_t buf_clear : 8;  
+} sfe_kx13x_buf_clear_t;
+
 #define SFE_KX13X_BUF_READ 0x63
+// Buffer Output Register, data is in 2's copmlement format
+typedef struct
+{
+	uint8_t buf_read : 8;  
+} sfe_kx13x_buf_read_t;
+
 #define SFE_KX13X_ADP_CNTL1 0x64
+// This register sets the ODR of the Advanced Data Path and number of samples
+// used to calculate RMS output. 
+typedef struct 
+{
+	uint8_t reserved :  1;
+	uint8_t rms_avc  :  3;
+	uint8_t oadp     :  3;
+} sfe_kx13x_adp_cntl1_t;
+
 #define SFE_KX13X_ADP_CNTL2 0x65
+// This register controls route of data path, wake-up/back-to-sleep,
+// filter bypass amongst others. 
+typedef struct 
+{
+	uint8_t adp_buf_sel  :  1;
+	uint8_t adp_wb_isel  :  1;
+	uint8_t rms_wb_osel  :  1;
+	uint8_t adp_flt2_byp :  1;
+	uint8_t adp_flt1_byp :  1;
+	uint8_t undefined    :  1;
+	uint8_t adp_rms_osel :  1;
+	uint8_t adp_f2_hp    :  1;
+} sfe_kx13x_adp_cntl2_t;
+
 #define SFE_KX13X_ADP_CNTL3 0x66
+// Sets ADP filter-1 coefficient (1/A)
+typedef struct 
+{
+	uint8_t adp_f1_1a : 8;
+} sfe_kx13x_adp_cntl3_t;
+
 #define SFE_KX13X_ADP_CNTL4 0x67
+// Sets the ADP filter-1 coefficient (B/A)
+// Bits [7:0]
+typedef struct 
+{
+	uint8_t adp_f1_ba : 8;
+} sfe_kx13x_adp_cntl4_t;
+
 #define SFE_KX13X_ADP_CNTL5 0x68
+// Sets the ADP filter-1 coefficient (B/A)
+// Bits [15:8]
+typedef struct 
+{
+	uint8_t adp_f1_ba : 8;
+} sfe_kx13x_adp_cntl5_t;
+
 #define SFE_KX13X_ADP_CNTL6 0x69
+// Sets the ADP filter-1 coefficient (B/A)
+// Bits [22:16]
+typedef struct 
+{
+	uint8_t undefined : 1;
+	uint8_t adp_f1_ba : 7;
+} sfe_kx13x_adp_cntl6_t;
+
 #define SFE_KX13X_ADP_CNTL7 0x6A
+// Sets the ADP filter-1 coefficient (C/A)
+// Bits [7:0]
+typedef struct 
+{
+	uint8_t adp_f1_ca : 8;
+} sfe_kx13x_adp_cntl7_t;
+
 #define SFE_KX13X_ADP_CNTL8 0x6B
+// Sets the ADP filter-1 coefficient (C/A)
+// Bits [15:8]
+typedef struct 
+{
+	uint8_t adp_f1_ca : 8;
+} sfe_kx13x_adp_cntl8_t;
+
 #define SFE_KX13X_ADP_CNTL9 0x6C
+// Sets the ADP filter-1 coefficient (C/A)
+// Bits [22:16]
+typedef struct 
+{
+	uint8_t undefined : 1;
+	uint8_t adp_f1_ca : 7;
+} sfe_kx13x_adp_cntl9_t;
+
 #define SFE_KX13X_ADP_CNTL10 0x6D
+// Sets the ADP filter-1 input scale shift
+typedef struct 
+{
+	uint8_t undefined  :  3;
+	uint8_t adp_f1_ish :  5;
+} sfe_kx13x_adp_cntl10_t;
+
 #define SFE_KX13X_ADP_CNTL11 0x6E
+// Sets the ADP filter-2 coefficient (1/A)
+typedef struct 
+{
+	uint8_t adp_f2_osh :  1;
+	uint8_t adp_f2_1a  :  7;
+} sfe_kx13x_adp_cntl11_t;
+
 #define SFE_KX13X_ADP_CNTL12 0x6F
+// Sets the ADP filter-2 coefficient (B/A)
+// Bits [7:0]
+typedef struct 
+{
+	uint8_t adp_f2_ba : 1;
+} sfe_kx13x_adp_cntl12_t;
+
 #define SFE_KX13X_ADP_CNTL13 0x70
-#define SFE_KX13X_ADP_CNTL14 0x71
-#define SFE_KX13X_ADP_CNTL15 0x72
-#define SFE_KX13X_ADP_CNTL16 0x73
-#define SFE_KX13X_ADP_CNTL17 0x74
+// Sets the ADP filter-2 coefficient (B/A)
+// Bits [14:8]
+typedef struct 
+{
+	uint8_t undefined : 1;
+	uint8_t adp_f2_ba : 1;
+} sfe_kx13x_adp_cntl13_t;
+
+//---------------------------------- Set to Zero by Manufacturer vv ----
+#define SFE_KX13X_ADP_CNTL14 0x71 // -------------------------------
+#define SFE_KX13X_ADP_CNTL15 0x72 // -------------------------------
+#define SFE_KX13X_ADP_CNTL16 0x73 // -------------------------------
+#define SFE_KX13X_ADP_CNTL17 0x74 // -------------------------------
+//---------------------------------- Set to Zero by Manufacturer ^^ ----
+
 #define SFE_KX13X_ADP_CNTL18 0x75
+// Sets the ADP filter-2 input scale shift
+typedef struct 
+{
+	uint8_t undefined  :  3;
+	uint8_t adp_f1_ish :  5;
+} sfe_kx13x_adp_cntl18_t;
+
 #define SFE_KX13X_ADP_CNTL19 0x76
-//Reserved 0x77 - 0x7F
+// Sets the ADP filter-2 output scale shift
+typedef struct 
+{
+	uint8_t undefined  :  3;
+	uint8_t adp_f1_osh :  5;
+} sfe_kx13x_adp_cntl19_t;
 
 typedef struct
 {
