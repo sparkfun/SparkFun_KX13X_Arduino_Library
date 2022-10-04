@@ -72,7 +72,29 @@ class QwDevKX13X
 
     QwDevKX13X() : _i2cAddress{0}, _cs{0} {};
 
+    //////////////////////////////////////////////////////////////////////////////////
+    // writeRegisterRegion()
+    //
+    //
+    //  Parameter    Description
+    //  ---------    -----------------------------
+    //  reg          register to read from
+    //  data         Array to store data in
+		//  length       Size of data in bytes (8 bits): 2 bytes = length of two
+    //  retval       -1 = error, 0 = success
     int32_t writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t length);
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // writeRegisterByte()
+    //
+    //
+    //  Parameter    Description
+    //  ---------    -----------------------------
+    //  reg          register to read from
+    //  data         Array to store data in
+    //  retval       -1 = error, 0 = success
+		//
+    int32_t writeRegisterByte(uint8_t reg, uint8_t data);
 
     //////////////////////////////////////////////////////////////////////////////////
     // readRegisterRegion()

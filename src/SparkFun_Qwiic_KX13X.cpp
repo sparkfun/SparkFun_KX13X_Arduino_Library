@@ -23,12 +23,12 @@ uint8_t QwDevKX13X::init(uint8_t deviceAddress, TwoWire &i2cPort)
   _deviceAddress = deviceAddress; //If provided, store the I2C address from user
   _i2cPort = &i2cPort;
   uint8_t partID;
-  KX13X_STATUS_t status = readRegister(&partID, KX13X_WHO_AM_I);
+  int status = readRegisterRegion(&partID, KX13X_WHO_AM_I);
   if( status != KX13X_SUCCESS ) 
     return status;
   else    
     return partID;
-  KX13X_STATUS_t status = readRegister(&partID, KX13X_WHO_AM_I);
+  int status = readRegisterRegion(&partID, KX13X_WHO_AM_I);
 }
 
 // This function sets various register with regards to these pre-determined
@@ -37,27 +37,27 @@ uint8_t QwDevKX13X::init(uint8_t deviceAddress, TwoWire &i2cPort)
 bool QwDevKX13X::initialize(uint8_t settings)
 {
 
-  KX13X_STATUS_t returnError = KX13X_GENERAL_ERROR;
+  int returnError = KX13X_GENERAL_ERROR;
   if( !accelControl(false) ){
     return false; 
   }
   
   if( settings == DEFAULT_SETTINGS )
-    returnError = writeRegister(KX13X_CNTL1, 0x00, DEFAULT_SETTINGS, 0);
+    returnError = writeRegisterRegion(KX13X_CNTL1, 0x00, DEFAULT_SETTINGS, 0);
   if( settings == INT_SETTINGS ){
     setInterruptPin(true, 1);
     routeHardwareInterrupt(HI_DATA_READY);
-    returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
+    returnError = writeRegisterRegion(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
   if( settings == SOFT_INT_SETTINGS ){
-    returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
+    returnError = writeRegisterRegion(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
   if( settings == BUFFER_SETTINGS ){
     setInterruptPin(true, 1);
     routeHardwareInterrupt(HI_BUFFER_FULL);
     enableBuffer(true, true);
     setBufferOperation(BUFFER_MODE_FIFO, BUFFER_16BIT_SAMPLES);
-    returnError = writeRegister(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
+    returnError = writeRegisterRegion(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
 
 
@@ -75,8 +75,8 @@ bool QwDevKX13X::accelControl(bool standby){
   if( standby != true && standby != false )
     return false;
   
-  KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_CNTL1, 0x7F, standby, 7);
+  int returnError;
+  returnError = writeRegisterRegion(KX13X_CNTL1, 0x7F, standby, 7);
   if( returnError == KX13X_SUCCESS )
     return true;
   else
@@ -90,7 +90,7 @@ bool QwDevKX13X::accelControl(bool standby){
 uint8_t QwDevKX13X::readAccelState(){
 
   uint8_t tempRegVal;
-  readRegister(&tempRegVal, KX13X_CNTL1);
+  readRegisterRegion(&tempRegVal, KX13X_CNTL1);
   return (tempRegVal & 0x80) >> 7;
 
 }
@@ -106,8 +106,8 @@ bool QwDevKX13X::setRange(uint8_t range){
   uint8_t accelState = readAccelState();
   accelControl(false);
 
-  KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_CNTL1, 0xE7, range, 3);
+  int returnError;
+  returnError = writeRegisterRegion(KX13X_CNTL1, 0xE7, range, 3);
   if( returnError == KX13X_SUCCESS ){
     accelControl(accelState);
     return true;
@@ -129,8 +129,8 @@ bool QwDevKX13X::setOutputDataRate(uint8_t rate){
   uint8_t accelState = readAccelState(); // Put it back where we found it.
   accelControl(false); // Can't adjust without putting to sleep
 
-  KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_ODCNTL, 0xF0, rate, 0);
+  int returnError;
+  returnError = writeRegisterRegion(KX13X_ODCNTL, 0xF0, rate, 0);
   if( returnError == KX13X_SUCCESS ){
     accelControl(accelState);
     return true;
@@ -144,7 +144,7 @@ bool QwDevKX13X::setOutputDataRate(uint8_t rate){
 float QwDevKX13X::readOutputDataRate(){
   
   uint8_t tempRegVal;
-  readRegister(&tempRegVal, KX13X_ODCNTL);
+  readRegisterRegion(&tempRegVal, KX13X_ODCNTL);
   tempRegVal &= 0x0F;
   tempRegVal = (float)tempRegVal;
   return (0.78 * (pow(2,tempRegVal)));
@@ -169,8 +169,8 @@ bool QwDevKX13X::setInterruptPin(bool enable, uint8_t polarity, uint8_t pulseWid
   accelControl(false); // Can't adjust without putting to sleep
 
   uint8_t combinedArguments = ((pulseWidth << 6) | (enable << 5) | (polarity << 4) | (latchControl << 3));
-  KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_INC1, 0x07, combinedArguments, 0);
+  int returnError;
+  returnError = writeRegisterRegion(KX13X_INC1, 0x07, combinedArguments, 0);
   if( returnError == KX13X_SUCCESS ){
     accelControl(accelState); 
     return true;
@@ -193,16 +193,16 @@ bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
   uint8_t accelState = readAccelState(); // Put it back where we found it.
   accelControl(false); // Can't adjust without putting to sleep
 
-  KX13X_STATUS_t returnError;
+  int returnError;
 
   if( pin == 1 ){
-    returnError = writeRegister(KX13X_INC4, 0x00, rdr, 0);
+    returnError = writeRegisterRegion(KX13X_INC4, 0x00, rdr, 0);
     if( returnError == KX13X_SUCCESS ){
       accelControl(accelState); 
       return true;
     }
   else
-    returnError = writeRegister(KX13X_INC6, 0x00, rdr, 0);
+    returnError = writeRegisterRegion(KX13X_INC6, 0x00, rdr, 0);
     if( returnError == KX13X_SUCCESS ){
       accelControl(accelState);
       return true;
@@ -219,8 +219,8 @@ bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
 bool QwDevKX13X::clearInterrupt(){
   
   uint8_t tempRegVal;
-  KX13X_STATUS_t returnError;
-  returnError = readRegister(&tempRegVal, KX13X_INT_REL);
+  int returnError;
+  returnError = readRegisterRegion(&tempRegVal, KX13X_INT_REL);
   if( returnError == KX13X_SUCCESS )
     return true;
   else 
@@ -232,8 +232,8 @@ bool QwDevKX13X::clearInterrupt(){
 bool QwDevKX13X::dataTrigger(){
   
   uint8_t tempRegVal;
-  KX13X_STATUS_t returnError;
-  returnError = readRegister(&tempRegVal, KX13X_INS2);
+  int returnError;
+  returnError = readRegisterRegion(&tempRegVal, KX13X_INS2);
   if( returnError == KX13X_SUCCESS ){
     if( tempRegVal & 0x10 )
       return true;
@@ -258,8 +258,8 @@ bool QwDevKX13X::setBufferThreshold(uint8_t threshold){
   
   uint8_t tempRegVal;
   uint8_t resolution;
-  KX13X_STATUS_t returnError;
-  returnError = readRegister(&tempRegVal, KX13X_BUF_CNTL2);
+  int returnError;
+  returnError = readRegisterRegion(&tempRegVal, KX13X_BUF_CNTL2);
   resolution = (tempRegVal & 0x40) >> 6; 
   if( returnError != KX13X_SUCCESS )
     return false;
@@ -267,7 +267,7 @@ bool QwDevKX13X::setBufferThreshold(uint8_t threshold){
   if( threshold > 86 && resolution == 1 ) // 1 = 16bit resolution, max samples: 86
     threshold = 86; 
   
-  returnError = writeRegister(KX13X_BUF_CNTL1, 0x00, threshold, 0);
+  returnError = writeRegisterRegion(KX13X_BUF_CNTL1, 0x00, threshold, 0);
   if( returnError == KX13X_SUCCESS )
     return true;
   else 
@@ -288,8 +288,8 @@ bool QwDevKX13X::setBufferOperation(uint8_t operationMode, uint8_t resolution){
 
 
   uint8_t combinedSettings = (resolution << 6) | operationMode;
-  KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_BUF_CNTL2, 0xBC, combinedSettings, 0);
+  int returnError;
+  returnError = writeRegisterRegion(KX13X_BUF_CNTL2, 0xBC, combinedSettings, 0);
   if( returnError == KX13X_SUCCESS )
     return true;
   else
@@ -306,8 +306,8 @@ bool QwDevKX13X::enableBuffer(bool enable, bool enableInterrupt){
     return false;
 
   uint8_t combinedSettings = (enable << 7) | (enableInterrupt << 5); 
-  KX13X_STATUS_t returnError;
-  returnError = writeRegister(KX13X_BUF_CNTL2, 0x5F, combinedSettings, 0);
+  int returnError;
+  returnError = writeRegisterRegion(KX13X_BUF_CNTL2, 0x5F, combinedSettings, 0);
   if( returnError == KX13X_SUCCESS )
     return true;
   else
@@ -322,13 +322,13 @@ bool QwDevKX13X::runCommandTest()
 {
   
   uint8_t tempRegVal;
-  KX13X_STATUS_t returnError;
+  int returnError;
 
-  returnError = writeRegister(KX13X_CNTL2, 0xBF, 1, 6);
+  returnError = writeRegisterRegion(KX13X_CNTL2, 0xBF, 1, 6);
   if( returnError != KX13X_SUCCESS )
     return false;
 
-  returnError = readRegister(&tempRegVal, KX13X_COTR);
+  returnError = readRegisterRegion(&tempRegVal, KX13X_COTR);
   if( returnError == KX13X_SUCCESS && tempRegVal == COTR_POS_STATE)
     return true;
   else 
@@ -342,18 +342,18 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
 
   
   uint8_t tempRegVal;
-  KX13X_STATUS_t returnError;
+  int returnError;
   uint8_t tempRegData[TOTAL_ACCEL_DATA_16BIT] {}; 
 
-  returnError = readRegister(&tempRegVal, KX13X_INC4);
+  returnError = readRegisterRegion(&tempRegVal, KX13X_INC4);
   if( returnError != KX13X_SUCCESS )
     return false;
 
   if( tempRegVal & 0x40 ){ // If Buffer interrupt is enabled, then we'll read accelerometer data from buffer register.
-    returnError = readMultipleRegisters(KX13X_BUF_READ, tempRegData, TOTAL_ACCEL_DATA_16BIT);
+    returnError = readRegisterRegion(KX13X_BUF_READ, tempRegData, TOTAL_ACCEL_DATA_16BIT);
   }
   else
-    returnError = readMultipleRegisters(KX13X_XOUT_L, tempRegData, TOTAL_ACCEL_DATA_16BIT);
+    returnError = readRegisterRegion(KX13X_XOUT_L, tempRegData, TOTAL_ACCEL_DATA_16BIT);
 
 
 
@@ -371,158 +371,6 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
 }
 
 
-// Reads a single register using the selected bus. 
-KX13X_STATUS_t QwDevKX13X::readRegister(uint8_t *dataPointer, uint8_t reg)
-{
-
-	if( _i2cPort == NULL ) {
-
-		_spiPort->beginTransaction(kxSPISettings);
-		digitalWrite(_cs, LOW);
-
-		reg = (reg | SPI_READ); 
-    _spiPort->transfer(reg);
-
-		*dataPointer = _spiPort->transfer(0x00);
-
-		digitalWrite(_cs, HIGH);
-		_spiPort->endTransaction();
-
-    return KX13X_SUCCESS;
-	}
-
-
-	uint8_t i2cResult;
-
-	_i2cPort->beginTransmission(_deviceAddress);
-	_i2cPort->write(reg);
-	i2cResult = _i2cPort->endTransmission(false); 
-	
-	if( i2cResult != 0 )
-		return KX13X_I2C_ERROR; //Error: Sensor did not ack
-														//
-	_i2cPort->requestFrom(static_cast<uint8_t>(_deviceAddress), static_cast<uint8_t>(1)); //returns number of bytes
-																																																		//
-	*dataPointer = _i2cPort->read();
-	return KX13X_SUCCESS;
-	
-}
-
-//Sends a request to read a number of registers
-KX13X_STATUS_t QwDevKX13X::readMultipleRegisters(uint8_t reg, uint8_t dataBuffer[], uint16_t numBytes)
-{
-	
-	if( _i2cPort == NULL ) {
-		_spiPort->beginTransaction(kxSPISettings);
-		digitalWrite(_cs, LOW);
-		reg = (reg | SPI_READ);
-    _spiPort->transfer(reg);
-		dataBuffer[0] = _spiPort->transfer(0x00); //first byte on transfer of address and read bit
-		for(size_t i = 1; i < numBytes; i++) {
-			dataBuffer[i] = _spiPort->transfer(0x00); //Assuming this will initiate auto-increment behavior
-		}
-		digitalWrite(_cs, HIGH);
-		_spiPort->endTransaction();
-		return KX13X_SUCCESS;
-	}
-	else {
-
-    if( numBytes > MAX_BUFFER_LENGTH ){
-      KX13X_STATUS_t returnError;
-      returnError = overBufLenI2CRead(reg, dataBuffer, numBytes);
-      return returnError;
-    }
-
-    uint8_t i2cResult;
-		_i2cPort->beginTransmission(_deviceAddress);
-		_i2cPort->write(reg);
-    i2cResult = _i2cPort->endTransmission(false);
-    if( i2cResult != 0 )
-      return KX13X_I2C_ERROR; //Error: Sensor did not ack
-
-		i2cResult = _i2cPort->requestFrom(_deviceAddress, uint8_t(numBytes), uint8_t(true));
-    if( i2cResult == 0 ) 
-      return KX13X_I2C_ERROR;
-		for(size_t i = 0; i < numBytes; i++) {
-			dataBuffer[i] = _i2cPort->read();
-		}
-    return KX13X_SUCCESS;
-	}
-}
-
-// This function is used when more than 32 bytes (TwoWire maximum buffer
-// length) of data are requested.
-KX13X_STATUS_t QwDevKX13X::overBufLenI2CRead(uint8_t reg, uint8_t dataBuffer[], int16_t numBytes)
-{
-  uint8_t resizedRead; 
-  uint8_t i2cResult; 
-  size_t arrayPlaceHolder = 0;
-
-  _i2cPort->beginTransmission(_deviceAddress);
-  _i2cPort->write(reg); 
-  i2cResult = _i2cPort->endTransmission(false);
-  if( i2cResult != 0 )
-    return KX13X_I2C_ERROR; //Error: Sensor did not ack
-
-  while(numBytes > 0) 
-  {
-    if( numBytes > MAX_BUFFER_LENGTH )
-      resizedRead = MAX_BUFFER_LENGTH; 
-    else
-      resizedRead = numBytes; 
-
-		i2cResult = _i2cPort->requestFrom(_deviceAddress, resizedRead, uint8_t(false)); //false = repeated start
-    if( i2cResult == 0 )
-      return KX13X_I2C_ERROR;
-		for(size_t i = 0; i < resizedRead; i++) {
-			dataBuffer[arrayPlaceHolder] = _i2cPort->read();
-      arrayPlaceHolder++;
-    }	
-    numBytes = numBytes - MAX_BUFFER_LENGTH; // end condition
-  }
-  return KX13X_SUCCESS;
-}
-
-// Writes the given value to the given register, using the provided mask and
-// bit position. 
-KX13X_STATUS_t QwDevKX13X::writeRegister(uint8_t reg, uint8_t mask, uint8_t data, uint8_t bitPos)
-{
-
-  uint8_t tempRegVal; 
-  KX13X_STATUS_t returnError;
-
-  returnError = readRegister(&tempRegVal, reg);
-  if( returnError != KX13X_SUCCESS )
-    return KX13X_I2C_ERROR;
-  tempRegVal &= mask;
-  tempRegVal |= (data << bitPos); 
-
-	if( _i2cPort == NULL ) {
-    
-		_spiPort->beginTransaction(kxSPISettings);
-		digitalWrite(_cs, LOW);
-		_spiPort->transfer(reg | SPI_WRITE);
-		_spiPort->transfer(tempRegVal); 
-		digitalWrite(_cs, HIGH);
-		_spiPort->endTransaction();
-    return KX13X_SUCCESS;
-	}
-
-	else { 
-		_i2cPort->beginTransmission(_deviceAddress);
-		_i2cPort->write(reg); // Move to register
-		_i2cPort->write(tempRegVal); 
-
-		uint8_t i2cResult = _i2cPort->endTransmission();
-		if( i2cResult != 0 )
-			return KX13X_I2C_ERROR;
-    else
-      return KX13X_SUCCESS;
-	}
-
-}
-
-
 
 //***************************************** KX132 ******************************************
 //******************************************************************************************
@@ -534,31 +382,17 @@ QwiicKX132::QwiicKX132() { }
 
 // Uses the beginCore function to check that the part ID from the "who am I"
 // register matches the correct value. Uses I2C for data transfer.
-bool QwiicKX132::begin(uint8_t kxAddress, TwoWire &i2cPort){
+bool QwiicKX132::init(uint8_t kxAddress, TwoWire &i2cPort){
 
   if( kxAddress != KX13X_DEFAULT_ADDRESS && kxAddress != KX13X_ALT_ADDRESS )
     return false;
 
-  uint8_t partID = beginCore(kxAddress, i2cPort); 
+  uint8_t partID = getUniqueID(kxAddress, i2cPort); 
   if( partID == KX132_WHO_AM_I ) 
     return true; 
   else 
     return false;
   
-}
-
-// Uses the beginCore function to check that the part ID from the "who am I"
-// register matches the correct value. Uses SPI for data transfer.
-bool QwiicKX132::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
-
-  uint8_t partID; 
-
-	partID =	beginSPICore(csPin, spiPortSpeed, spiPort); 
-	
-  if( partID == KX132_WHO_AM_I ) 
-    return true; 
-
-	return false;
 }
 
 // Grabs raw accel data and passes it to the following function to be
@@ -580,9 +414,11 @@ bool QwiicKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
 
   uint8_t regVal;
   uint8_t range; 
-  KX13X_STATUS_t returnError;
-  returnError = readRegister(&regVal, KX13X_CNTL1);
-  if( returnError != KX13X_SUCCESS )
+  int returnError;
+
+  returnError = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
+
+  if( returnError != 0 )
     return false; 
 
   range = (regVal & 0x18) >> 3;
@@ -609,6 +445,8 @@ bool QwiicKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
       userAccel->yData = (float)rawAccelData->yData * convRange16G;
       userAccel->zData = (float)rawAccelData->zData * convRange16G;
       break;
+		default:
+			return false;
   }
 
   return true;
@@ -622,33 +460,6 @@ bool QwiicKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
 //Constructor
 QwiicKX134::QwiicKX134() { }
 
-// Uses the beginCore function to check that the part ID from the "who am I"
-// register matches the correct value. Uses I2C for data transfer.
-bool QwiicKX134::begin(uint8_t kxAddress, TwoWire &i2cPort){
-
-  if( kxAddress != KX13X_DEFAULT_ADDRESS && kxAddress != KX13X_ALT_ADDRESS )
-    return false;
-
-  uint8_t partID = beginCore(kxAddress, i2cPort); 
-  if( partID == KX134_WHO_AM_I ) 
-    return true; 
-  else 
-    return false;
-}
-
-
-// Uses the beginCore function to check that the part ID from the "who am I"
-// register matches the correct value. Uses SPI for data transfer.
-bool QwiicKX134::beginSPI(uint8_t csPin, uint32_t spiPortSpeed, SPIClass &spiPort){
-
-  uint8_t partID; 
-	partID = beginSPICore(csPin, spiPortSpeed, spiPort); 
-
-  if( partID == KX134_WHO_AM_I ) 
-    return true; 
-
-	return false;
-}
 
 // Grabs raw accel data and passes it to the following function to be
 // converted.
@@ -669,9 +480,11 @@ bool QwiicKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
 
   uint8_t regVal;
   uint8_t range; 
-  KX13X_STATUS_t returnError;
-  returnError = readRegister(&regVal, KX13X_CNTL1);
-  if( returnError != KX13X_SUCCESS )
+  int returnError;
+
+  returnError = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
+
+  if( returnError != 0 )
     return false; 
 
   range = (regVal & 0x18) >> 3;
@@ -703,4 +516,19 @@ bool QwiicKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
   return true;
 }
 
+
+int QwDevKX13X::readRegisterRegion(uint8_t reg, uint8_t *value, uint8_t len)
+{
+	_sfeBus->readRegisterRegion(_i2cAddress, reg, *value, len);
+}
+
+int QwDevKX13X::writeRegisterRegion(uint8_t reg, uint8_t *value, uint8_t len)
+{
+	_sfeBus->writeRegisterRegion(_i2cAddress, reg, *value, len);
+}
+
+int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t value)
+{
+	_sfeBus->writeRegisterByte(_i2cAddress, reg, value);
+}
 

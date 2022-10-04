@@ -774,12 +774,3 @@ typedef struct
   uint8_t SFE_KX13X_I2C_ERROR = 0x02
 } sfe_error_code_t;
 
-#define  SFE_HI_TILT_POSITION 0x01
-#define  SFE_HI_WAKE_UP  0x02 
-#define  SFE_HI_TAP_DOUBLE_TAP 0x04
-#define  SFE_HI_BACK_TO_SLEEP 0x08
-#define  SFE_HI_DATA_READY 0x10
-#define  SFE_HI_WATERMARK 0x20
-#define  SFE_HI_BUFFER_FULL 0x40
-#define  SFE_HI_FREEFALL 0x80
-
