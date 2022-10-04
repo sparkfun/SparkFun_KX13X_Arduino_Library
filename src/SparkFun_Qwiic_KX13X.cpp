@@ -450,28 +450,32 @@ bool QwDevKX13X::dataTrigger()
 // buffer. Each sample is one full word of X,Y,Z data and the minimum that this
 // can be set to is two. The maximum is dependent on the resolution: 8 or 16bit,
 // set in the BUF_CNTL2 (0x5F) register (see "setBufferOperation" below).  
-bool QwDevKX13X::setBufferThreshold(uint8_t threshold){
+bool QwDevKX13X::setBufferThreshold(uint8_t threshold)
+{
+
+  int retVal;
+  uint8_t tempVal;
+  uint8_t resolution;
 
   if( threshold < 2 || threshold > 171 )
     return false;
 
-  
-  uint8_t tempVal;
-  uint8_t resolution;
-  int retVal;
-  retVal = readRegisterRegion(&tempVal, SFE_KX13X_BUF_CNTL2);
-  resolution = (tempVal & 0x40) >> 6; 
-  if( retVal != SFE_KX13X_SUCCESS )
+  retVal = readRegisterRegion(SFE_KX13X_BUF_CNTL2, &tempVal, 1);
+
+  if( retVal != 0 )
     return false;
+
+  resolution = (tempVal & 0x40) >> 6; 
 
   if( threshold > 86 && resolution == 1 ) // 1 = 16bit resolution, max samples: 86
     threshold = 86; 
   
-  retVal = writeRegisterRegion(SFE_KX13X_BUF_CNTL1, 0x00, threshold, 0);
-  if( retVal  != 0 )
+  retVal = writeRegisterByte(SFE_KX13X_BUF_CNTL1, threshold);
+
+  if( retVal != 0 )
     return true;
-  else 
-    return false;
+
+	return false
 
 }
 
@@ -525,7 +529,7 @@ bool QwDevKX13X::runCommandTest()
   int retVal;
 
   retVal = writeRegisterRegion(SFE_KX13X_CNTL2, 0xBF, 1, 6);
-  if( retVal != SFE_KX13X_SUCCESS )
+  if( retVal != 0 )
     return false;
 
   retVal = readRegisterRegion(&tempVal, SFE_KX13X_COTR);
@@ -546,7 +550,7 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
   uint8_t tempRegData[TOTAL_ACCEL_DATA_16BIT] {}; 
 
   retVal = readRegisterRegion(&tempVal, SFE_KX13X_INC4);
-  if( retVal != SFE_KX13X_SUCCESS )
+  if( retVal != 0 )
     return false;
 
   if( tempVal & 0x40 ){ // If Buffer interrupt is enabled, then we'll read accelerometer data from buffer register.
