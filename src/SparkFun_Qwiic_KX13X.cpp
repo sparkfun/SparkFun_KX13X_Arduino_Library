@@ -18,17 +18,58 @@ Distributed as-is; no warranty is given.
 #include "SparkFun_Qwiic_KX13X.h"
 
 
-uint8_t QwDevKX13X::init(uint8_t deviceAddress, TwoWire &i2cPort)
+bool QwDevKX13X::init(void)
 {
-  _deviceAddress = deviceAddress; //If provided, store the I2C address from user
-  _i2cPort = &i2cPort;
-  uint8_t partID;
-  int status = readRegisterRegion(&partID, KX13X_WHO_AM_I);
-  if( status != KX13X_SUCCESS ) 
-    return status;
-  else    
-    return partID;
-  int status = readRegisterRegion(&partID, KX13X_WHO_AM_I);
+  if( !_sfebus->ping(_i2cAddress) )
+		return false;
+
+	if( getUniqueID() != KX132_WHO_AM_I )
+		return false;
+
+	return true; 
+}
+
+uint8_t QwDevKX13X::getUniqueID()
+{
+	uint8_t tempVal;
+	int retVal = readRegisterRegion(SFE_KX13X_WHO_AM_I, &tempVal, 1);
+
+	if( retVal != 0 )
+		return 0; 
+
+	return tempVal;	
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+// setCommunicationBus()
+//
+// Method to set the bus object that is used to communicate with the device
+//
+//  Parameter    Description
+//  ---------    -----------------------------
+//  theBus       The communication bus object
+//  i2cAddress   I2C address for the 6DoF
+
+void QwDevISM330DHCX::setCommunicationBus(QwIDeviceBus &theBus, uint8_t i2cAddress)
+{
+    _sfeBus = &theBus;
+		_i2cAddress = i2cAddress; 
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+// setCommunicationBus()
+//
+// Overloaded option for setting the data bus (theBus) object to a SPI bus object.
+//
+//  Parameter    Description
+//  ---------    -----------------------------
+//  theBus       The communication bus object
+//  
+
+void QwDevISM330DHCX::setCommunicationBus(QwIDeviceBus &theBus)
+{
+    _sfeBus = &theBus;
 }
 
 // This function sets various register with regards to these pre-determined
@@ -37,118 +78,200 @@ uint8_t QwDevKX13X::init(uint8_t deviceAddress, TwoWire &i2cPort)
 bool QwDevKX13X::initialize(uint8_t settings)
 {
 
-  int returnError = KX13X_GENERAL_ERROR;
-  if( !accelControl(false) ){
+  int retVal; 
+
+  if( !accelControl(false) )
     return false; 
-  }
+  
   
   if( settings == DEFAULT_SETTINGS )
-    returnError = writeRegisterRegion(KX13X_CNTL1, 0x00, DEFAULT_SETTINGS, 0);
+    retVal = writeRegisterRegion(SFE_KX13X_CNTL1, 0x00, DEFAULT_SETTINGS, 0);
+
   if( settings == INT_SETTINGS ){
     setInterruptPin(true, 1);
     routeHardwareInterrupt(HI_DATA_READY);
-    returnError = writeRegisterRegion(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
+    retVal = writeRegisterRegion(SFE_KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
+
   if( settings == SOFT_INT_SETTINGS ){
-    returnError = writeRegisterRegion(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
+    retVal = writeRegisterRegion(SFE_KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
+
   if( settings == BUFFER_SETTINGS ){
     setInterruptPin(true, 1);
     routeHardwareInterrupt(HI_BUFFER_FULL);
     enableBuffer(true, true);
     setBufferOperation(BUFFER_MODE_FIFO, BUFFER_16BIT_SAMPLES);
-    returnError = writeRegisterRegion(KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
+    retVal = writeRegisterRegion(SFE_KX13X_CNTL1, 0x00, INT_SETTINGS, 0);
   }
 
 
-  if( returnError == KX13X_SUCCESS )
+  if( retVal  != 0 )
     return true;
   else
     return false;
 }
 
-// Address: 0x1B, bit[7]: default value is: 0x00
-// This function sets the accelerometer into stand-by mode or
-// an active mode depending on the given argument.
-bool QwDevKX13X::accelControl(bool standby){
+bool QwDevKX13X::setOperatingMode(bool standby){
 
-  if( standby != true && standby != false )
+  uint8_t tempVal;
+  int retVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
+	
+  if( retVal != 0 )
     return false;
-  
-  int returnError;
-  returnError = writeRegisterRegion(KX13X_CNTL1, 0x7F, standby, 7);
-  if( returnError == KX13X_SUCCESS )
-    return true;
-  else
+
+	tempVal = (tempVal | standby);
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
+
+  if( retVal != 0 )
     return false;
+
+	return true;
   
 }
 
 // Address: 0x1B, bit[7]: default value is: 0x00
 // This function reads whether the accelerometer is in stand by or an active
 // mode. 
-uint8_t QwDevKX13X::readAccelState(){
+uint8_t QwDevKX13X::getOpertingMode(){
 
-  uint8_t tempRegVal;
-  readRegisterRegion(&tempRegVal, KX13X_CNTL1);
-  return (tempRegVal & 0x80) >> 7;
+  uint8_t tempVal;
+	int retVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
+
+	if( retVal != 0 )
+		return 2; // Not a possible value for the PC1 bit.
+
+  return (tempVal  >> 7);
 
 }
 // Address: 0x1B, bit[1:0]: default value is: 0x00 (2g)
 // This function sets the acceleration range of the accelerometer outputs.
 // Possible KX132 arguments: 0x00 (2g), 0x01 (4g), 0x02 (8g), 0x03 (16g)
 // Possible KX134 arguments: 0x00 (8g), 0x01 (16g), 0x02 (32g), 0x03 (64g)
+// KX13X needs to be set into standby mode to change this value
 bool QwDevKX13X::setRange(uint8_t range){
 
-  if( range > 3)
+	int retVal; 
+
+  if( range > 3 )
     return false;
 
-  uint8_t accelState = readAccelState();
-  accelControl(false);
+  retVal = writeRegisterByte(SFE_KX13X_CNTL1, range);
 
-  int returnError;
-  returnError = writeRegisterRegion(KX13X_CNTL1, 0xE7, range, 3);
-  if( returnError == KX13X_SUCCESS ){
-    accelControl(accelState);
-    return true;
-  }
-  else
+  if( retVal != 0 )
     return false;
+
+	return true;
   
 }
 
+bool QwDevKX13X::enableDataEngine();
+{
+	int retVal; 
+	uint8_t tempVal; 
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
+
+  if( retVal != 0 )
+    return false;
+	
+	tempVal = tempVal | 0x20; 
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
+
+  if( retVal != 0 )
+    return false;
+
+	return true;
+}
+
+bool QwDevKX13X::enableTapEngine();
+{
+	int retVal; 
+	uint8_t tempVal; 
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
+
+  if( retVal != 0 )
+    return false;
+	
+	tempVal = tempVal | 0x40; 
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
+
+  if( retVal != 0 )
+    return false;
+
+	return true;
+}
+
+bool QwDevKX13X::enableTiltEngine();
+{
+	int retVal; 
+	uint8_t tempVal; 
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
+
+  if( retVal != 0 )
+    return false;
+	
+	tempVal = tempVal | 0x01; 
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
+
+  if( retVal != 0 )
+    return false;
+
+	return true;
+}
 
 //Address: 0x21, bits[3:0] - default value is 0x06 (50Hz)
 //Sets the refresh rate of the accelerometer's data. 
 // 0.781 * (2 * (n)) derived from pg. 26 of Techincal Reference Manual
-bool QwDevKX13X::setOutputDataRate(uint8_t rate){
+bool QwDevKX13X::setOutputDataRate(uint8_t rate)
+{
 
   if( rate > 15 )
     return false;
 
-  uint8_t accelState = readAccelState(); // Put it back where we found it.
-  accelControl(false); // Can't adjust without putting to sleep
+	uint8_t tempVal;
+  int retVal;
 
-  int returnError;
-  returnError = writeRegisterRegion(KX13X_ODCNTL, 0xF0, rate, 0);
-  if( returnError == KX13X_SUCCESS ){
-    accelControl(accelState);
-    return true;
-  }
-  else
+	retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
+
+  if( retVal != 0 )
     return false;
+	
+	tempVal = tempVal | rate; 
+
+  retVal = writeRegisterByte(SFE_KX13X_ODCNTL, tempVal);
+
+  if( retVal != 0 )
+    return false;
+
+	return true;
 }
 
 // Address:0x21 , bit[3:0]: default value is: 0x06 (50Hz)
 // Gets the accelerometer's output data rate. 
-float QwDevKX13X::readOutputDataRate(){
-  
-  uint8_t tempRegVal;
-  readRegisterRegion(&tempRegVal, KX13X_ODCNTL);
-  tempRegVal &= 0x0F;
-  tempRegVal = (float)tempRegVal;
-  return (0.78 * (pow(2,tempRegVal)));
+float QwDevKX13X::getOutputDataRate()
+{
+	int retVal; 
+  uint8_t tempVal;
 
+  retVal = readRegisterRegion(SFE_KX13X_ODCNTL, &tempVal);
+	
+	if( retVal != 0 )
+		return 0.0;
+
+  tempVal = tempVal & 0x0F;
+
+  return (0.78 * ( pow(2,(float)tempVal)));
 }
 
 
@@ -156,57 +279,130 @@ float QwDevKX13X::readOutputDataRate(){
 // This register controls the various interrupt settings, all of which can be
 // set here. Note: trying to set just one will set the others to their default
 // state.
-bool QwDevKX13X::setInterruptPin(bool enable, uint8_t polarity, uint8_t pulseWidth, bool latchControl){
+// Thish configures all of the bits related to the interrupt pin.
+bool QwDevKX13X::configureInterruptPin(uint8_t pinVal){
   
-  if( enable != true && enable != false ) 
-    return false;
-  else if( polarity != 1 && polarity != 0 ) 
-    return false;
-  else if( pulseWidth != 1 && pulseWidth != 0 ) 
+	int retVal;
+
+  retVal = writeRegisterByte(SFE_KX13X_INC1, pinVal);
+
+  if( retVal != 0 )
     return false;
 
-  uint8_t accelState = readAccelState(); // Put it back where we found it.
-  accelControl(false); // Can't adjust without putting to sleep
+	return true;
+}
 
-  uint8_t combinedArguments = ((pulseWidth << 6) | (enable << 5) | (polarity << 4) | (latchControl << 3));
-  int returnError;
-  returnError = writeRegisterRegion(KX13X_INC1, 0x07, combinedArguments, 0);
-  if( returnError == KX13X_SUCCESS ){
-    accelControl(accelState); 
-    return true;
-  }
-  else
-    return false;
+bool QwDevKX13X::enablePhysInterrupt(bool enable)
+{
+	int retVal;
+	uint8_t tempVal;
+
+	retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
+
+	if( retVal != 0 )
+		return false;
+
+	tempVal = tempVal | (enable << 6);
+
+	retVal = writRegisterByte(SFE_KX13X_INC1, tempVal);
+
+	if( retVal != 0 )
+		return false;
+
+	return true; 
+}
+
+bool QwDevKX13X::setPinMode(bool activeLow)
+{
+	int retVal;
+	uint8_t tempVal;
+
+	retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
+
+	if( retVal != 0 )
+		return false;
+
+	tempVal = tempVal | (activeLow << 5);
+
+	retVal = writRegisterByte(SFE_KX13X_INC1, tempVal);
+
+	if( retVal != 0 )
+		return false;
+
+	return true; 
+}
+
+bool QwDevKX13X::setLatchControl(bool pulse)
+{
+	int retVal;
+	uint8_t tempVal;
+
+	retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
+
+	if( retVal != 0 )
+		return false;
+
+	tempVal = tempVal | (pulse << 4);
+
+	retVal = writRegisterByte(SFE_KX13X_INC1, tempVal);
+
+	if( retVal != 0 )
+		return false;
+
+	return true; 
+}
+
+bool QwDevKX13X::setPulseWidth(uint8_t width)
+{
+	int retVal;
+	uint8_t tempVal;
+
+	if( width > 4 ) 
+		return false; 
+
+	retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
+
+	if( retVal != 0 )
+		return false;
+
+	tempVal = tempVal | (width << 6);
+
+	retVal = writRegisterByte(SFE_KX13X_INC1, tempVal);
+
+	if( retVal != 0 )
+		return false;
+
+	return true; 
 }
 
 
 // Address: 0x25, bits[7:0]: default value is 0: disabled
 // Enables anyone of the various interrupt settings to be routed to hardware
 // interrupt pin one or pin two.
-bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
+bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin)
+{
 
-  if(  rdr > 128 )
-    return false;
-  if( pin != 1 && pin != 2)
+  int retVal;
+
+  if( rdr > 0x80 ) 
     return false;
   
-  uint8_t accelState = readAccelState(); // Put it back where we found it.
-  accelControl(false); // Can't adjust without putting to sleep
 
-  int returnError;
+  if( pin == 1 )
+	{
+    retVal = writeRegisterByte(SFE_KX13X_INC4, rdr);
 
-  if( pin == 1 ){
-    returnError = writeRegisterRegion(KX13X_INC4, 0x00, rdr, 0);
-    if( returnError == KX13X_SUCCESS ){
-      accelControl(accelState); 
+    if( retVal != 0 )
+      return false;
+  }
+
+  if( pin == 2 ) 
+	{
+    retVal = writeRegisterByte(KX13X_INC6, rdr);
+
+    if( retVal != 0 )
       return true;
-    }
-  else
-    returnError = writeRegisterRegion(KX13X_INC6, 0x00, rdr, 0);
-    if( returnError == KX13X_SUCCESS ){
-      accelControl(accelState);
-      return true;
-    }
+    
   }
 
   return false;
@@ -216,33 +412,37 @@ bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin){
 // Address: 0x1A , bit[7:0]: default value is: 0x00
 // This function reads the interrupt latch release register, thus clearing any
 // interrupts. 
-bool QwDevKX13X::clearInterrupt(){
+bool QwDevKX13X::clearInterrupt()
+{
   
-  uint8_t tempRegVal;
-  int returnError;
-  returnError = readRegisterRegion(&tempRegVal, KX13X_INT_REL);
-  if( returnError == KX13X_SUCCESS )
-    return true;
-  else 
-    return false;
+  int retVal;
+  uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_INT_REL, &tempVal, 1);
+
+  if( retVal != 0 )
+		 return false;
+	
+	return true;
 }
 
 // Address: 0x17 , bit[4]: default value is: 0
 // This function triggers collection of data by the KX13X.
-bool QwDevKX13X::dataTrigger(){
+bool QwDevKX13X::dataTrigger()
+{
   
-  uint8_t tempRegVal;
-  int returnError;
-  returnError = readRegisterRegion(&tempRegVal, KX13X_INS2);
-  if( returnError == KX13X_SUCCESS ){
-    if( tempRegVal & 0x10 )
-      return true;
-    else
-      return false;
-  }
-  else 
-    return false;
+  int retVal;
+  uint8_t tempVal;
 
+  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal);
+
+  if( retVal  != 0 )
+      return false;
+
+	if( tempVal & 0x10 )
+      return true;
+
+	return false;
 }
 
 // Address: 0x5E , bit[7:0]: default value is: unknown
@@ -256,19 +456,19 @@ bool QwDevKX13X::setBufferThreshold(uint8_t threshold){
     return false;
 
   
-  uint8_t tempRegVal;
+  uint8_t tempVal;
   uint8_t resolution;
-  int returnError;
-  returnError = readRegisterRegion(&tempRegVal, KX13X_BUF_CNTL2);
-  resolution = (tempRegVal & 0x40) >> 6; 
-  if( returnError != KX13X_SUCCESS )
+  int retVal;
+  retVal = readRegisterRegion(&tempVal, SFE_KX13X_BUF_CNTL2);
+  resolution = (tempVal & 0x40) >> 6; 
+  if( retVal != SFE_KX13X_SUCCESS )
     return false;
 
   if( threshold > 86 && resolution == 1 ) // 1 = 16bit resolution, max samples: 86
     threshold = 86; 
   
-  returnError = writeRegisterRegion(KX13X_BUF_CNTL1, 0x00, threshold, 0);
-  if( returnError == KX13X_SUCCESS )
+  retVal = writeRegisterRegion(SFE_KX13X_BUF_CNTL1, 0x00, threshold, 0);
+  if( retVal  != 0 )
     return true;
   else 
     return false;
@@ -288,9 +488,9 @@ bool QwDevKX13X::setBufferOperation(uint8_t operationMode, uint8_t resolution){
 
 
   uint8_t combinedSettings = (resolution << 6) | operationMode;
-  int returnError;
-  returnError = writeRegisterRegion(KX13X_BUF_CNTL2, 0xBC, combinedSettings, 0);
-  if( returnError == KX13X_SUCCESS )
+  int retVal;
+  retVal = writeRegisterRegion(SFE_KX13X_BUF_CNTL2, 0xBC, combinedSettings, 0);
+  if( retVal  != 0 )
     return true;
   else
     return false;
@@ -306,9 +506,9 @@ bool QwDevKX13X::enableBuffer(bool enable, bool enableInterrupt){
     return false;
 
   uint8_t combinedSettings = (enable << 7) | (enableInterrupt << 5); 
-  int returnError;
-  returnError = writeRegisterRegion(KX13X_BUF_CNTL2, 0x5F, combinedSettings, 0);
-  if( returnError == KX13X_SUCCESS )
+  int retVal;
+  retVal = writeRegisterRegion(SFE_KX13X_BUF_CNTL2, 0x5F, combinedSettings, 0);
+  if( retVal  != 0 )
     return true;
   else
     return false;
@@ -321,15 +521,15 @@ bool QwDevKX13X::enableBuffer(bool enable, bool enableInterrupt){
 bool QwDevKX13X::runCommandTest()
 {
   
-  uint8_t tempRegVal;
-  int returnError;
+  uint8_t tempVal;
+  int retVal;
 
-  returnError = writeRegisterRegion(KX13X_CNTL2, 0xBF, 1, 6);
-  if( returnError != KX13X_SUCCESS )
+  retVal = writeRegisterRegion(SFE_KX13X_CNTL2, 0xBF, 1, 6);
+  if( retVal != SFE_KX13X_SUCCESS )
     return false;
 
-  returnError = readRegisterRegion(&tempRegVal, KX13X_COTR);
-  if( returnError == KX13X_SUCCESS && tempRegVal == COTR_POS_STATE)
+  retVal = readRegisterRegion(&tempVal, SFE_KX13X_COTR);
+  if( retVal  != 0 && tempVal == COTR_POS_STATE)
     return true;
   else 
     return false;
@@ -341,23 +541,23 @@ bool QwDevKX13X::runCommandTest()
 bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
 
   
-  uint8_t tempRegVal;
-  int returnError;
+  uint8_t tempVal;
+  int retVal;
   uint8_t tempRegData[TOTAL_ACCEL_DATA_16BIT] {}; 
 
-  returnError = readRegisterRegion(&tempRegVal, KX13X_INC4);
-  if( returnError != KX13X_SUCCESS )
+  retVal = readRegisterRegion(&tempVal, SFE_KX13X_INC4);
+  if( retVal != SFE_KX13X_SUCCESS )
     return false;
 
-  if( tempRegVal & 0x40 ){ // If Buffer interrupt is enabled, then we'll read accelerometer data from buffer register.
-    returnError = readRegisterRegion(KX13X_BUF_READ, tempRegData, TOTAL_ACCEL_DATA_16BIT);
+  if( tempVal & 0x40 ){ // If Buffer interrupt is enabled, then we'll read accelerometer data from buffer register.
+    retVal = readRegisterRegion(SFE_KX13X_BUF_READ, tempRegData, TOTAL_ACCEL_DATA_16BIT);
   }
   else
-    returnError = readRegisterRegion(KX13X_XOUT_L, tempRegData, TOTAL_ACCEL_DATA_16BIT);
+    retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, TOTAL_ACCEL_DATA_16BIT);
 
 
 
-  if( returnError == KX13X_SUCCESS ) {
+  if( retVal  != 0 ) {
     rawAccelData->xData = tempRegData[XLSB]; 
     rawAccelData->xData |= (static_cast<uint16_t>(tempRegData[XMSB]) << 8); 
     rawAccelData->yData = tempRegData[YLSB]; 
@@ -414,11 +614,11 @@ bool QwiicKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
 
   uint8_t regVal;
   uint8_t range; 
-  int returnError;
+  int retVal;
 
-  returnError = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
+  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
 
-  if( returnError != 0 )
+  if( retVal != 0 )
     return false; 
 
   range = (regVal & 0x18) >> 3;
@@ -480,11 +680,11 @@ bool QwiicKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
 
   uint8_t regVal;
   uint8_t range; 
-  int returnError;
+  int retVal;
 
-  returnError = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
+  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
 
-  if( returnError != 0 )
+  if( retVal != 0 )
     return false; 
 
   range = (regVal & 0x18) >> 3;
