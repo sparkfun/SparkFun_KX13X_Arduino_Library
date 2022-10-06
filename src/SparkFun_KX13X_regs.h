@@ -1,8 +1,10 @@
+
 #define SFE_KX13X_MAN_ID 0x00//      Retuns "KION" in ASCII
+										 //
 typedef struct 
 {
 	uint8_t man_id : 8; 
-} sfe_kx13x_man_id_t
+} sfe_kx13x_man_id_t;
 
 #define SFE_KX13X_PART_ID 0x01//      Retuns "KION" in ASCII
 typedef struct 
@@ -505,7 +507,7 @@ typedef struct
 {
 	uint8_t reserved_one :  1;
 	uint8_t avc          :  3;
-	uint8_t reserved_one :  4;
+	uint8_t reserved_two :  4;
 } sfe_kx13x_lp_cntl1_t;
 
 #define SFE_KX13X_LP_CNTL2 0x3B
@@ -769,8 +771,8 @@ typedef struct
 
 typedef struct
 {
-  uint8_t SFE_KX13X_SUCCESS  = 0x00,
-  uint8_t SFE_KX13X_GENERAL_ERROR = 0x01,
-  uint8_t SFE_KX13X_I2C_ERROR = 0x02
+  uint8_t SFE_KX13X_SUCCESS  = 0x00;
+  uint8_t SFE_KX13X_GENERAL_ERROR = 0x01;
+  uint8_t SFE_KX13X_I2C_ERROR = 0x03;
 } sfe_error_code_t;
 

@@ -11,22 +11,27 @@ Distributed as-is; no warranty is given.
 
 #pragma once
 
-#if (ARDUINO >= 100)
-#include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
-
 #include <SPI.h>
 #include <Wire.h>
+#include "SparkFun_KX13X_regs.h"
+#include "sfe_bus.h"
 
 #define KX13X_ADDRESS_HIGH 0x1F
-#define KKX13X_ADDRESS_LOW 0x1E
+#define KX13X_ADDRESS_LOW 0x1E
 
 #define KX132_WHO_AM_I  0x3D
 #define KX134_WHO_AM_I  0x46
 
-#define TOTAL_ACCEL_DATA_16BIT 6 
+#define KX132_RANGE2G  0x00
+#define KX132_RANGE4G  0x01
+#define KX132_RANGE8G  0x02
+#define KX132_RANGE16G 0x03
+
+#define KX134_RANGE8G  0x00
+#define KX134_RANGE16G 0x01
+#define KX134_RANGE32G 0x02
+#define KX134_RANGE64G 0x03
+
 #define TOTAL_ACCEL_DATA_8BIT 3 
 
 #define XLSB 0
@@ -43,9 +48,6 @@ Distributed as-is; no warranty is given.
 #define SOFT_INT_SETTINGS 0xE1  
 #define BUFFER_SETTINGS 0xE2  
 #define TILT_SETTINGS 0xE3  
-
-#define COTR_DEF_STATE 0x55
-#define COTR_POS_STATE 0xAA
 
 #define BUFFER_16BIT_SAMPLES 0x01
 #define BUFFER_8BIT_SAMPLES 0x00
@@ -123,38 +125,62 @@ class QwDevKX13X
 		void setCommunicationBus(QwIDeviceBus &theBus, uint8_t i2cAddress);
 		void setCommunicationBus(QwIDeviceBus &theBus);
 
-		bool init();
-
 		uint8_t getUniqueID();
 
 		bool initialize(uint8_t settings = DEFAULT_SETTINGS);
-
+		
+		// General Settings
+		bool enableAccel(bool enable = true);
+		uint8_t getOperatingMode();
     bool setRange(uint8_t);
-    bool setOutputDataRate(uint8_t);
     bool setInterruptPin(bool enable, uint8_t polarity = 0, uint8_t pulseWidth = 0, bool latchControl = false);
-    bool setBufferThreshold(uint8_t);
-    bool setBufferOperation(uint8_t, uint8_t);
-
-    float readOutputDataRate();
+		bool enableDataEngine();
+		bool enableTapEngine();
+		bool enableTiltEngine();
+    bool setOutputDataRate(uint8_t);
+		float getOutputDataRate();
     bool routeHardwareInterrupt(uint8_t, uint8_t pin = 1);
-    bool clearInterrupt();
     bool dataTrigger();
-    bool enableBuffer(bool, bool);
-
 		bool runCommandTest();
-    bool accelControl(bool);
     uint8_t readAccelState();
     bool getRawAccelData(rawOutputData*);
-    outputData getAccelData();
-    bool convAccelData(outputData*, rawOutputData*); 
+
+		// Interrupt Settings
+		bool configureInterruptPin(uint8_t pinVal);
+		bool enablePhysInterrupt(bool enable = true);
+		bool setPinMode(bool activeLow = true);
+		bool setLatchControl(bool pulse = true);
+		bool setPulseWidth(uint8_t width);
+    float readOutputDataRate();
+    bool clearInterrupt();
+
+		// Buffer Setttings
+    bool setBufferThreshold(uint8_t);
+		bool setBufferOperationMode(uint8_t operationMode);
+		bool setBufferResolution(bool sixteenBit = true);
+		bool enableBufferInt(bool enable = true);
+		bool enableSampleBuffer(bool enable = true);
+		uint16_t getSampleLevel();
+		bool clearBuffer();
 
 
+    rawOutputData rawAccelData;
 
-  private: 
 
-		QwIDeviceBus *_theBus;			 //The generic connection to user's chosen SPI hardware
+  protected: 
+
+		QwIDeviceBus *_sfeBus;			 //The generic connection to user's chosen SPI hardware
 		uint8_t _i2cAddress; 
 		uint8_t _cs;
+};
+    
+class QwDevKX132 : public QwDevKX13X
+{
+  public:
+
+		bool init(void);
+		bool getAccelData(outputData *userData);
+		bool convAccelData(outputData *userAccel, rawOutputData *rawAccelData);
 
 		//KX132 conversion values	
     const double convRange2G =  .00006103518784142582;
@@ -162,10 +188,16 @@ class QwDevKX13X
     const double convRange8G =  .0002441407513657033;
     const double convRange16G = .0004882811975463118;
 
-#define KX132_RANGE2G  0x00
-#define KX132_RANGE4G  0x01
-#define KX132_RANGE8G  0x02
-#define KX132_RANGE16G 0x03
+	private: 
+};
+
+class QwDevKX134 : public QwDevKX13X
+{
+  public:
+
+		bool init(void);
+		bool getAccelData(outputData *userData);
+		bool convAccelData(outputData *userAccel, rawOutputData *rawAccelData);
 
 		//KX134 conversion values	
     const double convRange8G =  .000244140751365703299;
@@ -173,13 +205,5 @@ class QwDevKX13X
     const double convRange32G = .000976523950926236762;
     const double convRange64G = .001953125095370342112;
 
-#define KX134_RANGE8G  0x00
-#define KX134_RANGE16G 0x01
-#define KX134_RANGE32G 0x02
-#define KX134_RANGE64G 0x03
-
-    rawOutputData rawAccelData;
-    outputData userAccel;
-
+	private: 
 };
-    
