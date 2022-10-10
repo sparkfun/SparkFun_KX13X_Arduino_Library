@@ -78,21 +78,21 @@ bool QwDevKX13X::initialize(uint8_t settings)
   if( settings == INT_SETTINGS )
 	{
     enablePhysInterrupt();
-    routeHardwareInterrupt(HI_DATA_READY);
-    retVal = writeRegisterRegion(SFE_KX13X_CNTL1, INT_SETTINGS);
+    routeHardwareInterrupt(0x10);
+    retVal = writeRegisterByte(SFE_KX13X_CNTL1, INT_SETTINGS);
   }
 
   if( settings == SOFT_INT_SETTINGS )
-    retVal = writeRegisterRegion(SFE_KX13X_CNTL1, INT_SETTINGS);
+    retVal = writeRegisterByte(SFE_KX13X_CNTL1, INT_SETTINGS);
   
 
   if( settings == BUFFER_SETTINGS )
 	{
     enablePhysInterrupt();
-    routeHardwareInterrupt(HI_BUFFER_FULL);
-    enableSampleBuffer();
-    setBufferOperationMode(BUFFER_MODE_FIFO, BUFFER_16BIT_SAMPLES);
-    retVal = writeRegisterRegion(SFE_KX13X_CNTL1, INT_SETTINGS);
+    routeHardwareInterrupt(0x40);//Buffer full interrupt
+    enableSampleBuffer(); //Enable buffer
+    setBufferOperationMode(0x00); //FIFO
+    retVal = writeRegisterByte(SFE_KX13X_CNTL1, INT_SETTINGS);
   }
 
 
@@ -145,7 +145,8 @@ uint8_t QwDevKX13X::getOperatingMode(){
 // Possible KX132 arguments: 0x00 (2g), 0x01 (4g), 0x02 (8g), 0x03 (16g)
 // Possible KX134 arguments: 0x00 (8g), 0x01 (16g), 0x02 (32g), 0x03 (64g)
 // KX13X needs to be set into standby mode to change this value
-bool QwDevKX13X::setRange(uint8_t range){
+bool QwDevKX13X::setRange(uint8_t range)
+{
 
 	int retVal; 
 
@@ -161,7 +162,7 @@ bool QwDevKX13X::setRange(uint8_t range){
   
 }
 
-bool QwDevKX13X::enableDataEngine();
+bool QwDevKX13X::enableDataEngine()
 {
 	int retVal; 
 	uint8_t tempVal; 
@@ -181,7 +182,7 @@ bool QwDevKX13X::enableDataEngine();
 	return true;
 }
 
-bool QwDevKX13X::enableTapEngine();
+bool QwDevKX13X::enableTapEngine()
 {
 	int retVal; 
 	uint8_t tempVal; 
@@ -201,7 +202,7 @@ bool QwDevKX13X::enableTapEngine();
 	return true;
 }
 
-bool QwDevKX13X::enableTiltEngine();
+bool QwDevKX13X::enableTiltEngine()
 {
 	int retVal; 
 	uint8_t tempVal; 
@@ -255,7 +256,7 @@ float QwDevKX13X::getOutputDataRate()
 	int retVal; 
   uint8_t tempVal;
 
-  retVal = readRegisterRegion(SFE_KX13X_ODCNTL, &tempVal);
+  retVal = readRegisterRegion(SFE_KX13X_ODCNTL, &tempVal, 1);
 	
 	if( retVal != 0 )
 		return 0.0;
@@ -295,7 +296,7 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable)
 
 	tempVal = tempVal | (enable << 6);
 
-	retVal = writRegisterByte(SFE_KX13X_INC1, tempVal);
+	retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
 
 	if( retVal != 0 )
 		return false;
@@ -315,7 +316,7 @@ bool QwDevKX13X::setPinMode(bool activeLow)
 
 	tempVal = tempVal | (activeLow << 5);
 
-	retVal = writRegisterByte(SFE_KX13X_INC1, tempVal);
+	retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
 
 	if( retVal != 0 )
 		return false;
@@ -335,7 +336,7 @@ bool QwDevKX13X::setLatchControl(bool pulse)
 
 	tempVal = tempVal | (pulse << 4);
 
-	retVal = writRegisterByte(SFE_KX13X_INC1, tempVal);
+	retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
 
 	if( retVal != 0 )
 		return false;
@@ -358,7 +359,7 @@ bool QwDevKX13X::setPulseWidth(uint8_t width)
 
 	tempVal = tempVal | (width << 6);
 
-	retVal = writRegisterByte(SFE_KX13X_INC1, tempVal);
+	retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
 
 	if( retVal != 0 )
 		return false;
@@ -389,7 +390,7 @@ bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin)
 
   if( pin == 2 ) 
 	{
-    retVal = writeRegisterByte(KX13X_INC6, rdr);
+    retVal = writeRegisterByte(SFE_KX13X_INC6, rdr);
 
     if( retVal != 0 )
       return true;
@@ -425,7 +426,7 @@ bool QwDevKX13X::dataTrigger()
   int retVal;
   uint8_t tempVal;
 
-  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal);
+  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal, 1);
 
   if( retVal  != 0 )
       return false;
@@ -466,7 +467,7 @@ bool QwDevKX13X::setBufferThreshold(uint8_t threshold)
   if( retVal != 0 )
     return true;
 
-	return false
+	return false;
 
 }
 
@@ -490,7 +491,7 @@ bool QwDevKX13X::setBufferOperationMode(uint8_t operationMode)
 
 	tempVal = tempVal | operationMode;
 
-  retVal = writeRegisterRegion(SFE_KX13X_BUF_CNTL2, tempVal, 1);
+  retVal = writeRegisterByte(SFE_KX13X_BUF_CNTL2, tempVal);
 
   if( retVal != 0 )
     return false;
@@ -661,19 +662,19 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
 }
 
 
-int QwDevKX13X::readRegisterRegion(uint8_t reg, uint8_t *value, uint8_t len)
+int QwDevKX13X::readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 {
-	return _sfeBus->readRegisterRegion(_i2cAddress, reg, *value, len);
+	return (int)_sfeBus->readRegisterRegion(_i2cAddress, reg, data, len);
 }
 
-int QwDevKX13X::writeRegisterRegion(uint8_t reg, uint8_t *value, uint8_t len)
+int QwDevKX13X::writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 {
-	return _sfeBus->writeRegisterRegion(_i2cAddress, reg, *value, len);
+	return (int)_sfeBus->writeRegisterRegion(_i2cAddress, reg, data, len);
 }
 
 int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t value)
 {
-	return _sfeBus->writeRegisterByte(_i2cAddress, reg, value);
+	return (int)_sfeBus->writeRegisterByte(_i2cAddress, reg, value);
 }
 
 
@@ -682,14 +683,12 @@ int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t value)
 //******************************************************************************************
 //******************************************************************************************
 
-// Constructor
-QwiicKX132::QwiicKX132() { }
 
 // Uses the beginCore function to check that the part ID from the "who am I"
 // register matches the correct value. Uses I2C for data transfer.
 bool QwDevKX132::init(void)
 {
-  if( !_sfebus->ping(_i2cAddress) )
+  if( !_sfeBus->ping(_i2cAddress) )
 		return false;
 
 	if( getUniqueID() != KX132_WHO_AM_I )
@@ -700,7 +699,7 @@ bool QwDevKX132::init(void)
 
 // Grabs raw accel data and passes it to the following function to be
 // converted.
-bool QwiicKX132::getAccelData(outputData *userData){
+bool QwDevKX132::getAccelData(outputData *userData){
   
 	bool retVal;
 
@@ -709,7 +708,7 @@ bool QwiicKX132::getAccelData(outputData *userData){
 	if( !retVal )
 		return false;
 
-	retVal = convAccelData(&userData, &rawAccelData);
+	retVal = convAccelData(userData, &rawAccelData);
 
 	if( !retVal )
 		return false;
@@ -718,7 +717,7 @@ bool QwiicKX132::getAccelData(outputData *userData){
 }
 
 // Converts acceleration data according to the set range value. 
-bool QwiicKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelData){
+bool QwDevKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelData){
 
   uint8_t regVal;
   uint8_t range; 
@@ -766,12 +765,11 @@ bool QwiicKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
 //******************************************************************************************
 
 //Constructor
-QwiicKX134::QwiicKX134() { }
 
 
 bool QwDevKX134::init(void)
 {
-  if( !_sfebus->ping(_i2cAddress) )
+  if( !_sfeBus->ping(_i2cAddress) )
 		return false;
 
 	if( getUniqueID() != KX132_WHO_AM_I )
@@ -780,7 +778,8 @@ bool QwDevKX134::init(void)
 	return true; 
 }
 
-bool QwiicKX134::getAccelData(outputData *userData){
+bool QwDevKX134::getAccelData(outputData *userData)
+{
   
 	bool retVal;
 
@@ -789,7 +788,7 @@ bool QwiicKX134::getAccelData(outputData *userData){
 	if( !retVal )
 		return false;
 
-	retVal = convAccelData(&userData, &rawAccelData);
+	retVal = convAccelData(userData, &rawAccelData);
 
 	if( !retVal )
 		return false;
@@ -797,7 +796,8 @@ bool QwiicKX134::getAccelData(outputData *userData){
 	return true; 
 }
 
-bool QwiicKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelData){
+bool QwDevKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelData)
+{
 
   uint8_t regVal;
   uint8_t range; 

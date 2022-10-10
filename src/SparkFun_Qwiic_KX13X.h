@@ -84,7 +84,7 @@ class QwDevKX13X
     //  data         Array to store data in
 		//  length       Size of data in bytes (8 bits): 2 bytes = length of two
     //  retval       -1 = error, 0 = success
-    int32_t writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t length);
+    int writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t length);
 
     //////////////////////////////////////////////////////////////////////////////////
     // writeRegisterByte()
@@ -96,7 +96,7 @@ class QwDevKX13X
     //  data         Array to store data in
     //  retval       -1 = error, 0 = success
 		//
-    int32_t writeRegisterByte(uint8_t reg, uint8_t data);
+    int writeRegisterByte(uint8_t reg, uint8_t data);
 
     //////////////////////////////////////////////////////////////////////////////////
     // readRegisterRegion()
@@ -109,7 +109,7 @@ class QwDevKX13X
     //  length       Length of the data to read
     //  retval       -1 = error, 0 = success
 
-    int32_t readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t length);
+    int readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t length);
 
     //////////////////////////////////////////////////////////////////////////////////
     // setCommunicationBus()
@@ -178,6 +178,8 @@ class QwDevKX132 : public QwDevKX13X
 {
   public:
 
+		QwDevKX132() {};
+
 		bool init(void);
 		bool getAccelData(outputData *userData);
 		bool convAccelData(outputData *userAccel, rawOutputData *rawAccelData);
@@ -194,6 +196,8 @@ class QwDevKX132 : public QwDevKX13X
 class QwDevKX134 : public QwDevKX13X
 {
   public:
+
+		QwDevKX134() {};
 
 		bool init(void);
 		bool getAccelData(outputData *userData);
