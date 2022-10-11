@@ -113,7 +113,7 @@ bool QwDevKX13X::enableAccel(bool enable)
   if( retVal != 0 )
     return false;
 
-	tempVal = (tempVal | enable);
+	tempVal = (tempVal | (enable << 7));
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
 
@@ -418,9 +418,7 @@ bool QwDevKX13X::clearInterrupt()
 	return true;
 }
 
-// Address: 0x17 , bit[4]: default value is: 0
-// This function triggers collection of data by the KX13X.
-bool QwDevKX13X::dataTrigger()
+bool QwDevKX13X::dataReady()
 {
   
   int retVal;
@@ -428,11 +426,11 @@ bool QwDevKX13X::dataTrigger()
 
   retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal, 1);
 
-  if( retVal  != 0 )
-      return false;
+  if( retVal != 0 )
+		return false;
 
 	if( tempVal & 0x10 )
-      return true;
+		return true;
 
 	return false;
 }

@@ -17,45 +17,57 @@ Distributed as-is; no warranty is given.
 #include <Wire.h>
 #include "SparkFun_KX13X.h"
 
-SparkFun_KX132 kxAccel; 
+SparkFun_KX132_SPI kxAccel; 
 
 outputData myData; // This will hold the accelerometer's output. 
+byte chipSelect = 1;
 
 void setup() {
+	
+	pinMode(chipSelect, OUTPUT);
+	digitalWrite(chipSelect, HIGH);
 
-	Wire.begin();
+	SPI.begin();
 	Serial.begin(115200);
   Serial.println("Welcome.");
 
-  while(!Serial)
-    delay(50);
+//  while(!Serial)
+//    delay(50);
+//
 
-
-  if( !kxAccel.begin() )
+  if( !kxAccel.begin(chipSelect) )
 	{
     Serial.println("Could not communicate with the the KX13X. Freezing.");
     while(1);
 	}
 
+	kxAccel.enableAccel(false); // The following settings will only be applied when the
+															// KX13X is off. 
+	
 	Serial.println("Ready.");
     
-  kxAccel.setRange(KX134_RANGE32G); // For a larger range uncomment
+  kxAccel.setRange(0x18); // 16g Range
+	kxAccel.enableDataEngine(); // Enables the bit that indicates data is ready.
+	// kxAccel.setOutputDataRate(); //Keeping default of 400Hz
+	kxAccel.enableAccel();
+
 
 }
 
 void loop() {
 
-  kxAccel.getAccelData(&myData); 
-  Serial.print("X: ");
-  Serial.print(myData.xData, 4);
-  Serial.print("g ");
-  Serial.print(" Y: ");
-  Serial.print(myData.yData, 4);
-  Serial.print("g ");
-  Serial.print(" Z: ");
-  Serial.print(myData.zData, 4);
-  Serial.println("g ");
 
-  delay(20); // Delay should be 1/ODR (Output Data Rate), default is 50Hz
+	if( kxAccel.dataReady() )
+	{
+		kxAccel.getAccelData(&myData); 
+		Serial.print("X: ");
+		Serial.print(myData.xData, 4);
+		Serial.print(" Y: ");
+		Serial.print(myData.yData, 4);
+		Serial.print(" Z: ");
+		Serial.print(myData.zData, 4);
+		Serial.println();
+	}	
+  delay(20); // Delay should be 1/ODR (Output Data Rate), default is 1/50ODR
 
 }

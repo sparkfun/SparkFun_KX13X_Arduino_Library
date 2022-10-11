@@ -140,7 +140,7 @@ class QwDevKX13X
     bool setOutputDataRate(uint8_t);
 		float getOutputDataRate();
     bool routeHardwareInterrupt(uint8_t, uint8_t pin = 1);
-    bool dataTrigger();
+    bool dataReady();
 		bool runCommandTest();
     uint8_t readAccelState();
     bool getRawAccelData(rawOutputData*);
