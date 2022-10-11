@@ -82,10 +82,6 @@ bool QwDevKX13X::initialize(uint8_t settings)
     retVal = writeRegisterByte(SFE_KX13X_CNTL1, INT_SETTINGS);
   }
 
-  if( settings == SOFT_INT_SETTINGS )
-    retVal = writeRegisterByte(SFE_KX13X_CNTL1, INT_SETTINGS);
-  
-
   if( settings == BUFFER_SETTINGS )
 	{
     enablePhysInterrupt();
@@ -162,7 +158,7 @@ bool QwDevKX13X::setRange(uint8_t range)
   
 }
 
-bool QwDevKX13X::enableDataEngine()
+bool QwDevKX13X::enableDataEngine(bool enable)
 {
 	int retVal; 
 	uint8_t tempVal; 
@@ -172,7 +168,7 @@ bool QwDevKX13X::enableDataEngine()
   if( retVal != 0 )
     return false;
 	
-	tempVal = tempVal | 0x20; 
+	tempVal = tempVal | (enable << 5); 
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
 
@@ -182,7 +178,7 @@ bool QwDevKX13X::enableDataEngine()
 	return true;
 }
 
-bool QwDevKX13X::enableTapEngine()
+bool QwDevKX13X::enableTapEngine(bool enable)
 {
 	int retVal; 
 	uint8_t tempVal; 
@@ -192,7 +188,7 @@ bool QwDevKX13X::enableTapEngine()
   if( retVal != 0 )
     return false;
 	
-	tempVal = tempVal | 0x40; 
+	tempVal = tempVal | (enable << 2); 
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
 
@@ -202,7 +198,7 @@ bool QwDevKX13X::enableTapEngine()
 	return true;
 }
 
-bool QwDevKX13X::enableTiltEngine()
+bool QwDevKX13X::enableTiltEngine(bool enable)
 {
 	int retVal; 
 	uint8_t tempVal; 
@@ -212,7 +208,7 @@ bool QwDevKX13X::enableTiltEngine()
   if( retVal != 0 )
     return false;
 	
-	tempVal = tempVal | 0x01; 
+	tempVal = tempVal | enable; 
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
 
@@ -284,22 +280,36 @@ bool QwDevKX13X::configureInterruptPin(uint8_t pinVal){
 	return true;
 }
 
-bool QwDevKX13X::enablePhysInterrupt(bool enable)
+bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
 {
 	int retVal;
 	uint8_t tempVal;
 
-	retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
+	if( pin == 1 )
+	{
+		retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
 
-	if( retVal != 0 )
-		return false;
+		if( retVal != 0 )
+			return false;
 
-	tempVal = tempVal | (enable << 6);
+		tempVal = tempVal | (enable << 5);
 
-	retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
+		writeRegisterByte(SFE_KX13X_INC1, tempVal);
 
-	if( retVal != 0 )
-		return false;
+	}
+
+	if( pin == 2 )
+	{
+		retVal = readRegisterRegion(SFE_KX13X_INC5, &tempVal, 1);
+
+		if( retVal != 0 )
+			return false;
+
+		tempVal = tempVal | (enable << 5);
+
+		writeRegisterByte(SFE_KX13X_INC5, tempVal);
+
+	}
 
 	return true; 
 }
@@ -376,9 +386,8 @@ bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin)
 
   int retVal;
 
-  if( rdr > 0x80 ) 
-    return false;
-  
+	if( pin > 2 )
+		return false;
 
   if( pin == 1 )
 	{
@@ -393,11 +402,11 @@ bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin)
     retVal = writeRegisterByte(SFE_KX13X_INC6, rdr);
 
     if( retVal != 0 )
-      return true;
+      return false;
     
   }
 
-  return false;
+  return true;
 
 }
 
@@ -418,6 +427,26 @@ bool QwDevKX13X::clearInterrupt()
 	return true;
 }
 
+bool QwDevKX13X::enableTapInterupt(bool enable)
+{
+	int retVal;
+	uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_TDTRC, &tempVal, 1);
+
+	if( retVal != 0 )
+		return false;
+
+	tempVal = tempVal | enable;
+
+	retVal = writeRegisterByte(SFE_KX13X_TDTRC, tempVal);
+
+	if( retVal != 0 )
+		return false;
+
+	return true; 
+}
+
 bool QwDevKX13X::dataReady()
 {
   
@@ -430,6 +459,134 @@ bool QwDevKX13X::dataReady()
 		return false;
 
 	if( tempVal & 0x10 )
+		return true;
+
+	return false;
+}
+
+bool QwDevKX13X::freeFall()
+{
+  
+  int retVal;
+  uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal, 1);
+
+  if( retVal != 0 )
+		return false;
+
+	if( tempVal & 0x80 )
+		return true;
+
+	return false;
+}
+
+bool QwDevKX13X::bufferFull()
+{
+  
+  int retVal;
+  uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal, 1);
+
+  if( retVal != 0 )
+		return false;
+
+	if( tempVal & 0x40 )
+		return true;
+
+	return false;
+}
+
+bool QwDevKX13X::waterMarkReached()
+{
+  
+  int retVal;
+  uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal, 1);
+
+  if( retVal != 0 )
+		return false;
+
+	if( tempVal & 0x10 )
+		return true;
+
+	return false;
+}
+
+bool QwDevKX13X::tapDetected()
+{
+  
+  int retVal;
+  uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal, 1);
+
+  if( retVal != 0 )
+		return false;
+
+	tempVal = tempVal & 0x0C; // Three states of interest: single tap detected
+														// undefined, and no tap.
+	
+	if( tempVal == 0x04 ) // True if tap - not undefined or no tap.
+		return true;
+
+	return false;
+}
+
+bool QwDevKX13X::unknownTap()
+{
+  
+  int retVal;
+  uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal, 1);
+
+  if( retVal != 0 )
+		return false;
+
+	tempVal = tempVal & 0x0C; // Three states of interest: single tap detected
+														// undefined, and no tap.
+	
+	if( tempVal == 0x0C ) // True if undefined
+		return true;
+
+	return false;
+}
+
+bool QwDevKX13X::doubleTapDetected()
+{
+  
+  int retVal;
+  uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal, 1);
+
+  if( retVal != 0 )
+		return false;
+
+	tempVal = tempVal & 0x0C; // Two states of interest: single tap detected
+														// and undefined.
+	
+	if( tempVal == 0x08 ) // True if tap - not undefined.
+		return true;
+
+	return false;
+}
+
+bool QwDevKX13X::tiltChange()
+{
+  
+  int retVal;
+  uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_INS2, &tempVal, 1);
+
+  if( retVal != 0 )
+		return false;
+
+	if( tempVal == 0x01 ) 
 		return true;
 
 	return false;
@@ -528,7 +685,7 @@ bool QwDevKX13X::enableBufferInt(bool enable)
 	if( retVal != 0 )
 		return false;
 
-	tempVal = tempVal | ((uint8_t)enable << 5);
+	tempVal = tempVal | (enable << 5);
 
 	retVal = writeRegisterByte(SFE_KX13X_BUF_CNTL2, tempVal);
 

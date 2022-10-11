@@ -134,9 +134,9 @@ class QwDevKX13X
 		uint8_t getOperatingMode();
     bool setRange(uint8_t);
     bool setInterruptPin(bool enable, uint8_t polarity = 0, uint8_t pulseWidth = 0, bool latchControl = false);
-		bool enableDataEngine();
-		bool enableTapEngine();
-		bool enableTiltEngine();
+		bool enableDataEngine(bool enable = true);
+		bool enableTapEngine(bool enable = true);
+		bool enableTiltEngine(bool enable = true);
     bool setOutputDataRate(uint8_t);
 		float getOutputDataRate();
     bool routeHardwareInterrupt(uint8_t, uint8_t pin = 1);
@@ -147,12 +147,20 @@ class QwDevKX13X
 
 		// Interrupt Settings
 		bool configureInterruptPin(uint8_t pinVal);
-		bool enablePhysInterrupt(bool enable = true);
+		bool enablePhysInterrupt(bool enable = true, uint8_t pin = 1);
+		bool enableTapInterupt(bool enable);
 		bool setPinMode(bool activeLow = true);
 		bool setLatchControl(bool pulse = true);
 		bool setPulseWidth(uint8_t width);
     float readOutputDataRate();
     bool clearInterrupt();
+		bool tapDetected();
+		bool unknownTap();
+		bool waterMarkReached();
+		bool bufferFull();
+		bool freeFall();
+		bool doubleTapDetected();
+		bool tiltChange();
 
 		// Buffer Setttings
     bool setBufferThreshold(uint8_t);
