@@ -24,6 +24,7 @@
 #include "SparkFun_KX13X.h"
 
 SparkFun_KX132 kxAccel; 
+// SparkFun_KX134 kxAccel; // For the KX134, uncomment this and comment line above
 
 outputData myData;   // Struct for the accelerometer's data
 
@@ -40,13 +41,16 @@ void setup()
     delay(50);
 
 
-  if( !kxAccel.begin(chipSelect) )
+  if( !kxAccel.begin() )
 	{
     Serial.println("Could not communicate with the the KX13X. Freezing.");
     while(1);
 	}
 
 	Serial.println("Ready.");
+
+	if( kxAccel.softwareReset() )
+		Serial.println("Reset.");
 
 	// Many settings for KX13X can only be                    														
 	// applied when the accelerometer is powered down.                  														
@@ -57,7 +61,7 @@ void setup()
 
   kxAccel.setRange(0x18);         // 16g Range
 	kxAccel.enableDataEngine();     // Enables the bit that indicates data is ready.
-	// kxAccel.setOutputDataRate(); // Default is 400Hz
+	// kxAccel.setOutputDataRate(); // Default is 50Hz
 	kxAccel.enableAccel();          
 
 

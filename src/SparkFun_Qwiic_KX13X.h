@@ -144,17 +144,21 @@ class QwDevKX13X
 		bool runCommandTest();
     uint8_t readAccelState();
     bool getRawAccelData(rawOutputData*);
+		bool softwareReset();
+		bool setTapDataRate(uint8_t rate);
 
 		// Interrupt Settings
 		bool configureInterruptPin(uint8_t pinVal);
 		bool enablePhysInterrupt(bool enable = true, uint8_t pin = 1);
-		bool enableTapInterupt(bool enable);
+		bool enableDirecTapInterupt(bool enable = true);
+		bool enableDoubleTapInterupt(bool enable = true);
 		bool setPinMode(bool activeLow = true);
-		bool setLatchControl(bool pulse = true);
+		bool setLatchControl(bool latch = true);
 		bool setPulseWidth(uint8_t width);
     float readOutputDataRate();
     bool clearInterrupt();
 		bool tapDetected();
+		int8_t getDirection();
 		bool unknownTap();
 		bool waterMarkReached();
 		bool bufferFull();

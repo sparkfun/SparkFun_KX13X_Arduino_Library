@@ -22,6 +22,7 @@ uint8_t QwDevKX13X::getUniqueID()
 {
 	uint8_t tempVal;
 	int retVal = readRegisterRegion(SFE_KX13X_WHO_AM_I, &tempVal, 1);
+	Serial.println(tempVal);
 
 	if( retVal != 0 )
 		return 0; 
@@ -96,6 +97,21 @@ bool QwDevKX13X::initialize(uint8_t settings)
     return false;
 
 	return true;
+}
+
+bool QwDevKX13X::softwareReset()
+{
+
+  uint8_t reset = 0x80;
+  int retVal;
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL2, reset);
+	
+  if( retVal != 0 )
+    return true;
+
+	return false;
+
 }
 
 bool QwDevKX13X::enableAccel(bool enable)
@@ -245,6 +261,29 @@ bool QwDevKX13X::setOutputDataRate(uint8_t rate)
 	return true;
 }
 
+bool QwDevKX13X::setTapDataRate(uint8_t rate)
+{
+
+  if( rate > 7 )
+    return false;
+
+	uint8_t tempVal;
+  int retVal;
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL3, &tempVal, 1);
+
+  if( retVal != 0 )
+    return false;
+	
+	tempVal = tempVal | (rate << 3); 
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL3, tempVal);
+
+  if( retVal != 0 )
+    return false;
+
+	return true;
+}
 // Address:0x21 , bit[3:0]: default value is: 0x06 (50Hz)
 // Gets the accelerometer's output data rate. 
 float QwDevKX13X::getOutputDataRate()
@@ -334,7 +373,7 @@ bool QwDevKX13X::setPinMode(bool activeLow)
 	return true; 
 }
 
-bool QwDevKX13X::setLatchControl(bool pulse)
+bool QwDevKX13X::setLatchControl(bool latch)
 {
 	int retVal;
 	uint8_t tempVal;
@@ -344,7 +383,7 @@ bool QwDevKX13X::setLatchControl(bool pulse)
 	if( retVal != 0 )
 		return false;
 
-	tempVal = tempVal | (pulse << 4);
+	tempVal = tempVal | (latch << 3);
 
 	retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
 
@@ -427,7 +466,7 @@ bool QwDevKX13X::clearInterrupt()
 	return true;
 }
 
-bool QwDevKX13X::enableTapInterupt(bool enable)
+bool QwDevKX13X::enableDirecTapInterupt(bool enable)
 {
 	int retVal;
 	uint8_t tempVal;
@@ -438,6 +477,26 @@ bool QwDevKX13X::enableTapInterupt(bool enable)
 		return false;
 
 	tempVal = tempVal | enable;
+
+	retVal = writeRegisterByte(SFE_KX13X_TDTRC, tempVal);
+
+	if( retVal != 0 )
+		return false;
+
+	return true; 
+}
+
+bool QwDevKX13X::enableDoubleTapInterupt(bool enable)
+{
+	int retVal;
+	uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_TDTRC, &tempVal, 1);
+
+	if( retVal != 0 )
+		return false;
+
+	tempVal = tempVal | (enable << 1);
 
 	retVal = writeRegisterByte(SFE_KX13X_TDTRC, tempVal);
 
@@ -526,6 +585,7 @@ bool QwDevKX13X::tapDetected()
   if( retVal != 0 )
 		return false;
 
+
 	tempVal = tempVal & 0x0C; // Three states of interest: single tap detected
 														// undefined, and no tap.
 	
@@ -533,6 +593,20 @@ bool QwDevKX13X::tapDetected()
 		return true;
 
 	return false;
+}
+
+int8_t QwDevKX13X::getDirection()
+{
+  
+  int retVal;
+  uint8_t tempVal;
+
+  retVal = readRegisterRegion(SFE_KX13X_INS1, &tempVal, 1);
+
+  if( retVal != 0 )
+		return retVal;
+
+	return tempVal;
 }
 
 bool QwDevKX13X::unknownTap()
@@ -927,7 +1001,7 @@ bool QwDevKX134::init(void)
   if( !_sfeBus->ping(_i2cAddress) )
 		return false;
 
-	if( getUniqueID() != KX132_WHO_AM_I )
+	if( getUniqueID() != KX134_WHO_AM_I )
 		return false;
 
 	return true; 

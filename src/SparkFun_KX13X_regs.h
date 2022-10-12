@@ -268,10 +268,10 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t iir_bypass   :  1; // 0 - not bypassed : 1 - bypassed	
+	uint8_t reserved_one :  1; 
 	uint8_t lpro         :  1; // 0 - Filter ODR/9 : 1 - Filter ODR/2
 	uint8_t fstup        :  1;
-	uint8_t reserved_one :  1;
+	uint8_t reserved_two :  1;
 	uint8_t osa          :  4;
 } sfe_kx13x_odcntl_t;
 
@@ -310,7 +310,7 @@ typedef struct
 typedef struct
 {
 	uint8_t undefined :  1;
-	uint8_t tmen      :  1;
+	uint8_t tmen      :  1; // Alternate masking scheme
 	uint8_t tlem      :  1; //X-
 	uint8_t trim      :  1; //X+
 	uint8_t tdom      :  1; //Y-

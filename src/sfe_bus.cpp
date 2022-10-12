@@ -218,7 +218,7 @@ SfeSPI::SfeSPI(void) : _spiPort{nullptr}
 // will use the default
 
 
-bool SfeSPI::init(SPIClass &spiPort, SPISettings& ismSPISettings, uint8_t cs,  bool bInit)
+bool SfeSPI::init(SPIClass &spiPort, SPISettings& kxSettings, uint8_t cs,  bool bInit)
 {
 
     // if we don't have a SPI port already
@@ -232,7 +232,7 @@ bool SfeSPI::init(SPIClass &spiPort, SPISettings& ismSPISettings, uint8_t cs,  b
 
 
 		// SPI settings are needed for every transaction
-		_sfeSPISettings = ismSPISettings; 
+		_sfeSPISettings = kxSettings; 
 
 		// The chip select pin can vary from platform to platform and project to project
 		// and so it must be given by the user. 
@@ -253,7 +253,7 @@ bool SfeSPI::init(uint8_t cs,  bool bInit)
 {
 
 		//If the transaction settings are not provided by the user they are built here.
-		SPISettings spiSettings = SPISettings(3000000, MSBFIRST, SPI_MODE3); 
+		SPISettings spiSettings = SPISettings(2000000, MSBFIRST, SPI_MODE0); 
 
 		//In addition of the port is not provided by the user, it defaults to SPI here. 
 		return init(SPI, spiSettings, cs, bInit);

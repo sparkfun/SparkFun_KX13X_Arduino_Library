@@ -105,13 +105,13 @@ class SparkFun_KX132_SPI : public QwDevKX132
         return this->QwDevKX132::init();
     }
 
-    bool begin(SPIClass &spiPort, SPISettings ismSettings, uint8_t cs)
+    bool begin(SPIClass &spiPort, SPISettings kxSettings, uint8_t cs)
     {
         // Setup a SPI object and pass into the superclass
         setCommunicationBus(_spiBus);
 
 				// Initialize the SPI bus class with provided SPI port, SPI setttings, and chip select pin.
-        _spiBus.init(spiPort, ismSettings, cs, true);
+        _spiBus.init(spiPort, kxSettings, cs, true);
 
         // Initialize the system - return results
         return this->QwDevKX132::init();
@@ -226,13 +226,13 @@ class SparkFun_KX134_SPI : public QwDevKX134
         return this->QwDevKX134::init();
     }
 
-    bool begin(SPIClass &spiPort, SPISettings ismSettings, uint8_t cs)
+    bool begin(SPIClass &spiPort, SPISettings kxSettings, uint8_t cs)
     {
         // Setup a SPI object and pass into the superclass
         setCommunicationBus(_spiBus);
 
 				// Initialize the SPI bus class with provided SPI port, SPI setttings, and chip select pin.
-        _spiBus.init(spiPort, ismSettings, cs, true);
+        _spiBus.init(spiPort, kxSettings, cs, true);
 
         // Initialize the system - return results
         return this->QwDevKX134::init();
