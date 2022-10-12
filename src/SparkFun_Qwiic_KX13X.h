@@ -196,11 +196,11 @@ class QwDevKX132 : public QwDevKX13X
 		bool getAccelData(outputData *userData);
 		bool convAccelData(outputData *userAccel, rawOutputData *rawAccelData);
 
-		//KX132 conversion values	
-    const double convRange2G =  .00006103518784142582;
-    const double convRange4G =  .0001220703756828516;
-    const double convRange8G =  .0002441407513657033;
-    const double convRange16G = .0004882811975463118;
+		//KX132 conversion values	- all 16 bit resolution
+    const double convRange2G =  .00006;
+    const double convRange4G =  .00012;
+    const double convRange8G =  .00024;
+    const double convRange16G = .00048;
 
 	private: 
 };
@@ -215,11 +215,11 @@ class QwDevKX134 : public QwDevKX13X
 		bool getAccelData(outputData *userData);
 		bool convAccelData(outputData *userAccel, rawOutputData *rawAccelData);
 
-		//KX134 conversion values	
-    const double convRange8G =  .000244140751365703299;
-    const double convRange16G = .000488281197546311838;
-    const double convRange32G = .000976523950926236762;
-    const double convRange64G = .001953125095370342112;
+		//KX134 conversion values	- all 16 bit resolution
+    const double convRange8G =  .00024;
+    const double convRange16G = .00049;
+    const double convRange32G = .00098;
+    const double convRange64G = .00195;
 
 	private: 
 };
