@@ -22,7 +22,6 @@ uint8_t QwDevKX13X::getUniqueID()
 {
 	uint8_t tempVal;
 	int retVal = readRegisterRegion(SFE_KX13X_WHO_AM_I, &tempVal, 1);
-	Serial.println(tempVal);
 
 	if( retVal != 0 )
 		return 0; 
@@ -99,6 +98,12 @@ bool QwDevKX13X::initialize(uint8_t settings)
 	return true;
 }
 
+//////////////////////////////////////////////////
+// softwareReset()
+//
+// Resets the accelerometer
+//
+
 bool QwDevKX13X::softwareReset()
 {
 
@@ -107,12 +112,27 @@ bool QwDevKX13X::softwareReset()
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL2, reset);
 	
+	// Logic is inverted here - if we reset using I2C the 
+	// accelerometer immediately shuts off which results
+	// in a NACK.
   if( retVal != 0 )
     return true;
 
 	return false;
 
 }
+
+//////////////////////////////////////////////////
+// softwareReset()
+//
+// Enables acceleromter data. In addition
+// some settings can only be set when the accelerometer is 
+// powered down
+//
+// Parameter: 
+// enable - enables or disables the accelerometer
+//
+//
 
 bool QwDevKX13X::enableAccel(bool enable)
 {
@@ -136,9 +156,12 @@ bool QwDevKX13X::enableAccel(bool enable)
   
 }
 
-// Address: 0x1B, bit[7]: default value is: 0x00
-// This function reads whether the accelerometer is in stand by or an active
-// mode. 
+//////////////////////////////////////////////////
+// getOperatingMode()
+//
+// Retrieves the current operating mode - low/high power mode
+//
+
 uint8_t QwDevKX13X::getOperatingMode(){
 
   uint8_t tempVal;
@@ -152,11 +175,16 @@ uint8_t QwDevKX13X::getOperatingMode(){
   return (tempVal  >> 7);
 
 }
-// Address: 0x1B, bit[1:0]: default value is: 0x00 (2g)
-// This function sets the acceleration range of the accelerometer outputs.
-// Possible KX132 arguments: 0x00 (2g), 0x01 (4g), 0x02 (8g), 0x03 (16g)
-// Possible KX134 arguments: 0x00 (8g), 0x01 (16g), 0x02 (32g), 0x03 (64g)
-// KX13X needs to be set into standby mode to change this value
+
+//////////////////////////////////////////////////
+// setRange()
+//
+// Sets the operational g-range of the accelerometer.
+//
+// Parameter:
+// range - sets the range of the accelerometer 2g - 32g depending
+// on the version. 
+//
 bool QwDevKX13X::setRange(uint8_t range)
 {
 
@@ -174,6 +202,14 @@ bool QwDevKX13X::setRange(uint8_t range)
   
 }
 
+//////////////////////////////////////////////////
+// enableDataEngine()
+//
+// Enables the data ready bit. 
+//
+// Parameter:
+// enable - enable/disables the data ready bit. 
+//
 bool QwDevKX13X::enableDataEngine(bool enable)
 {
 	int retVal; 
@@ -194,6 +230,14 @@ bool QwDevKX13X::enableDataEngine(bool enable)
 	return true;
 }
 
+//////////////////////////////////////////////////
+// enableTapEngine()
+//
+// Enables the tap and double tap features of the accelerometers
+//
+// Parameter:
+// enable - enables the tap/double tap feature
+//
 bool QwDevKX13X::enableTapEngine(bool enable)
 {
 	int retVal; 
@@ -214,6 +258,15 @@ bool QwDevKX13X::enableTapEngine(bool enable)
 	return true;
 }
 
+
+//////////////////////////////////////////////////
+// enableTiltEngine()
+//
+// Enables the tilt detection feature. 
+//
+// Parameter:
+// enable - enables the tilt feature
+//
 bool QwDevKX13X::enableTiltEngine(bool enable)
 {
 	int retVal; 
@@ -234,9 +287,14 @@ bool QwDevKX13X::enableTiltEngine(bool enable)
 	return true;
 }
 
-//Address: 0x21, bits[3:0] - default value is 0x06 (50Hz)
-//Sets the refresh rate of the accelerometer's data. 
-// 0.781 * (2 * (n)) derived from pg. 26 of Techincal Reference Manual
+//////////////////////////////////////////////////
+// setOutputDataRate()
+//
+// Changes the rate at which accelerometer data is generated.
+//
+// Parameter:
+// rate - determines the rate to be applied.
+//
 bool QwDevKX13X::setOutputDataRate(uint8_t rate)
 {
 
@@ -261,6 +319,14 @@ bool QwDevKX13X::setOutputDataRate(uint8_t rate)
 	return true;
 }
 
+//////////////////////////////////////////////////
+// setTapDataRate()
+//
+// Changes the rate at which tap data is generated.
+//
+// Parameter:
+// rate - determines the rate to be applied.
+//
 bool QwDevKX13X::setTapDataRate(uint8_t rate)
 {
 
@@ -284,8 +350,12 @@ bool QwDevKX13X::setTapDataRate(uint8_t rate)
 
 	return true;
 }
-// Address:0x21 , bit[3:0]: default value is: 0x06 (50Hz)
-// Gets the accelerometer's output data rate. 
+
+//////////////////////////////////////////////////
+// getOutputDataRate()
+//
+// Retrieves the output data rate of the acceleromter.
+//
 float QwDevKX13X::getOutputDataRate()
 {
 	int retVal; 
@@ -302,11 +372,15 @@ float QwDevKX13X::getOutputDataRate()
 }
 
 
-// Address: 0x22, bit[7:4] default value is 0000.
-// This register controls the various interrupt settings, all of which can be
-// set here. Note: trying to set just one will set the others to their default
-// state.
-// Thish configures all of the bits related to the interrupt pin.
+//////////////////////////////////////////////////
+// configureInterruptPin()
+//
+// This allows you to configure the entire interrupt register
+//
+// Parameter:
+// pinVal - register value to set, note that this overwrites
+// everything in the register.
+//
 bool QwDevKX13X::configureInterruptPin(uint8_t pinVal){
   
 	int retVal;
@@ -319,6 +393,16 @@ bool QwDevKX13X::configureInterruptPin(uint8_t pinVal){
 	return true;
 }
 
+
+//////////////////////////////////////////////////
+// enablePhysInterrupt()
+//
+// Enables interrupts to be routed to the interrupt pins. 
+//
+// Parameters:
+// enable - Enables interrupts to report to the physical interrupt pins
+// pin - This determines which pin to route the interrupts.
+//
 bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
 {
 	int retVal;
@@ -353,65 +437,136 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
 	return true; 
 }
 
-bool QwDevKX13X::setPinMode(bool activeLow)
+//////////////////////////////////////////////////
+// setPinMode()
+//
+// Sets the active state of the physical interupt pins
+//
+// Parameters:
+// enable - Enables interrupts to report to the physical interrupt pins
+// pin - This determines which pin to route the interrupts.
+//
+bool QwDevKX13X::setPinMode(bool activeLow, uint8_t pin)
 {
 	int retVal;
 	uint8_t tempVal;
 
-	retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
-
-	if( retVal != 0 )
+	if( pin > 2 ) 
 		return false;
 
-	tempVal = tempVal | (activeLow << 5);
+	if( pin == 1 )
+	{
+		retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
 
-	retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
+		if( retVal != 0 )
+			return false;
 
-	if( retVal != 0 )
-		return false;
+		tempVal = tempVal | (activeLow << 5);
+
+		writeRegisterByte(SFE_KX13X_INC1, tempVal);
+	}
+
+	if( pin == 2 )
+	{
+		retVal = readRegisterRegion(SFE_KX13X_INC5, &tempVal, 1);
+
+		if( retVal != 0 )
+			return false;
+
+		tempVal = tempVal | (activeLow << 5);
+
+		writeRegisterByte(SFE_KX13X_INC5, tempVal);
+	}
 
 	return true; 
 }
 
-bool QwDevKX13X::setLatchControl(bool latch)
+//////////////////////////////////////////////////
+// setLatchControl()
+//
+// Determines whether interrupts are pulsed (default) or latched. 
+// If they are latched then the interrupt must be released by reading
+// the INT_REL register - clearInterrupt();
+//
+// Parameters:
+// latch - True enables latch behavior, false enables pulse behavior (default)
+//
+bool QwDevKX13X::setLatchControl(bool latch, uint8_t pin)
 {
 	int retVal;
 	uint8_t tempVal;
-
-	retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
-
-	if( retVal != 0 )
+	
+	if( pin > 2 )
 		return false;
 
-	tempVal = tempVal | (latch << 3);
+	if( pin == 1 )
+	{
+		retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
 
-	retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
+		if( retVal != 0 )
+			return false;
 
-	if( retVal != 0 )
-		return false;
+		tempVal = tempVal | (latch << 3);
+
+		writeRegisterByte(SFE_KX13X_INC1, tempVal);
+	}
+
+
+	if( pin == 2 )
+	{
+		retVal = readRegisterRegion(SFE_KX13X_INC5, &tempVal, 1);
+
+		if( retVal != 0 )
+			return false;
+
+		tempVal = tempVal | (latch << 3);
+
+		writeRegisterByte(SFE_KX13X_INC5, tempVal);
+	}
 
 	return true; 
 }
 
-bool QwDevKX13X::setPulseWidth(uint8_t width)
+//////////////////////////////////////////////////
+// setPulseWidth()
+//
+// Determines the width of the interrupt pulse 
+//
+// Parameters:
+// width - The width setting to be applied. 
+// pin - the pin to be configured. 
+//
+bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
 {
 	int retVal;
 	uint8_t tempVal;
 
-	if( width > 4 ) 
+	if( width > 4 | pin > 2 ) 
 		return false; 
 
-	retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
+	if( pin == 1 )
+	{
+		retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
 
-	if( retVal != 0 )
-		return false;
+		if( retVal != 0 )
+			return false;
 
-	tempVal = tempVal | (width << 6);
+		tempVal = tempVal | (width << 6);
 
-	retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
+		writeRegisterByte(SFE_KX13X_INC1, tempVal);
+	}
 
-	if( retVal != 0 )
-		return false;
+	if( pin == 2 )
+	{
+		retVal = readRegisterRegion(SFE_KX13X_INC5, &tempVal, 1);
+
+		if( retVal != 0 )
+			return false;
+
+		tempVal = tempVal | (width << 6);
+
+		writeRegisterByte(SFE_KX13X_INC5, tempVal);
+	}
 
 	return true; 
 }
