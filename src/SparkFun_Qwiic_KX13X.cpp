@@ -123,7 +123,7 @@ bool QwDevKX13X::softwareReset()
 }
 
 //////////////////////////////////////////////////
-// softwareReset()
+// enableAccel()
 //
 // Enables acceleromter data. In addition
 // some settings can only be set when the accelerometer is 
@@ -162,7 +162,7 @@ bool QwDevKX13X::enableAccel(bool enable)
 // Retrieves the current operating mode - low/high power mode
 //
 
-uint8_t QwDevKX13X::getOperatingMode(){
+int8_t QwDevKX13X::getOperatingMode(){
 
   uint8_t tempVal;
 	int retVal;
@@ -170,7 +170,7 @@ uint8_t QwDevKX13X::getOperatingMode(){
   retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
 
 	if( retVal != 0 )
-		return 2; // Not a possible value for the PC1 bit.
+		return retVal; 
 
   return (tempVal  >> 7);
 
@@ -572,9 +572,16 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
 }
 
 
-// Address: 0x25, bits[7:0]: default value is 0: disabled
-// Enables anyone of the various interrupt settings to be routed to hardware
-// interrupt pin one or pin two.
+//////////////////////////////////////////////////
+// setPulseWidth()
+//
+// This determines which interrupt is routed to a particular physical
+// interrupt pin.
+//
+// Parameters:
+// rdr - The selected interrupt - watermark, tap/double tap, tilt, data ready etc.
+// pin - The physical hardware pin that will receive the interrupt. 
+//
 bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin)
 {
 
@@ -604,9 +611,12 @@ bool QwDevKX13X::routeHardwareInterrupt(uint8_t rdr, uint8_t pin)
 
 }
 
-// Address: 0x1A , bit[7:0]: default value is: 0x00
-// This function reads the interrupt latch release register, thus clearing any
-// interrupts. 
+
+//////////////////////////////////////////////////
+// clearInterrupt()
+//
+// Clears any latched interrupt by reading the INT_REL register.
+//
 bool QwDevKX13X::clearInterrupt()
 {
   
@@ -621,6 +631,14 @@ bool QwDevKX13X::clearInterrupt()
 	return true;
 }
 
+//////////////////////////////////////////////////
+// enableDirecTapInterupt()
+//
+// Enables reporting on the direction of the latest generated tap. 
+//
+// Parameter: 
+// enable - enables/disables directional tap reporting. 
+//
 bool QwDevKX13X::enableDirecTapInterupt(bool enable)
 {
 	int retVal;
@@ -641,7 +659,16 @@ bool QwDevKX13X::enableDirecTapInterupt(bool enable)
 	return true; 
 }
 
-bool QwDevKX13X::enableDoubleTapInterupt(bool enable)
+
+//////////////////////////////////////////////////
+// enableDirecTapInterupt()
+//
+// Enables the double tap interrupt. 
+//
+// Parameter: 
+// enable - enables/disables the double tap interrupt
+//
+bool QwDevKX13X::enableDoubleTapInterrupt(bool enable)
 {
 	int retVal;
 	uint8_t tempVal;
@@ -661,6 +688,14 @@ bool QwDevKX13X::enableDoubleTapInterupt(bool enable)
 	return true; 
 }
 
+//////////////////////////////////////////////////
+// dataReady()
+//
+// Checks the data ready bit indicating new accelerometer data
+// is ready in the X/Y/Z Out regsiters. This is cleared automatically
+// on read. 
+//
+//
 bool QwDevKX13X::dataReady()
 {
   
@@ -678,6 +713,12 @@ bool QwDevKX13X::dataReady()
 	return false;
 }
 
+//////////////////////////////////////////////////
+// freeFall()
+//
+// Checks the free fall interrupt bit indicating free fall
+// has been detected.
+//
 bool QwDevKX13X::freeFall()
 {
   
@@ -695,6 +736,13 @@ bool QwDevKX13X::freeFall()
 	return false;
 }
 
+
+//////////////////////////////////////////////////
+// bufferFull()
+//
+// Checks the buffer full interrupt bit indicating that the 
+// buff is full. 
+//
 bool QwDevKX13X::bufferFull()
 {
   
@@ -712,6 +760,13 @@ bool QwDevKX13X::bufferFull()
 	return false;
 }
 
+
+//////////////////////////////////////////////////
+// waterMarkReached()
+//
+// Checks the watermark interrupt bit indicating it has been reached.
+// buff is full. 
+//
 bool QwDevKX13X::waterMarkReached()
 {
   
@@ -729,6 +784,13 @@ bool QwDevKX13X::waterMarkReached()
 	return false;
 }
 
+
+//////////////////////////////////////////////////
+// tapDetected()
+//
+// Checks the tap interrupt bit indicating that a tap has
+// been detected. 
+//
 bool QwDevKX13X::tapDetected()
 {
   
@@ -750,6 +812,12 @@ bool QwDevKX13X::tapDetected()
 	return false;
 }
 
+//////////////////////////////////////////////////
+// getDirection()
+//
+// If the tap direction bit is enabled, this register will report
+// the direction of the detected tap. 
+//
 int8_t QwDevKX13X::getDirection()
 {
   
@@ -764,6 +832,14 @@ int8_t QwDevKX13X::getDirection()
 	return tempVal;
 }
 
+
+//////////////////////////////////////////////////
+// unknowntap()
+//
+// if the accelerometer is unsure whether it has in fact 
+// detected a tap, it will report an "unknown" state. in that
+// case this function will return true. good for error checking. 
+// 
 bool QwDevKX13X::unknownTap()
 {
   
@@ -784,6 +860,13 @@ bool QwDevKX13X::unknownTap()
 	return false;
 }
 
+
+//////////////////////////////////////////////////
+// doubleTapDetected()
+//
+// Checks the double tap interrupt bit indicating that 
+// a double tap has been detected. 
+// 
 bool QwDevKX13X::doubleTapDetected()
 {
   
@@ -804,6 +887,13 @@ bool QwDevKX13X::doubleTapDetected()
 	return false;
 }
 
+
+//////////////////////////////////////////////////
+// tiltChange()
+//
+// Checks the tilt change interrupt bit indicating that 
+// the accelerometer has been tipped. 
+// 
 bool QwDevKX13X::tiltChange()
 {
   
@@ -821,11 +911,17 @@ bool QwDevKX13X::tiltChange()
 	return false;
 }
 
-// Address: 0x5E , bit[7:0]: default value is: unknown
-// This function sets the number of samples (not bytes) that are held in the
-// buffer. Each sample is one full word of X,Y,Z data and the minimum that this
-// can be set to is two. The maximum is dependent on the resolution: 8 or 16bit,
-// set in the BUF_CNTL2 (0x5F) register (see "setBufferOperation" below).  
+
+//////////////////////////////////////////////////
+// setBufferThreshold()
+//
+// Sets the number of samples that can be held in the buffer. 
+// 
+// Parameter:
+// threshold - This value determines the number of samples that 
+// will be store in the buffer. Can not exceed 171 for 8 bit resolution
+// and 86 for 16 bit resolution. 
+//
 bool QwDevKX13X::setBufferThreshold(uint8_t threshold)
 {
 
@@ -855,10 +951,15 @@ bool QwDevKX13X::setBufferThreshold(uint8_t threshold)
 
 }
 
-// Address: 0x5F, bits[6] and bits[1:0]: default value is: 0x00
-// This functions sets the resolution and operation mode of the buffer. This does not include
-// the threshold - see "setBufferThreshold". This is a "On-the-fly" register, accel does not need
-// to be powered own to adjust settings.
+
+//////////////////////////////////////////////////
+// setBufferOperationMode()
+//
+// Sets the opertion mode of the Buffer: Bypass, FIFO, Stream, Trigger 
+// 
+// Parameter:
+// operationMode - Determines the operation mode to set. 
+//
 bool QwDevKX13X::setBufferOperationMode(uint8_t operationMode)
 {
 
@@ -883,6 +984,15 @@ bool QwDevKX13X::setBufferOperationMode(uint8_t operationMode)
 	return true;
 }
 
+
+//////////////////////////////////////////////////
+// setBufferResolution()
+//
+// Sets the resoltuion of the data that is stored in the buffer: 8 or 16 bit. 
+// 
+// Parameter:
+// sixteenBit - Determines whether the resolution is 16 (true) or 8 bit (false). 
+//
 bool QwDevKX13X::setBufferResolution(bool sixteenBit )
 {
 	int retVal;
@@ -904,6 +1014,15 @@ bool QwDevKX13X::setBufferResolution(bool sixteenBit )
 }
 
 
+
+//////////////////////////////////////////////////
+// enableBufferInt()
+//
+// Enables the buffer full interrupt bit. 
+// 
+// Parameter:
+// enable - enable/disables the buffer full interrupt bit. 
+//
 bool QwDevKX13X::enableBufferInt(bool enable)
 {
 	int retVal;
@@ -924,6 +1043,15 @@ bool QwDevKX13X::enableBufferInt(bool enable)
 	return true;
 }
 
+
+//////////////////////////////////////////////////
+// enableSampleBuffer()
+//
+// Enables use of the buffer.
+// 
+// Parameter:
+// enable - enable/disables the buffer. 
+//
 bool QwDevKX13X::enableSampleBuffer(bool enable)
 {
 	int retVal;
@@ -944,6 +1072,13 @@ bool QwDevKX13X::enableSampleBuffer(bool enable)
 	return true;
 }
 
+
+
+//////////////////////////////////////////////////
+// getSampleLevel()
+//
+// Gets the number of samples in the Buffer. 
+//
 uint16_t QwDevKX13X::getSampleLevel()
 {
 	int retVal;
@@ -961,6 +1096,12 @@ uint16_t QwDevKX13X::getSampleLevel()
 	return numSamples;
 }
 
+
+//////////////////////////////////////////////////
+// clearBuffer()
+//
+// Clears the samples in the buffer.
+//
 bool QwDevKX13X::clearBuffer()
 {
 	int retVal;
@@ -973,10 +1114,13 @@ bool QwDevKX13X::clearBuffer()
 
 	return true;
 }
-// Address: 0x1C, bit[6]: default value is: 0x00 
-//Tests functionality of the integrated circuit by setting the command test
-//control bit, then checks the results in the COTR register (0x12): 0xAA is a
-//successful read, 0x55 is the default state. 
+
+//////////////////////////////////////////////////
+// runCommandTest()
+//
+// Runs the command test which verifies the circuitry connected to 
+// the accelerometer.
+//
 bool QwDevKX13X::runCommandTest()
 {
   
@@ -1011,9 +1155,15 @@ bool QwDevKX13X::runCommandTest()
 	return true; 
 }
 
-// Address:0x08 - 0x0D or 0x63 , bit[7:0]
-// Reads acceleration data from either the buffer or the output registers
-// depending on if the user specified buffer usage.
+
+//////////////////////////////////////////////////
+// getRawAccelData()
+//
+// Retrieves the raw register values representing accelerometer data. 
+// 
+// Paramater:
+// *rawAccelData - This pointer to the 
+//
 bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
 
   

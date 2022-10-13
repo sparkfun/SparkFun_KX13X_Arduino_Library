@@ -132,7 +132,7 @@ class QwDevKX13X
 		// General Settings
 		bool enableAccel(bool enable = true);
 		bool softwareReset();
-		uint8_t getOperatingMode();
+		int8_t getOperatingMode();
     bool setRange(uint8_t);
     bool setInterruptPin(bool enable, uint8_t polarity = 0, uint8_t pulseWidth = 0, bool latchControl = false);
 		bool enableDataEngine(bool enable = true);
@@ -155,7 +155,7 @@ class QwDevKX13X
 		bool setLatchControl(bool latch = true, uint8_t pin = 1);
 		bool setPulseWidth(uint8_t width, uint8_t pin = 1);
 		bool enableDirecTapInterupt(bool enable = true);
-		bool enableDoubleTapInterupt(bool enable = true);
+		bool enableDoubleTapInterrupt(bool enable = true);
     bool clearInterrupt();
 		bool tapDetected();
 		int8_t getDirection();
