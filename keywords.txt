@@ -6,8 +6,6 @@ QwiicKX13xCore	KEYWORD1
 ==================================
 FUNCTIONS
 ==================================
-beginCore	KEYWORD2
-beginSPICore	KEYWORD2
 initialize	KEYWORD2
 runCommandTest	KEYWORD2
 accelControl	KEYWORD2

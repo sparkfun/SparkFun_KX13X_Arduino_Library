@@ -1,20 +1,3 @@
-/******************************************************************************
-SparkFun_Qwiic_KX13X.cpp
-SparkFun Qwiic KX13X Library Source File
-Elias Santistevan @ SparkFun Electronics
-Original Creation Date: March, 2021
-
-This file implements the QwiicKX13XCore, QwiicKX132, and QwiicKX134 class
-
-Development environment specifics:
-IDE: Arduino 1.8.12
-
-This code is Lemonadeware; if you see me (or any other SparkFun employee) at the
-local, and you've found our code helpful, please buy us a round!
-
-Distributed as-is; no warranty is given.
-******************************************************************************/
-
 #include "SparkFun_Qwiic_KX13X.h"
 
 
