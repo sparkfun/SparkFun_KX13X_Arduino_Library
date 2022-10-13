@@ -34,11 +34,9 @@ uint8_t QwDevKX13X::getUniqueID()
 //
 // Method to set the bus object that is used to communicate with the device
 //
-//  Parameter    Description
-//  ---------    -----------------------------
-//  theBus       The communication bus object
-//  i2cAddress   I2C address for the 6DoF
-
+//  Parameter:    
+//  theBus-The communication bus object
+//  i2cAddress-I2C address for the 6DoF
 void QwDevKX13X::setCommunicationBus(QwIDeviceBus &theBus, uint8_t i2cAddress)
 {
     _sfeBus = &theBus;
@@ -50,11 +48,9 @@ void QwDevKX13X::setCommunicationBus(QwIDeviceBus &theBus, uint8_t i2cAddress)
 //
 // Overloaded option for setting the data bus (theBus) object to a SPI bus object.
 //
-//  Parameter    Description
-//  ---------    -----------------------------
-//  theBus       The communication bus object
+//  Parameter:
+//  theBus-The communication bus object
 //  
-
 void QwDevKX13X::setCommunicationBus(QwIDeviceBus &theBus)
 {
     _sfeBus = &theBus;
@@ -103,7 +99,6 @@ bool QwDevKX13X::initialize(uint8_t settings)
 //
 // Resets the accelerometer
 //
-
 bool QwDevKX13X::softwareReset()
 {
 
@@ -1162,7 +1157,7 @@ bool QwDevKX13X::runCommandTest()
 // Retrieves the raw register values representing accelerometer data. 
 // 
 // Paramater:
-// *rawAccelData - This pointer to the 
+// *rawAccelData - a pointer to the data struct that holds acceleromter X/Y/Z data. 
 //
 bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
 
@@ -1196,19 +1191,52 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
 }
 
 
+//////////////////////////////////////////////////////////////////////////////////
+// readRegisterRegion()
+//
+// Calls sfebus read function.
+//
+//  Parameter:    
+//  reg- register to read from
+//  data- array to store data in
+//  length- Size of data in bytes (8 bits): 2 bytes = length of two
+//  retval- -1 = error, 0 = success
+//
 int QwDevKX13X::readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 {
 	return (int)_sfeBus->readRegisterRegion(_i2cAddress, reg, data, len);
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+// writeRegisterRegion()
+//
+// Calls sfebus write function.
+//
+//  Parameter:    
+//  reg- register to read from
+//  data- array to store data in
+//  length- Size of data in bytes (8 bits): 2 bytes = length of two
+//  retval- -1 = error, 0 = success
+//
 int QwDevKX13X::writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 {
 	return (int)_sfeBus->writeRegisterRegion(_i2cAddress, reg, data, len);
 }
 
-int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t value)
+//////////////////////////////////////////////////////////////////////////////////
+// writeRegisterByte()
+//
+// Calls sfebus write function.
+//
+//  Parameter:    
+//  reg- register to read from
+//  data- array to store data in
+//  length- Size of data in bytes (8 bits): 2 bytes = length of two
+//  retval- -1 = error, 0 = success
+//
+int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t data)
 {
-	return (int)_sfeBus->writeRegisterByte(_i2cAddress, reg, value);
+	return (int)_sfeBus->writeRegisterByte(_i2cAddress, reg, data);
 }
 
 
@@ -1218,8 +1246,12 @@ int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t value)
 //******************************************************************************************
 
 
-// Uses the beginCore function to check that the part ID from the "who am I"
-// register matches the correct value. Uses I2C for data transfer.
+//////////////////////////////////////////////////////////////////////////////////
+// init()
+//
+// Ensures that communication is established with the accelerometer by pinging its 
+// address and retrieving its device ID.
+//
 bool QwDevKX132::init(void)
 {
   if( !_sfeBus->ping(_i2cAddress) )
@@ -1231,8 +1263,15 @@ bool QwDevKX132::init(void)
 	return true; 
 }
 
-// Grabs raw accel data and passes it to the following function to be
-// converted.
+
+//////////////////////////////////////////////////////////////////////////////////
+// getAccelData()
+//
+// Retrieves the raw accelerometer data and calls a conversion function to convert the raw values.
+// 
+// Paramater:
+// *userData - a pointer to the user's data struct that will hold acceleromter data.
+//
 bool QwDevKX132::getAccelData(outputData *userData){
   
 	bool retVal;
@@ -1250,7 +1289,15 @@ bool QwDevKX132::getAccelData(outputData *userData){
 	return true; 
 }
 
-// Converts acceleration data according to the set range value. 
+//////////////////////////////////////////////////////////////////////////////////
+// convAccelData()
+//
+// Converts raw acceleromter data with the current accelerometer's range settings.
+// 
+// Paramater:
+// *userData - a pointer to the user's data struct that will hold acceleromter data.
+// *rawAccelData - a pointer to the data struct that holds acceleromter X/Y/Z data. 
+//
 bool QwDevKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelData){
 
   uint8_t regVal;
@@ -1266,22 +1313,22 @@ bool QwDevKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
   
 
   switch( range ) {
-    case KX132_RANGE2G:
+    case SFE_KX132_RANGE2G:
       userAccel->xData = (float)rawAccelData->xData * convRange2G;
       userAccel->yData = (float)rawAccelData->yData * convRange2G;
       userAccel->zData = (float)rawAccelData->zData * convRange2G;
       break;
-    case KX132_RANGE4G:
+    case SFE_KX132_RANGE4G:
       userAccel->xData = (float)rawAccelData->xData * convRange4G;
       userAccel->yData = (float)rawAccelData->yData * convRange4G;
       userAccel->zData = (float)rawAccelData->zData * convRange4G;
       break;
-    case KX132_RANGE8G:
+    case SFE_KX132_RANGE8G:
       userAccel->xData = (float)rawAccelData->xData * convRange8G;
       userAccel->yData = (float)rawAccelData->yData * convRange8G;
       userAccel->zData = (float)rawAccelData->zData * convRange8G;
       break;
-    case KX132_RANGE16G:
+    case SFE_KX132_RANGE16G:
       userAccel->xData = (float)rawAccelData->xData * convRange16G;
       userAccel->yData = (float)rawAccelData->yData * convRange16G;
       userAccel->zData = (float)rawAccelData->zData * convRange16G;
@@ -1298,9 +1345,13 @@ bool QwDevKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
 //******************************************************************************************
 //******************************************************************************************
 
-//Constructor
 
-
+//////////////////////////////////////////////////////////////////////////////////
+// init()
+//
+// Ensures that communication is established with the accelerometer by pinging its 
+// address and retrieving its device ID.
+//
 bool QwDevKX134::init(void)
 {
   if( !_sfeBus->ping(_i2cAddress) )
@@ -1312,6 +1363,15 @@ bool QwDevKX134::init(void)
 	return true; 
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////
+// getAccelData()
+//
+// Retrieves the raw accelerometer data and calls a conversion function to convert the raw values.
+// 
+// Paramater:
+// *userData - a pointer to the user's data struct that will hold acceleromter data.
+//
 bool QwDevKX134::getAccelData(outputData *userData)
 {
   
@@ -1330,6 +1390,15 @@ bool QwDevKX134::getAccelData(outputData *userData)
 	return true; 
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+// convAccelData()
+//
+// Converts raw acceleromter data with the current accelerometer's range settings.
+// 
+// Paramater:
+// *userData - a pointer to the user's data struct that will hold acceleromter data.
+// *rawAccelData - a pointer to the data struct that holds acceleromter X/Y/Z data. 
+//
 bool QwDevKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelData)
 {
 
@@ -1346,22 +1415,22 @@ bool QwDevKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
   
 
   switch( range ) {
-    case KX134_RANGE8G:
+    case SFE_KX134_RANGE8G:
       userAccel->xData = (float)rawAccelData->xData * convRange8G;
       userAccel->yData = (float)rawAccelData->yData * convRange8G;
       userAccel->zData = (float)rawAccelData->zData * convRange8G;
       break;                                               
-    case KX134_RANGE16G:                                   
+    case SFE_KX134_RANGE16G:                                   
       userAccel->xData = (float)rawAccelData->xData * convRange16G;
       userAccel->yData = (float)rawAccelData->yData * convRange16G;
       userAccel->zData = (float)rawAccelData->zData * convRange16G;
       break;                                               
-    case KX134_RANGE32G:                                   
+    case SFE_KX134_RANGE32G:                                   
       userAccel->xData = (float)rawAccelData->xData * convRange32G;
       userAccel->yData = (float)rawAccelData->yData * convRange32G;
       userAccel->zData = (float)rawAccelData->zData * convRange32G;
       break;                                               
-    case KX134_RANGE64G:                                   
+    case SFE_KX134_RANGE64G:                                   
       userAccel->xData = (float)rawAccelData->xData * convRange64G;
       userAccel->yData = (float)rawAccelData->yData * convRange64G;
       userAccel->zData = (float)rawAccelData->zData * convRange64G;

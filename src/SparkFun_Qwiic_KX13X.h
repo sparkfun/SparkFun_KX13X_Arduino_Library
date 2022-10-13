@@ -22,15 +22,15 @@ Distributed as-is; no warranty is given.
 #define KX132_WHO_AM_I  0x3D
 #define KX134_WHO_AM_I  0x46
 
-#define KX132_RANGE2G  0x00
-#define KX132_RANGE4G  0x01
-#define KX132_RANGE8G  0x02
-#define KX132_RANGE16G 0x03
+#define SFE_KX132_RANGE2G  0x00
+#define SFE_KX132_RANGE4G  0x01
+#define SFE_KX132_RANGE8G  0x02
+#define SFE_KX132_RANGE16G 0x03
 
-#define KX134_RANGE8G  0x00
-#define KX134_RANGE16G 0x01
-#define KX134_RANGE32G 0x02
-#define KX134_RANGE64G 0x03
+#define SFE_KX134_RANGE8G  0x00
+#define SFE_KX134_RANGE16G 0x01
+#define SFE_KX134_RANGE32G 0x02
+#define SFE_KX134_RANGE64G 0x03
 
 #define TOTAL_ACCEL_DATA_8BIT 3 
 
@@ -48,12 +48,6 @@ Distributed as-is; no warranty is given.
 #define SOFT_INT_SETTINGS 0xE1  
 #define BUFFER_SETTINGS 0xE2  
 #define TILT_SETTINGS 0xE3  
-
-#define BUFFER_16BIT_SAMPLES 0x01
-#define BUFFER_8BIT_SAMPLES 0x00
-#define BUFFER_MODE_FIFO 0x00
-#define BUFFER_MODE_STREAM 0x01
-#define BUFFER_MODE_TRIGGER 0x02
 
 struct outputData { 
   float xData;
@@ -74,59 +68,13 @@ class QwDevKX13X
 
     QwDevKX13X() : _i2cAddress{0}, _cs{0} {};
 
-    //////////////////////////////////////////////////////////////////////////////////
-    // writeRegisterRegion()
-    //
-    //
-    //  Parameter    Description
-    //  ---------    -----------------------------
-    //  reg          register to read from
-    //  data         Array to store data in
-		//  length       Size of data in bytes (8 bits): 2 bytes = length of two
-    //  retval       -1 = error, 0 = success
     int writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t length);
-
-    //////////////////////////////////////////////////////////////////////////////////
-    // writeRegisterByte()
-    //
-    //
-    //  Parameter    Description
-    //  ---------    -----------------------------
-    //  reg          register to read from
-    //  data         Array to store data in
-    //  retval       -1 = error, 0 = success
-		//
     int writeRegisterByte(uint8_t reg, uint8_t data);
-
-    //////////////////////////////////////////////////////////////////////////////////
-    // readRegisterRegion()
-    //
-    //
-    //  Parameter    Description
-    //  ---------    -----------------------------
-    //  reg          register to read from
-    //  data         Array to store data in
-    //  length       Length of the data to read
-    //  retval       -1 = error, 0 = success
-
     int readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t length);
-
-    //////////////////////////////////////////////////////////////////////////////////
-    // setCommunicationBus()
-    //
-    // Called to set the Communication Bus object to use
-    //
-    //  Parameter    Description
-    //  ---------    -----------------------------
-    //  theBus       The Bus object to use
-    //  idBus        The bus ID for the target device.
-    //
-
 		void setCommunicationBus(QwIDeviceBus &theBus, uint8_t i2cAddress);
 		void setCommunicationBus(QwIDeviceBus &theBus);
 
 		uint8_t getUniqueID();
-
 		bool initialize(uint8_t settings = DEFAULT_SETTINGS);
 		
 		// General Settings
@@ -181,7 +129,7 @@ class QwDevKX13X
 
   protected: 
 
-		QwIDeviceBus *_sfeBus;			 //The generic connection to user's chosen SPI hardware
+		QwIDeviceBus *_sfeBus;
 		uint8_t _i2cAddress; 
 		uint8_t _cs;
 };
