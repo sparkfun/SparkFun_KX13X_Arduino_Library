@@ -265,6 +265,64 @@ bool QwDevKX13X::enableTiltEngine(bool enable)
 	return true;
 }
 
+
+//////////////////////////////////////////////////
+// enableWakeEngine()
+//
+// Enables the wake detection feature. 
+//
+// Parameter:
+// enable - enables/disables the wake detection feature
+//
+bool QwDevKX13X::enableWakeEngine(bool enable)
+{
+	int retVal; 
+	uint8_t tempVal; 
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL4, &tempVal, 1);
+
+  if( retVal != 0 )
+    return false;
+	
+	tempVal = tempVal | (enable << 5); 
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL4, tempVal);
+
+  if( retVal != 0 )
+    return false;
+
+	return true;
+}
+
+//////////////////////////////////////////////////
+// enableSleepEngine()
+//
+// Enables the sleep feature. 
+//
+// Parameter:
+// enable - enables/disables the sleep feature
+//
+bool QwDevKX13X::enableSleepEngine(bool enable)
+{
+	int retVal; 
+	uint8_t tempVal; 
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL4, &tempVal, 1);
+
+  if( retVal != 0 )
+    return false;
+	
+	tempVal = tempVal | (enable << 4); 
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL4, tempVal);
+
+  if( retVal != 0 )
+    return false;
+
+	return true;
+}
+
+
 //////////////////////////////////////////////////
 // setOutputDataRate()
 //
@@ -329,6 +387,71 @@ bool QwDevKX13X::setTapDataRate(uint8_t rate)
 	return true;
 }
 
+
+//////////////////////////////////////////////////
+// setTiltDataRate()
+//
+// Changes the rate at which the tilt position is polled.
+//
+// Parameter:
+// rate - determines the rate to be applied.
+//
+bool QwDevKX13X::setTiltDataRate(uint8_t rate)
+{
+
+  if( rate > 3 )
+    return false;
+
+	uint8_t tempVal;
+  int retVal;
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL3, &tempVal, 1);
+
+  if( retVal != 0 )
+    return false;
+	
+	tempVal = tempVal | (rate << 6); 
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL3, tempVal);
+
+  if( retVal != 0 )
+    return false;
+
+	return true;
+}
+
+
+//////////////////////////////////////////////////
+// setWakeDataRate()
+//
+// Changes the rate at which the wake function is performed.
+//
+// Parameter:
+// rate - determines the rate to be applied.
+//
+bool QwDevKX13X::setWakeDataRate(uint8_t rate)
+{
+
+  if( rate > 7 )
+    return false;
+
+	uint8_t tempVal;
+  int retVal;
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL3, &tempVal, 1);
+
+  if( retVal != 0 )
+    return false;
+	
+	tempVal = tempVal | rate; 
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL3, tempVal);
+
+  if( retVal != 0 )
+    return false;
+
+	return true;
+}
 //////////////////////////////////////////////////
 // getOutputDataRate()
 //
@@ -519,7 +642,7 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
 	int retVal;
 	uint8_t tempVal;
 
-	if( width > 4 | pin > 2 ) 
+	if( (width > 4) | (pin > 2) ) 
 		return false; 
 
 	if( pin == 1 )
@@ -1173,6 +1296,57 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData){
   return true;
 }
 
+//////////////////////////////////////////////////
+// forceSleep()
+//
+// Forces the accelerometer into a sleep state.
+// 
+bool QwDevKX13X::forceSleep()
+{
+	int retVal;
+	uint8_t tempVal;
+	uint8_t forceSleep = 0x01; 
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL5, &tempVal, 1); 
+
+	if( retVal != 0 )
+		return false;
+
+	tempVal |= forceSleep; 
+
+	retVal = writeRegisterByte(SFE_KX13X_CNTL5, tempVal);
+
+	if( retVal != 0 )
+		return false;
+
+	return true; 
+}
+
+//////////////////////////////////////////////////
+// forceWake()
+//
+// Forces the accelerometer into a sleep state.
+// 
+bool QwDevKX13X::forceWake()
+{
+	int retVal;
+	uint8_t tempVal;
+	uint8_t forceWake = 0x02; 
+
+	retVal = readRegisterRegion(SFE_KX13X_CNTL5, &tempVal, 1); 
+
+	if( retVal != 0 )
+		return false;
+
+	tempVal |= forceWake; 
+
+	retVal = writeRegisterByte(SFE_KX13X_CNTL5, tempVal);
+
+	if( retVal != 0 )
+		return false;
+
+	return true; 
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 // readRegisterRegion()
@@ -1223,10 +1397,7 @@ int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t data)
 }
 
 
-//***************************************** KX132 ******************************************
-//******************************************************************************************
-//******************************************************************************************
-//******************************************************************************************
+//***************************************** KX132 *********************************************************
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1323,11 +1494,7 @@ bool QwDevKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
   return true;
 }
 
-//***************************************** KX134 ******************************************
-//******************************************************************************************
-//******************************************************************************************
-//******************************************************************************************
-
+//***************************************** KX134 ******************************************************
 
 //////////////////////////////////////////////////////////////////////////////////
 // init()

@@ -119,26 +119,38 @@ class QwDevKX13X
     bool setRange(uint8_t);
     bool setInterruptPin(bool enable, uint8_t polarity = 0, uint8_t pulseWidth = 0, bool latchControl = false);
 		bool enableDataEngine(bool enable = true);
-		bool enableTapEngine(bool enable = true);
-		bool enableTiltEngine(bool enable = true);
     bool setOutputDataRate(uint8_t);
 		float getOutputDataRate();
-    bool routeHardwareInterrupt(uint8_t, uint8_t pin = 1);
     bool dataReady();
 		bool runCommandTest();
     uint8_t readAccelState();
     bool getRawAccelData(rawOutputData*);
-		bool setTapDataRate(uint8_t rate);
     float readOutputDataRate();
+
+		// Tap/Double settings
+		bool enableTapEngine(bool enable = true);
+		bool setTapDataRate(uint8_t rate);
+		bool enableDirecTapInterupt(bool enable = true);
+		bool enableDoubleTapInterrupt(bool enable = true);
+
+		// Tilt Settings
+		bool enableTiltEngine(bool enable = true);
+		bool setTiltDataRate(uint8_t rate);
+
+		// Wake/Sleep Settings
+		bool setWakeDataRate(uint8_t rate);
+		bool enableSleepEngine(bool enable = true);
+		bool enableWakeEngine(bool enable = true);
+		bool forceWake();
+		bool forceSleep();
 
 		// Interrupt Settings
 		bool configureInterruptPin(uint8_t pinVal);
+    bool routeHardwareInterrupt(uint8_t, uint8_t pin = 1);
 		bool enablePhysInterrupt(bool enable = true, uint8_t pin = 1);
 		bool setPinMode(bool activeLow = true, uint8_t pin = 1);
 		bool setLatchControl(bool latch = true, uint8_t pin = 1);
 		bool setPulseWidth(uint8_t width, uint8_t pin = 1);
-		bool enableDirecTapInterupt(bool enable = true);
-		bool enableDoubleTapInterrupt(bool enable = true);
     bool clearInterrupt();
 		bool tapDetected();
 		int8_t getDirection();
