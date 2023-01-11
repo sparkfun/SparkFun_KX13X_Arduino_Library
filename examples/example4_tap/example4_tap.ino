@@ -3,14 +3,16 @@
 
   This example shows the how to enable the tap interrupts.
 
-	Please refer to the header file for more possible settings, found here:
-	..\SparkFun_KX13X_Arduino_Library\src\sfe_kx13x_defs.h
-
   Written by Elias Santistevan @ SparkFun Electronics, October 2022
 
-	Product:
+	Products:
 
+	SparkFun Triple Axis Accelerometer Breakout - KX132: 
 		https://www.sparkfun.com/products/17871
+
+	SparkFun Triple Axis Accelerometer Breakout - KX134: 
+		https://www.sparkfun.com/products/17589
+
 
   Repository:
 
@@ -84,6 +86,6 @@ void loop()
 	if( kxAccel.unknownTap() || kxAccel.doubleTapDetected() ) // These all share the same bit space
 		kxAccel.clearInterrupt();
 
-  delay(25); // Delay should be 1/ODR (Output Data Rate), default tap ODR is 400Hz
+  delay(2.5); // Delay should be 1/ODR (Output Data Rate), default tap ODR is 400Hz
 
 }
