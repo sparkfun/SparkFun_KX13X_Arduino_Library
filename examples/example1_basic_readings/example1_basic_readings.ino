@@ -36,8 +36,8 @@
 #include <Wire.h>
 #include "SparkFun_KX13X.h"
 
-//SparkFun_KX132 kxAccel; 
-SparkFun_KX134 kxAccel; // For the KX134, uncomment this and comment line above
+SparkFun_KX132 kxAccel; 
+//SparkFun_KX134 kxAccel; // For the KX134, uncomment this and comment line above
 
 outputData myData;   // Struct for the accelerometer's data
 
@@ -72,8 +72,8 @@ void setup()
 	// "...regs.h" file which specify which can be changed when.
 	kxAccel.enableAccel(false); 
 
-  //kxAccel.setRange(SFE_KX132_RANGE16G);         // 16g Range
-  kxAccel.setRange(SFE_KX134_RANGE16G);         // 16g for the KX134
+  kxAccel.setRange(SFE_KX132_RANGE16G);         // 16g Range
+  //kxAccel.setRange(SFE_KX134_RANGE16G);         // 16g for the KX134
 
 	kxAccel.enableDataEngine();     // Enables the bit that indicates data is ready.
 	// kxAccel.setOutputDataRate(); // Default is 50Hz
