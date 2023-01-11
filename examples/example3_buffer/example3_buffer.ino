@@ -4,14 +4,16 @@
   This example shows both how to setup the buffer but also how to route the buffer's 
 	interrupt to a physical interrupt pin. 
 
-	Please refer to the header file for more possible settings, found here:
-	..\SparkFun_KX13X_Arduino_Library\src\sfe_kx13x_defs.h
-
   Written by Elias Santistevan @ SparkFun Electronics, October 2022
 
-	Product:
+	Products:
 
+	SparkFun Triple Axis Accelerometer Breakout - KX132: 
 		https://www.sparkfun.com/products/17871
+
+	SparkFun Triple Axis Accelerometer Breakout - KX134: 
+		https://www.sparkfun.com/products/17589
+
 
   Repository:
 
@@ -81,7 +83,9 @@ void setup()
 	//kxAccel.getSampleLevel();                //  Get the number of samples in the buffer. This number
 																						 //  Changes depending on the resolution, see datasheet for more info.
 
-  kxAccel.setRange(0x18);        //  16g Range
+  kxAccel.setRange(SFE_KX132_RANGE16G);         // 16g Range
+  //kxAccel.setRange(SFE_KX134_RANGE16G);        // 16g for the KX134
+
 	//kxAccel.setOutputDataRate(); //  Default is 50Hz
 	kxAccel.enableAccel();          
 

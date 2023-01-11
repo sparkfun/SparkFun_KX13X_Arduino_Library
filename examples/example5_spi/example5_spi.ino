@@ -65,7 +65,9 @@ void setup()
 	// "...regs.h" file which specify which can be changed when.
 	kxAccel.enableAccel(false); 
 
-  kxAccel.setRange(0x18);         // 16g Range
+  kxAccel.setRange(SFE_KX132_RANGE16G);         // 16g Range
+  //kxAccel.setRange(SFE_KX134_RANGE16G);         // 16g for the KX134
+
 	kxAccel.enableDataEngine();     // Enables the bit that indicates data is ready.
 	// kxAccel.setOutputDataRate(); // Default is 50Hz
 	kxAccel.enableAccel();          

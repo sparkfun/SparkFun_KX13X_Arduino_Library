@@ -60,7 +60,9 @@ void setup()
 	// "...regs.h" file which specify which can be changed when.
 	kxAccel.enableAccel(false); 
 
-  kxAccel.setRange(0x18);                 //  16g Range
+  kxAccel.setRange(SFE_KX132_RANGE16G);         // 16g Range
+  //kxAccel.setRange(SFE_KX134_RANGE16G);         // 16g for the KX134
+
 	kxAccel.enableTapEngine();              //  Enable tap Engine
 	kxAccel.enableDirecTapInterupt();       //  This enables checking the direction of the interrupt
 	//kxAccel.setTapDataRate(uint8_t rate); //  Default is 400Hz

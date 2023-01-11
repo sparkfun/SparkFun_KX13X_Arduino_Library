@@ -77,7 +77,9 @@ void setup()
 	//kxAccel.setPinMode();		 // Change interrupt to active HIGH
 	//kxAccel.setPulseWidth(); // Change the length of a pulsed (non latched) interrupt
 							
-  kxAccel.setRange(0x18);         // 16g Range
+  kxAccel.setRange(SFE_KX132_RANGE16G);         // 16g Range
+  //kxAccel.setRange(SFE_KX134_RANGE16G);        // 16g for the KX134
+
 	//kxAccel.setOutputDataRate();   // Default is 400Hz
 	kxAccel.enableAccel();          
 
