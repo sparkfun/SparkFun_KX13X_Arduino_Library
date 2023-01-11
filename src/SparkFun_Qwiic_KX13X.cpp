@@ -119,7 +119,7 @@ bool QwDevKX13X::enableAccel(bool enable)
   int retVal;
 
   retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
-	
+
   if( retVal != 0 )
     return false;
 
@@ -204,6 +204,7 @@ bool QwDevKX13X::enableDataEngine(bool enable)
 
   if( retVal != 0 )
     return false;
+
 
 	return true;
 }

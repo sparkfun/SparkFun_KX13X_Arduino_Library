@@ -3,14 +3,16 @@
 
   This example shows how to route the data ready bit to either physical interrupt pin one and pin two.
 
-	Please refer to the header file for more possible settings, found here:
-	..\SparkFun_KX13X_Arduino_Library\src\sfe_kx13x_defs.h
-
   Written by Elias Santistevan @ SparkFun Electronics, October 2022
 
-	Product:
+	Products:
 
+	SparkFun Triple Axis Accelerometer Breakout - KX132: 
 		https://www.sparkfun.com/products/17871
+
+	SparkFun Triple Axis Accelerometer Breakout - KX134: 
+		https://www.sparkfun.com/products/17589
+
 
   Repository:
 
@@ -54,6 +56,10 @@ void setup()
 	// Reset the chip so that old settings don't apply to new setups.
 	if( kxAccel.softwareReset() )
 		Serial.println("Reset.");
+
+	//Give some time for the accelerometer to reset.
+	//It needs two, but give it five for good measure. 
+	delay(5);
 
 	// Many settings for KX13X can only be                    														
 	// applied when the accelerometer is powered down.                  														

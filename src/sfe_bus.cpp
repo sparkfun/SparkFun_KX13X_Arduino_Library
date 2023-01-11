@@ -192,7 +192,7 @@ int QwI2C::readRegisterRegion(uint8_t addr, uint8_t reg, uint8_t *data, uint16_t
         for (i = 0; i < nReturned; i++){
             *data++ = _i2cPort->read();
 				}
-
+				
         // Decrement the amount of data recieved from the overall data request amount
         numBytes = numBytes - nReturned;
 

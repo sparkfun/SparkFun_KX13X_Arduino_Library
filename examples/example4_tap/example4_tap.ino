@@ -55,6 +55,10 @@ void setup()
 	if( kxAccel.softwareReset() )
 		Serial.println("Reset.");
 
+	//Give some time for the accelerometer to reset.
+	//It needs two, but give it five for good measure. 
+	delay(5);
+
 	// Many settings for KX13X can only be                    														
 	// applied when the accelerometer is powered down.                  														
 	// However there are many that can be changed "on-the-fly"
