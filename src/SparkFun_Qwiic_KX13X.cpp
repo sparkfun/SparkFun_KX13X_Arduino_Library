@@ -642,7 +642,7 @@ bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
 // Parameters:
 // latch - True enables latch behavior, false enables pulse behavior (default)
 //
-bool QwDevKX13X::setLatchControl(bool latch, uint8_t pin)
+bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
 {
   int retVal;
   uint8_t tempVal;
@@ -657,7 +657,10 @@ bool QwDevKX13X::setLatchControl(bool latch, uint8_t pin)
     if (retVal != 0)
       return false;
 
-    tempVal = tempVal | (latch << 3);
+    sfe_kx13x_inc1_bitfield_t inc1;
+    inc1.all = tempVal;
+    inc1.bits.iel1 = pulsed; // This is a long winded but definitive way of setting/clearing the latch bit
+    tempVal = inc1.all;
 
     writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
@@ -669,7 +672,10 @@ bool QwDevKX13X::setLatchControl(bool latch, uint8_t pin)
     if (retVal != 0)
       return false;
 
-    tempVal = tempVal | (latch << 3);
+    sfe_kx13x_inc5_bitfield_t inc5;
+    inc5.all = tempVal;
+    inc5.bits.iel2 = pulsed; // This is a long winded but definitive way of setting/clearing the latch bit
+    tempVal = inc5.all;
 
     writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
@@ -691,7 +697,7 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
   int retVal;
   uint8_t tempVal;
 
-  if ((width > 4) | (pin > 2))
+  if ((width > 3) || (pin > 2))
     return false;
 
   if (pin == 1)
@@ -701,7 +707,10 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
     if (retVal != 0)
       return false;
 
-    tempVal = tempVal | (width << 6);
+    sfe_kx13x_inc1_bitfield_t inc1;
+    inc1.all = tempVal;
+    inc1.bits.pw1 = width; // This is a long winded but definitive way of setting the pulse width
+    tempVal = inc1.all;
 
     writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
@@ -713,7 +722,10 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
     if (retVal != 0)
       return false;
 
-    tempVal = tempVal | (width << 6);
+    sfe_kx13x_inc5_bitfield_t inc5;
+    inc5.all = tempVal;
+    inc5.bits.pw2 = width; // This is a long winded but definitive way of setting the pulse width
+    tempVal = inc5.all;
 
     writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
