@@ -419,6 +419,12 @@ typedef struct
   uint8_t ffi1 : 1;
 } sfe_kx13x_inc4_t;
 
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_inc4_t bits;
+} sfe_kx13x_inc4_bitfield_t;
+
 #define SFE_KX13X_INC5 0x26
 // Controls the settings for the physical interrupt pin INT2.
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
@@ -453,6 +459,12 @@ typedef struct
   uint8_t bfi2 : 1;
   uint8_t ffi2 : 1;
 } sfe_kx13x_inc6_t;
+
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_inc6_t bits;
+} sfe_kx13x_inc6_bitfield_t;
 
 #define SFE_KX13X_TILT_TIMER 0x29
 // Initial Count Registers for the tilt position state time (0 to 255 counts)

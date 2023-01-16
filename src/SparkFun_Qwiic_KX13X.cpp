@@ -734,7 +734,7 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
 }
 
 //////////////////////////////////////////////////
-// setPulseWidth()
+// routeHardwareInterrupt()
 //
 // This determines which interrupt is routed to a particular physical
 // interrupt pin.
