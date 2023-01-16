@@ -75,13 +75,13 @@ typedef struct
 #define SFE_KX13X_YADP_H 0x05
 typedef struct
 {
-	uint8_t yadp_l : 8;
+	uint8_t yadp_h : 8;
 } sfe_kx13x_yadp_h_t;
 
 #define SFE_KX13X_ZADP_L 0x06
 typedef struct
 {
-	uint8_t yadp_l : 8;
+	uint8_t zadp_l : 8;
 } sfe_kx13x_zadp_l_t;
 
 #define SFE_KX13X_ZADP_H 0x07
@@ -120,7 +120,7 @@ typedef struct
 	uint8_t zout_l : 8;
 } sfe_kx13x_zout_l_t;
 
-#define SFE_KX13X_ZOUT_H 0x0D   --------------^^--------------------------
+#define SFE_KX13X_ZOUT_H 0x0D
 typedef struct
 {
 	uint8_t zout_h : 8;
