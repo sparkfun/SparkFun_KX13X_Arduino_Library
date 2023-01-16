@@ -546,6 +546,9 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
   int retVal;
   uint8_t tempVal;
 
+  if (pin > 2)
+    return false;
+
   if (pin == 1)
   {
     retVal = readRegisterRegion(SFE_KX13X_INC1, &tempVal, 1);
@@ -553,7 +556,10 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
     if (retVal != 0)
       return false;
 
-    tempVal = tempVal | (enable << 5);
+    sfe_kx13x_inc1_bitfield_t inc1;
+    inc1.all = tempVal;
+    inc1.bits.ien1 = enable; // This is a long winded but definitive way of setting/clearing the enable bit
+    tempVal = inc1.all;
 
     writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
@@ -565,7 +571,10 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
     if (retVal != 0)
       return false;
 
-    tempVal = tempVal | (enable << 5);
+    sfe_kx13x_inc5_bitfield_t inc5;
+    inc5.all = tempVal;
+    inc5.bits.ien2 = enable; // This is a long winded but definitive way of setting/clearing the enable bit
+    tempVal = inc5.all;
 
     writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
@@ -597,7 +606,10 @@ bool QwDevKX13X::setPinMode(bool activeLow, uint8_t pin)
     if (retVal != 0)
       return false;
 
-    tempVal = tempVal | (activeLow << 5);
+    sfe_kx13x_inc1_bitfield_t inc1;
+    inc1.all = tempVal;
+    inc1.bits.iea1 = activeLow ? 0 : 1; // This is a long winded but definitive way of setting/clearing the level bit
+    tempVal = inc1.all;
 
     writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
@@ -609,7 +621,10 @@ bool QwDevKX13X::setPinMode(bool activeLow, uint8_t pin)
     if (retVal != 0)
       return false;
 
-    tempVal = tempVal | (activeLow << 5);
+    sfe_kx13x_inc5_bitfield_t inc5;
+    inc5.all = tempVal;
+    inc5.bits.iea2 = activeLow ? 0 : 1; // This is a long winded but definitive way of setting/clearing the level bit
+    tempVal = inc5.all;
 
     writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }

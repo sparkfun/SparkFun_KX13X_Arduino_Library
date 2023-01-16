@@ -368,6 +368,12 @@ typedef struct
   uint8_t pw1 : 2;
 } sfe_kx13x_inc1_t;
 
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_inc1_t bits;
+} sfe_kx13x_inc1_bitfield_t;
+
 #define SFE_KX13X_INC2 0x23
 // Defines behavior for Wake-Up Function and Back To Sleep
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
@@ -426,6 +432,12 @@ typedef struct
   uint8_t ien2 : 1;
   uint8_t pw2 : 2;
 } sfe_kx13x_inc5_t;
+
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_inc5_t bits;
+} sfe_kx13x_inc5_bitfield_t;
 
 #define SFE_KX13X_INC6 0x27
 // Controls which function triggers INT2
