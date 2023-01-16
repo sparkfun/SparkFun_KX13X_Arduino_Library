@@ -337,7 +337,10 @@ bool QwDevKX13X::enableSleepEngine(bool enable)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | (enable << 4);
+  sfe_kx13x_cntl4_bitfield_t cntl4;
+  cntl4.all = tempVal;
+  cntl4.bits.btse =  enable; // This is a long winded but definitive way of setting/clearing the back-to-sleep engine bit
+  tempVal = cntl4.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL4, tempVal);
 
