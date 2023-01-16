@@ -477,7 +477,10 @@ bool QwDevKX13X::setWakeDataRate(uint8_t rate)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | rate;
+  sfe_kx13x_cntl3_bitfield_t cntl3;
+  cntl3.all = tempVal;
+  cntl3.bits.owuf = rate; // This is a long winded but definitive way of updating the wake-up ODR
+  tempVal = cntl3.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL3, tempVal);
 
@@ -489,7 +492,7 @@ bool QwDevKX13X::setWakeDataRate(uint8_t rate)
 //////////////////////////////////////////////////
 // getOutputDataRate()
 //
-// Retrieves the output data rate of the acceleromter.
+// Retrieves the output data rate of the accelerometer.
 //
 float QwDevKX13X::getOutputDataRate()
 {
@@ -501,9 +504,10 @@ float QwDevKX13X::getOutputDataRate()
   if (retVal != 0)
     return 0.0;
 
-  tempVal = tempVal & 0x0F;
+  sfe_kx13x_odcntl_bitfield_t odcntl;
+  odcntl.all = tempVal; // This is a long winded but definitive way of getting the ODR
 
-  return (0.78 * (pow(2, (float)tempVal)));
+  return (0.781 * (pow(2, (float)odcntl.bits.osa)));
 }
 
 //////////////////////////////////////////////////
