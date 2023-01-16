@@ -197,6 +197,12 @@ typedef struct
   uint8_t ffs : 1;  // Free fall
 } sfe_kx13x_ins2_t;
 
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_ins2_t bits;
+} sfe_kx13x_ins2_bitfield_t;
+
 #define SFE_KX13X_INS3 0x18
 // Reports which axis and direction of detected motion triggered the wakeup interrupt
 typedef struct
@@ -484,6 +490,12 @@ typedef struct
   uint8_t dtre : 1;
   uint8_t undefined : 6;
 } sfe_kx13x_tdtrc_t;
+
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_tdtrc_t bits;
+} sfe_kx13x_tdtrc_bitfield_t;
 
 #define SFE_KX13X_TDTC 0x2B
 // Double tap time counter - see datashet for more specifics.

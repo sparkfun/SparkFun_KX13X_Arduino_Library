@@ -807,7 +807,10 @@ bool QwDevKX13X::enableDirecTapInterupt(bool enable)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | enable;
+  sfe_kx13x_tdtrc_bitfield_t tdtrc;
+  tdtrc.all = tempVal;
+  tdtrc.bits.stre = enable; // This is a long winded but definitive way of setting/clearing the enable bit
+  tempVal = tdtrc.all;
 
   retVal = writeRegisterByte(SFE_KX13X_TDTRC, tempVal);
 
@@ -835,7 +838,10 @@ bool QwDevKX13X::enableDoubleTapInterrupt(bool enable)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | (enable << 1);
+  sfe_kx13x_tdtrc_bitfield_t tdtrc;
+  tdtrc.all = tempVal;
+  tdtrc.bits.dtre = enable; // This is a long winded but definitive way of setting/clearing the enable bit
+  tempVal = tdtrc.all;
 
   retVal = writeRegisterByte(SFE_KX13X_TDTRC, tempVal);
 
@@ -864,10 +870,10 @@ bool QwDevKX13X::dataReady()
   if (retVal != 0)
     return false;
 
-  if (tempVal & 0x10)
-    return true;
+  sfe_kx13x_ins2_bitfield_t ins2;
+  ins2.all = tempVal;
 
-  return false;
+  return ins2.bits.drdy;
 }
 
 //////////////////////////////////////////////////
