@@ -152,7 +152,10 @@ int8_t QwDevKX13X::getOperatingMode()
   if (retVal != 0)
     return retVal;
 
-  return (tempVal >> 7);
+  sfe_kx13x_cntl1_bitfield_t cntl1;
+  cntl1.all = tempVal; // This is a long winded but definitive way of getting the operating mode bit
+
+  return (cntl1.bits.pc1); // Return the operating mode bit
 }
 
 //////////////////////////////////////////////////
@@ -162,17 +165,29 @@ int8_t QwDevKX13X::getOperatingMode()
 //
 // Parameter:
 // range - sets the range of the accelerometer 2g - 32g depending
-// on the version.
+// on the version. 8g - 64g for the KX134.
 //
 bool QwDevKX13X::setRange(uint8_t range)
 {
 
+  uint8_t tempVal;
   int retVal;
 
-  if (range > 3)
+  if (range > SFE_KX132_RANGE16G) // Same as SFE_KX134_RANGE64G
     return false;
 
-  retVal = writeRegisterByte(SFE_KX13X_CNTL1, range);
+  // Read - Modify - Write
+  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
+
+  if (retVal != 0)
+    return false;
+
+  sfe_kx13x_cntl1_bitfield_t cntl1;
+  cntl1.all = tempVal;
+  cntl1.bits.gsel =  range; // This is a long winded but definitive way of setting the range (g select)
+  tempVal = cntl1.all;
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
 
   if (retVal != 0)
     return false;
