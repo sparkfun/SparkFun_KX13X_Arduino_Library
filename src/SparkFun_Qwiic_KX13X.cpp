@@ -244,7 +244,10 @@ bool QwDevKX13X::enableTapEngine(bool enable)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | (enable << 2);
+  sfe_kx13x_cntl1_bitfield_t cntl1;
+  cntl1.all = tempVal;
+  cntl1.bits.tdte =  enable; // This is a long winded but definitive way of setting/clearing the tap engine bit
+  tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
 
