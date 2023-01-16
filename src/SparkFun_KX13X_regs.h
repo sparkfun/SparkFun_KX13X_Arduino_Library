@@ -145,14 +145,14 @@ typedef struct
 //Current Tilt Position Register reports current position data
 typedef struct
 {
+	uint8_t face_up_state      :  1;  //Z+
+	uint8_t face_down_state    :  1;  //Z-
+	uint8_t up_state           :  1;  //Y+
+	uint8_t down_state         :  1;  //Y-
+	uint8_t right_state        :  1;  //X+
+	uint8_t left_state         :  1;  //X-
 	uint8_t reserved_one       :  1;
 	uint8_t reserved_two       :  1;
-	uint8_t left_state         :  1;  //X-
-	uint8_t right_state        :  1;  //X+
-	uint8_t down_state         :  1;  //Y-
-	uint8_t up_state           :  1;  //Y+
-	uint8_t face_down_state    :  1;	//Z-
-	uint8_t face_up_down_state :  1;  //Z+
 } sfe_kx13x_tscp_t;
 
 #define SFE_KX13X_TSPP 0x15
