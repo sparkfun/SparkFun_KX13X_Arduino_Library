@@ -342,6 +342,12 @@ typedef struct
   uint8_t iir_bypass : 1;
 } sfe_kx13x_odcntl_t;
 
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_odcntl_t bits;
+} sfe_kx13x_odcntl_bitfield_t;
+
 #define SFE_KX13X_INC1 0x22
 // Controls settings for physical interrupt pin
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.

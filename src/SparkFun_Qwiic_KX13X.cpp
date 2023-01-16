@@ -367,12 +367,15 @@ bool QwDevKX13X::setOutputDataRate(uint8_t rate)
   uint8_t tempVal;
   int retVal;
 
-  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &tempVal, 1);
+  retVal = readRegisterRegion(SFE_KX13X_ODCNTL, &tempVal, 1);
 
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | rate;
+  sfe_kx13x_odcntl_bitfield_t odcntl;
+  odcntl.all = tempVal;
+  odcntl.bits.osa =  rate; // This is a long winded but definitive way of updating the ODR
+  tempVal = odcntl.all;
 
   retVal = writeRegisterByte(SFE_KX13X_ODCNTL, tempVal);
 
