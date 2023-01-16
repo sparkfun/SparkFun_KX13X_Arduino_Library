@@ -174,41 +174,41 @@ typedef struct
 // is cleared when the interrupt latch release register (INT_REL) is read. 
 typedef struct
 {
+	uint8_t tap_face_up   :  1;  //Z+
+	uint8_t tap_face_down :  1;	 //Z-
+	uint8_t tap_up        :  1;  //Y+
+	uint8_t tap_down      :  1;  //Y-
+	uint8_t tap_right     :  1;  //X+
+	uint8_t tap_left      :  1;  //X-
 	uint8_t reserved_one  :  1;
 	uint8_t reserved_two  :  1;
-	uint8_t tap_left      :  1;  //X-
-	uint8_t tap_right     :  1;  //X+
-	uint8_t tap_down      :  1;  //Y-
-	uint8_t tap_up        :  1;  //Y+
-	uint8_t tap_face_down :  1;	 //Z-
-	uint8_t tap_face_up   :  1;  //Z+
 } sfe_kx13x_ins1_t;
 
 #define SFE_KX13X_INS2 0x17
 // Reports which function caused an interrupt
 typedef struct
 {
-	uint8_t ffs      :  1; // Free fall
-	uint8_t bfi      :  1; // Buffer full
-	uint8_t wmi      :  1; // Watermark
-	uint8_t drdy     :  1; // Data Ready 
-	uint8_t tdts     :  2; // Tap/Double Tap  
-	uint8_t reserved :  1;  
 	uint8_t tps      :  1; // Tilt Position  
+	uint8_t reserved :  1;  
+	uint8_t tdts     :  2; // Tap/Double Tap  
+	uint8_t drdy     :  1; // Data Ready 
+	uint8_t wmi      :  1; // Watermark
+	uint8_t bfi      :  1; // Buffer full
+	uint8_t ffs      :  1; // Free fall
 } sfe_kx13x_ins2_t;
 
 #define SFE_KX13X_INS3 0x18
 // Reports which axis and direction of detected motion triggered the wakeup interrupt
 typedef struct
 {
-	uint8_t wufs :  1;
-	uint8_t bts  :  1;
-	uint8_t xnwu :  1;  //X-
-	uint8_t xpwu :  1;  //X+
-	uint8_t ynwu :  1;  //Y-
-	uint8_t ypwu :  1;  //Y+
-	uint8_t znwu :  1;	//Z-
 	uint8_t zpwu :  1;  //Z+
+	uint8_t znwu :  1;	//Z-
+	uint8_t ypwu :  1;  //Y+
+	uint8_t ynwu :  1;  //Y-
+	uint8_t xpwu :  1;  //X+
+	uint8_t xnwu :  1;  //X-
+	uint8_t bts  :  1;
+	uint8_t wufs :  1;
 } sfe_kx13x_ins3_t;
 
 #define SFE_KX13X_STATUS_REG 0x19 
