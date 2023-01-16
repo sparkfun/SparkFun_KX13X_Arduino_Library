@@ -709,6 +709,12 @@ typedef struct
   uint8_t bufe : 1; // Activation of sample buffer
 } sfe_kx13x_buf_cntl2_t;
 
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_buf_cntl2_t bits;
+} sfe_kx13x_buf_cntl2_bitfield_t;
+
 #define SFE_KX13X_BUF_STATUS_1 0x60
 // The buffer status registers (buff status one and two) report the number of
 // data bytes in the sample buffer.

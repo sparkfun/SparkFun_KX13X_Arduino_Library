@@ -893,10 +893,10 @@ bool QwDevKX13X::freeFall()
   if (retVal != 0)
     return false;
 
-  if (tempVal & 0x80)
-    return true;
+  sfe_kx13x_ins2_bitfield_t ins2;
+  ins2.all = tempVal;
 
-  return false;
+  return ins2.bits.ffs;
 }
 
 //////////////////////////////////////////////////
@@ -916,10 +916,10 @@ bool QwDevKX13X::bufferFull()
   if (retVal != 0)
     return false;
 
-  if (tempVal & 0x40)
-    return true;
+  sfe_kx13x_ins2_bitfield_t ins2;
+  ins2.all = tempVal;
 
-  return false;
+  return ins2.bits.bfi;
 }
 
 //////////////////////////////////////////////////
@@ -939,10 +939,10 @@ bool QwDevKX13X::waterMarkReached()
   if (retVal != 0)
     return false;
 
-  if (tempVal & 0x10)
-    return true;
+  sfe_kx13x_ins2_bitfield_t ins2;
+  ins2.all = tempVal;
 
-  return false;
+  return ins2.bits.wmi;
 }
 
 //////////////////////////////////////////////////
@@ -962,13 +962,10 @@ bool QwDevKX13X::tapDetected()
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal & 0x0C; // Three states of interest: single tap detected
-                            // undefined, and no tap.
+  sfe_kx13x_ins2_bitfield_t ins2;
+  ins2.all = tempVal;
 
-  if (tempVal == 0x04) // True if tap - not undefined or no tap.
-    return true;
-
-  return false;
+  return (ins2.bits.tdts == 0x01); // Single tap
 }
 
 //////////////////////////////////////////////////
@@ -1009,13 +1006,10 @@ bool QwDevKX13X::unknownTap()
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal & 0x0C; // Three states of interest: single tap detected
-                            // undefined, and no tap.
+  sfe_kx13x_ins2_bitfield_t ins2;
+  ins2.all = tempVal;
 
-  if (tempVal == 0x0C) // True if undefined
-    return true;
-
-  return false;
+  return (ins2.bits.tdts == 0x03); // undefined tap event
 }
 
 //////////////////////////////////////////////////
@@ -1035,13 +1029,10 @@ bool QwDevKX13X::doubleTapDetected()
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal & 0x0C; // Two states of interest: single tap detected
-                            // and undefined.
+  sfe_kx13x_ins2_bitfield_t ins2;
+  ins2.all = tempVal;
 
-  if (tempVal == 0x08) // True if tap - not undefined.
-    return true;
-
-  return false;
+  return (ins2.bits.tdts == 0x02); // Double tap
 }
 
 //////////////////////////////////////////////////
@@ -1061,10 +1052,10 @@ bool QwDevKX13X::tiltChange()
   if (retVal != 0)
     return false;
 
-  if (tempVal == 0x01)
-    return true;
+  sfe_kx13x_ins2_bitfield_t ins2;
+  ins2.all = tempVal;
 
-  return false;
+  return (ins2.bits.tps); // Tilt position status
 }
 
 //////////////////////////////////////////////////
@@ -1082,7 +1073,6 @@ bool QwDevKX13X::setBufferThreshold(uint8_t threshold)
 
   int retVal;
   uint8_t tempVal;
-  uint8_t resolution;
 
   if (threshold < 2 || threshold > 171)
     return false;
@@ -1092,17 +1082,22 @@ bool QwDevKX13X::setBufferThreshold(uint8_t threshold)
   if (retVal != 0)
     return false;
 
-  resolution = (tempVal & 0x40) >> 6; // Isolate it, move it
+  sfe_kx13x_buf_cntl2_bitfield_t bufCntl2;
+  bufCntl2.all = tempVal;
 
-  if (threshold > 86 && resolution == 1) // 1 = 16bit resolution, max samples: 86
+  // BRES – determines the resolution of the acceleration data samples collected by the sample buffer.
+  // BRES = 0 – 8-bit samples are accumulated in the buffer
+  // BRES = 1 – 16-bit samples are accumulated in the buffer
+
+  if ((threshold > 86) && (bufCntl2.bits.bres == 1)) // 1 = 16bit resolution, max samples: 86
     threshold = 86;
 
   retVal = writeRegisterByte(SFE_KX13X_BUF_CNTL1, threshold);
 
   if (retVal != 0)
-    return true;
+    return false;
 
-  return false;
+  return true;
 }
 
 //////////////////////////////////////////////////
@@ -1127,7 +1122,10 @@ bool QwDevKX13X::setBufferOperationMode(uint8_t operationMode)
   if (retVal != 0)
     return true;
 
-  tempVal = tempVal | operationMode;
+  sfe_kx13x_buf_cntl2_bitfield_t bufCntl2;
+  bufCntl2.all = tempVal;
+  bufCntl2.bits.bm = operationMode; // This is a long winded but definitive way of setting/clearing the operating mode
+  tempVal = bufCntl2.all;
 
   retVal = writeRegisterByte(SFE_KX13X_BUF_CNTL2, tempVal);
 
