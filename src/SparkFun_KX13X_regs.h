@@ -420,9 +420,9 @@ typedef struct
 // These settings can be changed on the fly - no need to put IC in stand-by.
 typedef struct
 {
-	uint8_t undefined :  6;
-	uint8_t dtre      :  1;
 	uint8_t stre      :  1;
+	uint8_t dtre      :  1;
+	uint8_t undefined :  6;
 } sfe_kx13x_tdtrc_t;
 
 #define SFE_KX13X_TDTC 0x2B
@@ -455,8 +455,8 @@ typedef struct
 // Check datasheet for conversion information.
 typedef struct
 {
-	uint8_t ftdh : 5;  //Default high limit is .05 seconds 
 	uint8_t ftdl : 3;  //Default low limits is .05 seconds 
+	uint8_t ftdh : 5;  //Default high limit is .05 seconds 
 } sfe_kx13x_ftd_t;
 
 #define SFE_KX13X_STD 0x2F
@@ -508,11 +508,11 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t ffie : 1;  
-	uint8_t ulmode : 1;  
-	uint8_t ffdc : 2;  
-	uint8_t dcrm : 1;  
 	uint8_t offl : 3;  
+	uint8_t dcrm : 1;  
+	uint8_t ffdc : 2;  
+	uint8_t ulmode : 1;  
+	uint8_t ffie : 1;  
 } sfe_kx13x_ffcntl_t;
 
 #define SFE_KX13X_TILT_ANGLE_LL 0x37
@@ -536,8 +536,8 @@ typedef struct
 // These settings can be changed on the fly - no need to put IC in stand-by.
 typedef struct
 {
-	uint8_t reserved : 2;  
 	uint8_t hyst : 6;  
+	uint8_t reserved : 2;  
 } sfe_kx13x_hyst_t;
 
 #define SFE_KX13X_LP_CNTL1 0x3A
@@ -548,9 +548,9 @@ typedef struct
 // These settings can be changed on the fly - no need to put IC in stand-by.
 typedef struct
 {
-	uint8_t reserved_one :  1;
+	uint8_t reserved_one :  4;
 	uint8_t avc          :  3;
-	uint8_t reserved_two :  4;
+	uint8_t reserved_two :  1;
 } sfe_kx13x_lp_cntl1_t;
 
 #define SFE_KX13X_LP_CNTL2 0x3B
@@ -559,8 +559,8 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t reserved : 7;  
 	uint8_t lpstpsel : 1;  
+	uint8_t reserved : 7;  
 } sfe_kx13x_lpcntl2_t;
 
 #define SFE_KX13X_WUFTH 0x49
@@ -577,10 +577,10 @@ typedef struct
 // These settings can be changed on the fly - no need to put IC in stand-by.
 typedef struct
 {
+	uint8_t wufth : 3;  
 	uint8_t undefined_one : 1;  
 	uint8_t btsth : 3;  
 	uint8_t undefined_two : 1;  
-	uint8_t wufth : 3;  
 } sfe_kx13x_btswufth_t;
 
 #define SFE_KX13X_BTSTH 0x4B
@@ -630,11 +630,11 @@ typedef struct
 // These settings can be changed on the fly - no need to put IC in stand-by.
 typedef struct
 {
-	uint8_t bufe      :  1; // Activation of sample buffer
-	uint8_t bres      :  1; // Resolution - 8 or 16 bit samples
-	uint8_t bfie      :  1; // Full interrupt enable bit
-	uint8_t undefined :  3;
 	uint8_t bm        :  2; //FIFO, Stream, Trigger
+	uint8_t undefined :  3;
+	uint8_t bfie      :  1; // Full interrupt enable bit
+	uint8_t bres      :  1; // Resolution - 8 or 16 bit samples
+	uint8_t bufe      :  1; // Activation of sample buffer
 } sfe_kx13x_buf_cntl2_t;
 
 #define SFE_KX13X_BUF_STATUS_1 0x60
@@ -653,9 +653,9 @@ typedef struct
 // buf_status1.
 typedef struct
 {
-	uint8_t buf_trig  :  1;
-	uint8_t undefined :  5;
 	uint8_t smp_lev   :  2;
+	uint8_t undefined :  5;
+	uint8_t buf_trig  :  1;
 } sfe_kx13x_buf_status2_t;
 
 #define SFE_KX13X_BUF_CLEAR 0x62
@@ -679,9 +679,9 @@ typedef struct
 // used to calculate RMS output. 
 typedef struct 
 {
-	uint8_t reserved :  1;
-	uint8_t rms_avc  :  3;
 	uint8_t oadp     :  3;
+	uint8_t rms_avc  :  3;
+	uint8_t reserved :  1;
 } sfe_kx13x_adp_cntl1_t;
 
 #define SFE_KX13X_ADP_CNTL2 0x65
@@ -689,14 +689,14 @@ typedef struct
 // filter bypass amongst others. 
 typedef struct 
 {
-	uint8_t adp_buf_sel  :  1;
-	uint8_t adp_wb_isel  :  1;
-	uint8_t rms_wb_osel  :  1;
-	uint8_t adp_flt2_byp :  1;
-	uint8_t adp_flt1_byp :  1;
-	uint8_t undefined    :  1;
-	uint8_t adp_rms_osel :  1;
 	uint8_t adp_f2_hp    :  1;
+	uint8_t adp_rms_osel :  1;
+	uint8_t undefined    :  1;
+	uint8_t adp_flt1_byp :  1;
+	uint8_t adp_flt2_byp :  1;
+	uint8_t rms_wb_osel  :  1;
+	uint8_t adp_wb_isel  :  1;
+	uint8_t adp_buf_sel  :  1;
 } sfe_kx13x_adp_cntl2_t;
 
 #define SFE_KX13X_ADP_CNTL3 0x66
@@ -727,8 +727,8 @@ typedef struct
 // Bits [22:16]
 typedef struct 
 {
-	uint8_t undefined : 1;
 	uint8_t adp_f1_ba : 7;
+	uint8_t undefined : 1;
 } sfe_kx13x_adp_cntl6_t;
 
 #define SFE_KX13X_ADP_CNTL7 0x6A
@@ -752,24 +752,24 @@ typedef struct
 // Bits [22:16]
 typedef struct 
 {
-	uint8_t undefined : 1;
 	uint8_t adp_f1_ca : 7;
+	uint8_t undefined : 1;
 } sfe_kx13x_adp_cntl9_t;
 
 #define SFE_KX13X_ADP_CNTL10 0x6D
 // Sets the ADP filter-1 input scale shift
 typedef struct 
 {
-	uint8_t undefined  :  3;
 	uint8_t adp_f1_ish :  5;
+	uint8_t undefined  :  3;
 } sfe_kx13x_adp_cntl10_t;
 
 #define SFE_KX13X_ADP_CNTL11 0x6E
 // Sets the ADP filter-2 coefficient (1/A)
 typedef struct 
 {
-	uint8_t adp_f2_osh :  1;
 	uint8_t adp_f2_1a  :  7;
+	uint8_t adp_f1_osh :  1;
 } sfe_kx13x_adp_cntl11_t;
 
 #define SFE_KX13X_ADP_CNTL12 0x6F
@@ -785,8 +785,8 @@ typedef struct
 // Bits [14:8]
 typedef struct 
 {
-	uint8_t undefined : 1;
 	uint8_t adp_f2_ba : 1;
+	uint8_t undefined : 1;
 } sfe_kx13x_adp_cntl13_t;
 
 //---------------------------------- Set to Zero by Manufacturer vv ----
@@ -800,16 +800,16 @@ typedef struct
 // Sets the ADP filter-2 input scale shift
 typedef struct 
 {
+	uint8_t adp_f2_ish :  5;
 	uint8_t undefined  :  3;
-	uint8_t adp_f1_ish :  5;
 } sfe_kx13x_adp_cntl18_t;
 
 #define SFE_KX13X_ADP_CNTL19 0x76
 // Sets the ADP filter-2 output scale shift
 typedef struct 
 {
+	uint8_t adp_f2_osh :  5;
 	uint8_t undefined  :  3;
-	uint8_t adp_f1_osh :  5;
 } sfe_kx13x_adp_cntl19_t;
 
 typedef struct
