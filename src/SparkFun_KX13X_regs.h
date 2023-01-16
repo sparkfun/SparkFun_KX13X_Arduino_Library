@@ -311,11 +311,11 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t reserved_one :  1; 
-	uint8_t lpro         :  1; // 0 - Filter ODR/9 : 1 - Filter ODR/2
-	uint8_t fstup        :  1;
-	uint8_t reserved_two :  1;
 	uint8_t osa          :  4;
+	uint8_t reserved_one :  1; 
+	uint8_t fstup        :  1;
+	uint8_t lpro         :  1; // 0 - Filter ODR/9 : 1 - Filter ODR/2
+	uint8_t iir_bypass   :  1;
 } sfe_kx13x_odcntl_t;
 
 #define SFE_KX13X_INC1 0x22
@@ -323,13 +323,13 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t pw1          :  2;
-	uint8_t ien1         :  1; // Enable/disable physical interrupt pin
-	uint8_t iea1         :  1; // Interrupt active level control, 0 - LOW : 1 - HIGH
-	uint8_t iel1         :  1; // Interrupt lactch control, 0 - latched : 1 - pulsed
-	uint8_t reserved_one :  1;
-	uint8_t stpol        :  1;
 	uint8_t spi3e        :  1;
+	uint8_t stpol        :  1;
+	uint8_t reserved_one :  1;
+	uint8_t iel1         :  1; // Interrupt lactch control, 0 - latched : 1 - pulsed
+	uint8_t iea1         :  1; // Interrupt active level control, 0 - LOW : 1 - HIGH
+	uint8_t ien1         :  1; // Enable/disable physical interrupt pin
+	uint8_t pw1          :  2;
 } sfe_kx13x_inc1_t;
 													 
 #define SFE_KX13X_INC2 0x23
@@ -337,14 +337,14 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t reserved_one :  1;
-	uint8_t aoi          :  1;
-	uint8_t xnwue        :  1; //X-
-	uint8_t xpwue        :  1; //X+
-	uint8_t ynwue        :  1; //Y-
-	uint8_t ypwue        :  1; //Y+
-	uint8_t znwue        :  1; //Z-
 	uint8_t zpwue        :  1; //Z+
+	uint8_t znwue        :  1; //Z-
+	uint8_t ypwue        :  1; //Y+
+	uint8_t ynwue        :  1; //Y-
+	uint8_t xpwue        :  1; //X+
+	uint8_t xnwue        :  1; //X-
+	uint8_t aoi          :  1;
+	uint8_t reserved_one :  1;
 } sfe_kx13x_inc2_t;
 
 #define SFE_KX13X_INC3 0x24
@@ -352,14 +352,14 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t undefined :  1;
-	uint8_t tmen      :  1; // Alternate masking scheme
-	uint8_t tlem      :  1; //X-
-	uint8_t trim      :  1; //X+
-	uint8_t tdom      :  1; //Y-
-	uint8_t tpum      :  1; //Y+
-	uint8_t tfdm      :  1; //Z-
 	uint8_t tfum      :  1; //Z+
+	uint8_t tfdm      :  1; //Z-
+	uint8_t tpum      :  1; //Y+
+	uint8_t tdom      :  1; //Y-
+	uint8_t trim      :  1; //X+
+	uint8_t tlem      :  1; //X-
+	uint8_t tmen      :  1; // Alternate masking scheme
+	uint8_t undefined :  1;
 } sfe_kx13x_inc3_t;
 
 #define SFE_KX13X_INC4 0x25 
@@ -367,14 +367,14 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t ffi1   :  1;
-	uint8_t bfi1   :  1;
-	uint8_t wmi1   :  1;
-	uint8_t drdyi1 :  1;
-	uint8_t btsi1  :  1;
-	uint8_t tdti1  :  1;
-	uint8_t wufi1  :  1;
 	uint8_t tpi1   :  1;
+	uint8_t wufi1  :  1;
+	uint8_t tdti1  :  1;
+	uint8_t btsi1  :  1;
+	uint8_t drdyi1 :  1;
+	uint8_t wmi1   :  1;
+	uint8_t bfi1   :  1;
+	uint8_t ffi1   :  1;
 } sfe_kx13x_inc4_t;
 
 #define SFE_KX13X_INC5 0x26
@@ -382,13 +382,13 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t pw2          :  2;
-	uint8_t ien2         :  1;
-	uint8_t iea2         :  1;
-	uint8_t iel2         :  1;
-	uint8_t reserved_one :  1;
-	uint8_t aclr2        :  1;
 	uint8_t aclr1        :  1;
+	uint8_t aclr2        :  1;
+	uint8_t reserved_one :  1;
+	uint8_t iel2         :  1;
+	uint8_t iea2         :  1;
+	uint8_t ien2         :  1;
+	uint8_t pw2          :  2;
 } sfe_kx13x_inc5_t;
 
 #define SFE_KX13X_INC6 0x27
@@ -396,14 +396,14 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-	uint8_t ffi2   :  1;
-	uint8_t bfi2   :  1;
-	uint8_t wmi2   :  1;
-	uint8_t drdyi2 :  1;
-	uint8_t btsi2  :  1;
-	uint8_t tdti2  :  1;
-	uint8_t wufi2  :  1;
 	uint8_t tpi2   :  1;
+	uint8_t wufi2  :  1;
+	uint8_t tdti2  :  1;
+	uint8_t btsi2  :  1;
+	uint8_t drdyi2 :  1;
+	uint8_t wmi2   :  1;
+	uint8_t bfi2   :  1;
+	uint8_t ffi2   :  1;
 } sfe_kx13x_inc6_t;
 
 #define SFE_KX13X_TILT_TIMER 0x29 
