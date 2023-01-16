@@ -296,6 +296,12 @@ typedef struct
   uint8_t c_mode : 1;
 } sfe_kx13x_cntl4_t;
 
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_cntl4_t bits;
+} sfe_kx13x_cntl4_bitfield_t;
+
 #define SFE_KX13X_CNTL5 0x1F
 // Read/Write control register that providers more feature set control.
 // These settings can be changed on the fly - no need to put IC in stand-by.
