@@ -124,7 +124,7 @@ bool QwDevKX13X::enableAccel(bool enable)
 
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal;
-  cntl1.bits.pc1 = 1; // This is a long winded but definitive way of setting the operating mode bit
+  cntl1.bits.pc1 = enable; // This is a long winded but definitive way of setting/clearing the operating mode bit
   tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
