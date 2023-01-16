@@ -407,7 +407,10 @@ bool QwDevKX13X::setTapDataRate(uint8_t rate)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | (rate << 3);
+  sfe_kx13x_cntl3_bitfield_t cntl3;
+  cntl3.all = tempVal;
+  cntl3.bits.otdt = rate; // This is a long winded but definitive way of updating the tap ODR
+  tempVal = cntl3.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL3, tempVal);
 
@@ -439,7 +442,10 @@ bool QwDevKX13X::setTiltDataRate(uint8_t rate)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | (rate << 6);
+  sfe_kx13x_cntl3_bitfield_t cntl3;
+  cntl3.all = tempVal;
+  cntl3.bits.otp = rate; // This is a long winded but definitive way of updating the tap ODR
+  tempVal = cntl3.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL3, tempVal);
 

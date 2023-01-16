@@ -280,8 +280,14 @@ typedef struct
 {
   uint8_t owuf : 3; // ORR wake-up
   uint8_t otdt : 3; // ODR tap/double-tap
-  uint8_t opt : 2;  // ODR tilt position
+  uint8_t otp : 2;  // ODR tilt position
 } sfe_kx13x_cntl3_t;
+
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_cntl3_t bits;
+} sfe_kx13x_cntl3_bitfield_t;
 
 #define SFE_KX13X_CNTL4 0x1E
 // Read/write control register that provides more feature set control.
