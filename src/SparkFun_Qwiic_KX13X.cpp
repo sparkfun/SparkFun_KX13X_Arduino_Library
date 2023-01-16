@@ -1074,7 +1074,7 @@ bool QwDevKX13X::setBufferThreshold(uint8_t threshold)
   int retVal;
   uint8_t tempVal;
 
-  if (threshold < 2 || threshold > 171)
+  if ((threshold < 2) || (threshold > 171))
     return false;
 
   retVal = readRegisterRegion(SFE_KX13X_BUF_CNTL2, &tempVal, 1);
@@ -1245,7 +1245,7 @@ uint16_t QwDevKX13X::getSampleLevel()
     return 0;
 
   numSamples = tempVal[0];
-  numSamples = numSamples | (((uint16_t)tempVal[1] & 0x03) << 8);
+  numSamples |= (((uint16_t)tempVal[1] & 0x03) << 8);
 
   return numSamples;
 }
