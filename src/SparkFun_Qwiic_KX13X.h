@@ -148,7 +148,7 @@ public:
   bool configureInterruptPin(uint8_t pinVal);
   bool routeHardwareInterrupt(uint8_t, uint8_t pin = 1);
   bool enablePhysInterrupt(bool enable = true, uint8_t pin = 1);
-  bool setPinMode(bool activeLow = true, uint8_t pin = 1);
+  bool setPinMode(bool activeHigh = true, uint8_t pin = 1);
   bool setLatchControl(bool latch = true, uint8_t pin = 1);
   bool setPulseWidth(uint8_t width, uint8_t pin = 1);
   bool clearInterrupt();

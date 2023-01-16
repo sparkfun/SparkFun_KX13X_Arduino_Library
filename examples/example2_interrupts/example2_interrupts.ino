@@ -80,7 +80,7 @@ void setup()
 	// In this case you'll need to release directly with clearInterrupt();.
   //kxAccel.setLatchControl(); 
 
-	//kxAccel.setPinMode(false);		 // Change interrupt to active HIGH
+	//kxAccel.setPinMode();		 // Change interrupt to active HIGH
 	//kxAccel.setPulseWidth(); // Change the length of a pulsed (non latched) interrupt
 							
   kxAccel.setRange(SFE_KX132_RANGE16G);         // 16g Range

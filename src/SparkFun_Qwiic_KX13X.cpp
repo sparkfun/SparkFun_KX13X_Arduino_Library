@@ -591,7 +591,7 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
 // enable - Enables interrupts to report to the physical interrupt pins
 // pin - This determines which pin to route the interrupts.
 //
-bool QwDevKX13X::setPinMode(bool activeLow, uint8_t pin)
+bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
 {
   int retVal;
   uint8_t tempVal;
@@ -608,7 +608,7 @@ bool QwDevKX13X::setPinMode(bool activeLow, uint8_t pin)
 
     sfe_kx13x_inc1_bitfield_t inc1;
     inc1.all = tempVal;
-    inc1.bits.iea1 = activeLow ? 0 : 1; // This is a long winded but definitive way of setting/clearing the level bit
+    inc1.bits.iea1 = activeHigh; // This is a long winded but definitive way of setting/clearing the level bit
     tempVal = inc1.all;
 
     writeRegisterByte(SFE_KX13X_INC1, tempVal);
@@ -623,7 +623,7 @@ bool QwDevKX13X::setPinMode(bool activeLow, uint8_t pin)
 
     sfe_kx13x_inc5_bitfield_t inc5;
     inc5.all = tempVal;
-    inc5.bits.iea2 = activeLow ? 0 : 1; // This is a long winded but definitive way of setting/clearing the level bit
+    inc5.bits.iea2 = activeHigh; // This is a long winded but definitive way of setting/clearing the level bit
     tempVal = inc5.all;
 
     writeRegisterByte(SFE_KX13X_INC5, tempVal);
