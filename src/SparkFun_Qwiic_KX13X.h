@@ -188,10 +188,10 @@ public:
   bool convAccelData(outputData *userAccel, rawOutputData *rawAccelData);
 
   // KX132 conversion values	- all 16 bit resolution
-  const double convRange2G = .00006;
-  const double convRange4G = .00012;
-  const double convRange8G = .00024;
-  const double convRange16G = .00048;
+  const double convRange2G = .000061;
+  const double convRange4G = .000122;
+  const double convRange8G = .000244;
+  const double convRange16G = .000488;
 
 private:
 };
@@ -206,10 +206,10 @@ public:
   bool convAccelData(outputData *userAccel, rawOutputData *rawAccelData);
 
   // KX134 conversion values	- all 16 bit resolution
-  const double convRange8G = .00024;
-  const double convRange16G = .00049;
-  const double convRange32G = .00098;
-  const double convRange64G = .00195;
+  const double convRange8G = .000244;
+  const double convRange16G = .000488;
+  const double convRange32G = .000977;
+  const double convRange64G = .001953;
 
 private:
 };
