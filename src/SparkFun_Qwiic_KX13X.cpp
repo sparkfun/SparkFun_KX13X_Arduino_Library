@@ -1153,7 +1153,10 @@ bool QwDevKX13X::setBufferResolution(bool sixteenBit)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | ((uint8_t)sixteenBit << 6);
+  sfe_kx13x_buf_cntl2_bitfield_t bufCntl2;
+  bufCntl2.all = tempVal;
+  bufCntl2.bits.bres = sixteenBit; // This is a long winded but definitive way of setting/clearing the resolution bit
+  tempVal = bufCntl2.all;
 
   retVal = writeRegisterByte(SFE_KX13X_BUF_CNTL2, tempVal);
 
@@ -1181,7 +1184,10 @@ bool QwDevKX13X::enableBufferInt(bool enable)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | (enable << 5);
+  sfe_kx13x_buf_cntl2_bitfield_t bufCntl2;
+  bufCntl2.all = tempVal;
+  bufCntl2.bits.bfie = enable; // This is a long winded but definitive way of setting/clearing the buffer interrupt enable bit
+  tempVal = bufCntl2.all;
 
   retVal = writeRegisterByte(SFE_KX13X_BUF_CNTL2, tempVal);
 
@@ -1209,7 +1215,10 @@ bool QwDevKX13X::enableSampleBuffer(bool enable)
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | ((uint8_t)enable << 7);
+  sfe_kx13x_buf_cntl2_bitfield_t bufCntl2;
+  bufCntl2.all = tempVal;
+  bufCntl2.bits.bufe = enable; // This is a long winded but definitive way of setting/clearing the buffer enable bit
+  tempVal = bufCntl2.all;
 
   retVal = writeRegisterByte(SFE_KX13X_BUF_CNTL2, tempVal);
 
@@ -1236,7 +1245,7 @@ uint16_t QwDevKX13X::getSampleLevel()
     return 0;
 
   numSamples = tempVal[0];
-  numSamples = numSamples | ((tempVal[1] & 0x03) << 8);
+  numSamples = numSamples | (((uint16_t)tempVal[1] & 0x03) << 8);
 
   return numSamples;
 }
@@ -1276,7 +1285,10 @@ bool QwDevKX13X::runCommandTest()
   if (retVal != 0)
     return false;
 
-  tempVal = tempVal | 0x40;
+  sfe_kx13x_cntl2_bitfield_t cntl2;
+  cntl2.all = tempVal;
+  cntl2.bits.cotc = 1; // This is a long winded, but definitive way of setting the COTC bit
+  tempVal = cntl2.all;
 
   // Going to assume that communication is working at this point.
   writeRegisterByte(SFE_KX13X_CNTL2, tempVal);
@@ -1288,7 +1300,8 @@ bool QwDevKX13X::runCommandTest()
 
   readRegisterRegion(SFE_KX13X_CNTL2, &tempVal, 1);
 
-  if (tempVal != 0)
+  cntl2.all = tempVal;
+  if (cntl2.bits.cotc != 0)
     return false;
 
   readRegisterRegion(SFE_KX13X_COTR, &tempVal, 1);
@@ -1314,26 +1327,61 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData)
   uint8_t tempVal;
   uint8_t tempRegData[6] = {0};
 
-  // Check if buffer is enabled
-  retVal = readRegisterRegion(SFE_KX13X_INC4, &tempVal, 1);
+  // Check if the buffer full interrupt is activated
+  //retVal = readRegisterRegion(SFE_KX13X_INC4, &tempVal, 1); // inc4.bfi1 indicates if the buffer full interrupt is reported on INT1
+  retVal = readRegisterRegion(SFE_KX13X_BUF_CNTL2, &tempVal, 1); // bufCntl2.bits.bufe indicates if the buffer is enabled
 
   if (retVal != 0)
     return false;
 
-  if (tempVal & 0x40) // If Buffer is enabled, read there.
-    retVal = readRegisterRegion(SFE_KX13X_BUF_READ, tempRegData, 6);
+  sfe_kx13x_buf_cntl2_bitfield_t bufCntl2;
+  bufCntl2.all = tempVal;
+
+  bool is16bit = true;
+
+  if (bufCntl2.bits.bufe) // If Buffer is enabled, read there.
+  {
+    if (getSampleLevel() > 0) // Check the buffer contains data
+    {
+      if (bufCntl2.bits.bres) // If the buffer contains 16-bit samples
+        retVal = readRegisterRegion(SFE_KX13X_BUF_READ, tempRegData, 6); // Read 3 * 16-bit
+      else
+      {
+        retVal = readRegisterRegion(SFE_KX13X_BUF_READ, tempRegData, 3); // Read 3 * 8-bit
+        is16bit = false;
+      }
+    }
+    else
+      // No buffer data to read!
+      // We can either:
+      //return false;
+      // Or, be kind and read the normal registers
+      retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, 6); // Read 3 * 16-bit
+  }
   else
-    retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, 6);
+    retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, 6); // Read 3 * 16-bit
 
   if (retVal != 0)
     return false;
 
-  rawAccelData->xData = tempRegData[XLSB];
-  rawAccelData->xData |= (uint16_t)((tempRegData[XMSB]) << 8);
-  rawAccelData->yData = tempRegData[YLSB];
-  rawAccelData->yData |= (uint16_t)((tempRegData[YMSB]) << 8);
-  rawAccelData->zData = tempRegData[ZLSB];
-  rawAccelData->zData |= ((uint16_t)(tempRegData[ZMSB]) << 8);
+  if (is16bit) // Process buffer 8-bit samples
+  {
+    rawAccelData->xData = tempRegData[XLSB];
+    rawAccelData->xData |= (uint16_t)tempRegData[XMSB] << 8;
+    rawAccelData->yData = tempRegData[YLSB];
+    rawAccelData->yData |= (uint16_t)tempRegData[YMSB] << 8;
+    rawAccelData->zData = tempRegData[ZLSB];
+    rawAccelData->zData |= (uint16_t)tempRegData[ZMSB] << 8;
+  }
+  else
+  {
+    rawAccelData->xData = 0;
+    rawAccelData->xData |= (uint16_t)tempRegData[0] << 8; // Convert 8-bit signed to 16-bit signed
+    rawAccelData->yData = 0;
+    rawAccelData->yData |= (uint16_t)tempRegData[1] << 8;
+    rawAccelData->zData = 0;
+    rawAccelData->zData |= (uint16_t)tempRegData[2] << 8;
+  }
 
   return true;
 }
