@@ -244,6 +244,12 @@ typedef struct
   uint8_t pc1 : 1;
 } sfe_kx13x_cntl1_t;
 
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_cntl1_t bits;
+} sfe_kx13x_cntl1_bitfield_t;
+
 #define SFE_KX13X_CNTL2 0x1C
 // Read/Write control register that controls tilt position state enabling
 // Default value: 0b00111111
@@ -260,6 +266,12 @@ typedef struct
                     //  for tilt: 1 = enabled
   uint8_t srst : 1; // Software reset
 } sfe_kx13x_cntl2_t;
+
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_cntl2_t bits;
+} sfe_kx13x_cntl2_bitfield_t;
 
 #define SFE_KX13X_CNTL3 0x1D
 // Read/Write control register that provides control of the Output Data Rate (ODR)
@@ -295,6 +307,12 @@ typedef struct
   uint8_t adpe : 1;
   uint8_t reserved_two : 3;
 } sfe_kx13x_cntl5_t;
+
+typedef union
+{
+  uint8_t all;
+  sfe_kx13x_cntl5_t bits;
+} sfe_kx13x_cntl5_bitfield_t;
 
 #define SFE_KX13X_CNTL6 0x20
 // Read/Write control register that providers more feature set control.

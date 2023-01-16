@@ -44,7 +44,7 @@ void QwDevKX13X::setCommunicationBus(QwIDeviceBus &theBus)
 bool QwDevKX13X::initialize(uint8_t settings)
 {
 
-  int retVal;
+  int retVal = 0;
 
   if (!enableAccel(true))
     return false;
@@ -82,10 +82,13 @@ bool QwDevKX13X::initialize(uint8_t settings)
 bool QwDevKX13X::softwareReset()
 {
 
-  uint8_t reset = 0x80;
+  sfe_kx13x_cntl2_bitfield_t cntl2;
+  cntl2.all = 0;
+  cntl2.bits.srst = 1; // This is a long winded, but definitive way of setting the software reset bit
+
   int retVal;
 
-  retVal = writeRegisterByte(SFE_KX13X_CNTL2, reset);
+  retVal = writeRegisterByte(SFE_KX13X_CNTL2, cntl2.all);
 
   // Logic is inverted here - if we reset using I2C the
   // accelerometer immediately shuts off which results
@@ -119,7 +122,10 @@ bool QwDevKX13X::enableAccel(bool enable)
   if (retVal != 0)
     return false;
 
-  tempVal = (tempVal | (enable << 7));
+  sfe_kx13x_cntl1_bitfield_t cntl1;
+  cntl1.all = tempVal;
+  cntl1.bits.pc1 = 1; // This is a long winded but definitive way of setting the operating mode bit
+  tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
 
@@ -1267,14 +1273,16 @@ bool QwDevKX13X::forceSleep()
 {
   int retVal;
   uint8_t tempVal;
-  uint8_t forceSleep = 0x01;
 
   retVal = readRegisterRegion(SFE_KX13X_CNTL5, &tempVal, 1);
 
   if (retVal != 0)
     return false;
 
-  tempVal |= forceSleep;
+  sfe_kx13x_cntl5_bitfield_t cntl5;
+  cntl5.all = tempVal;
+  cntl5.bits.man_sleep = 1; // Set the manual sleep bit
+  tempVal = cntl5.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL5, tempVal);
 
@@ -1293,14 +1301,16 @@ bool QwDevKX13X::forceWake()
 {
   int retVal;
   uint8_t tempVal;
-  uint8_t forceWake = 0x02;
 
   retVal = readRegisterRegion(SFE_KX13X_CNTL5, &tempVal, 1);
 
   if (retVal != 0)
     return false;
 
-  tempVal |= forceWake;
+  sfe_kx13x_cntl5_bitfield_t cntl5;
+  cntl5.all = tempVal;
+  cntl5.bits.man_wake = 1; // Set the manual wake bit
+  tempVal = cntl5.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL5, tempVal);
 
@@ -1414,7 +1424,6 @@ bool QwDevKX132::getAccelData(outputData *userData)
 //
 bool QwDevKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelData)
 {
-
   uint8_t regVal;
   uint8_t range;
   int retVal;
@@ -1424,7 +1433,10 @@ bool QwDevKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
   if (retVal != 0)
     return false;
 
-  range = (regVal & 0x18) >> 3;
+  sfe_kx13x_cntl1_bitfield_t cntl1;
+  cntl1.all = regVal;
+
+  range = cntl1.bits.gsel;
 
   switch (range)
   {
@@ -1511,7 +1523,6 @@ bool QwDevKX134::getAccelData(outputData *userData)
 //
 bool QwDevKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelData)
 {
-
   uint8_t regVal;
   uint8_t range;
   int retVal;
@@ -1521,7 +1532,10 @@ bool QwDevKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelDat
   if (retVal != 0)
     return false;
 
-  range = (regVal & 0x18) >> 3;
+  sfe_kx13x_cntl1_bitfield_t cntl1;
+  cntl1.all = regVal;
+
+  range = cntl1.bits.gsel;
 
   switch (range)
   {
