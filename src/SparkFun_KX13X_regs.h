@@ -402,7 +402,7 @@ typedef struct
 {
   uint8_t tfum : 1; // Z+
   uint8_t tfdm : 1; // Z-
-  uint8_t tpum : 1; // Y+
+  uint8_t tupm : 1; // Y+
   uint8_t tdom : 1; // Y-
   uint8_t trim : 1; // X+
   uint8_t tlem : 1; // X-
@@ -580,7 +580,7 @@ typedef struct
 // To change these settings make sure IC is in "stand-by" mode: PC1 bit in CNTL1.
 typedef struct
 {
-  uint8_t offl : 3;
+  uint8_t offi : 3;
   uint8_t dcrm : 1;
   uint8_t ffdc : 2;
   uint8_t ulmode : 1;
@@ -757,7 +757,7 @@ typedef struct
 // used to calculate RMS output.
 typedef struct
 {
-  uint8_t oadp : 3;
+  uint8_t oadp : 4;
   uint8_t rms_avc : 3;
   uint8_t reserved : 1;
 } sfe_kx13x_adp_cntl1_t;
@@ -855,7 +855,7 @@ typedef struct
 // Bits [7:0]
 typedef struct
 {
-  uint8_t adp_f2_ba : 1;
+  uint8_t adp_f2_ba : 8;
 } sfe_kx13x_adp_cntl12_t;
 
 #define SFE_KX13X_ADP_CNTL13 0x70
@@ -863,7 +863,7 @@ typedef struct
 // Bits [14:8]
 typedef struct
 {
-  uint8_t adp_f2_ba : 1;
+  uint8_t adp_f2_ba : 7;
   uint8_t undefined : 1;
 } sfe_kx13x_adp_cntl13_t;
 
