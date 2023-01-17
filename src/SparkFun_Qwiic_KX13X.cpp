@@ -1327,8 +1327,6 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData)
   uint8_t tempVal;
   uint8_t tempRegData[6] = {0};
 
-  // Check if the buffer full interrupt is activated
-  //retVal = readRegisterRegion(SFE_KX13X_INC4, &tempVal, 1); // inc4.bfi1 indicates if the buffer full interrupt is reported on INT1
   retVal = readRegisterRegion(SFE_KX13X_BUF_CNTL2, &tempVal, 1); // bufCntl2.bits.bufe indicates if the buffer is enabled
 
   if (retVal != 0)
@@ -1354,9 +1352,9 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData)
     else
       // No buffer data to read!
       // We can either:
-      //return false;
+      return false;
       // Or, be kind and read the normal registers
-      retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, 6); // Read 3 * 16-bit
+      //retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, 6); // Read 3 * 16-bit
   }
   else
     retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, 6); // Read 3 * 16-bit
