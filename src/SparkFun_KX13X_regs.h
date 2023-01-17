@@ -265,7 +265,7 @@ typedef struct
   uint8_t fdm : 1;  // Face-Down state (Z-)
   uint8_t upm : 1;  // Up state (Y+)
   uint8_t dom : 1;  // Down state (Y-)
-  uint8_t rim : 2;  // Right state (X+)
+  uint8_t rim : 1;  // Right state (X+)
   uint8_t lem : 1;  // Left state (X-)
   uint8_t cotc : 1; // Command Test Control bit
                     //  The following bits control when an interrupt is generated

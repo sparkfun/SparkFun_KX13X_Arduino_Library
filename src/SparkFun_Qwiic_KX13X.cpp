@@ -640,7 +640,7 @@ bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
 // the INT_REL register - clearInterrupt();
 //
 // Parameters:
-// latch - True enables latch behavior, false enables pulse behavior (default)
+// latch - False enables latch behavior, True enables pulse behavior (default)
 //
 bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
 {
