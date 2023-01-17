@@ -24,7 +24,7 @@
 */
 
 #include <Wire.h>
-#include "SparkFun_Qwiic_KX13X.h"
+#include "SparkFun_KX13X.h"
 
 SparkFun_KX132 kxAccel; 
 // SparkFun_KX134 kxAccel; // For the KX134, uncomment this and comment line above
