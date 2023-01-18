@@ -79,8 +79,8 @@
 
 #define SPI_READ 0x80 // OR'ed at most sig BIT with register address
 
-#define DEFAULT_SETTINGS 0xC0
-#define INT_SETTINGS 0xE0
+#define DEFAULT_SETTINGS 0xC0 // CNTL1: Hi-Performance mode; Data-Ready disabled; minimum G-range; Tap & Tilt disabled
+#define INT_SETTINGS 0xE0 // CNTL1: Hi-Performance mode; Data-Ready enabled; minimum G-range; Tap & Tilt disabled
 #define SOFT_INT_SETTINGS 0xE1
 #define BUFFER_SETTINGS 0xE2
 #define TILT_SETTINGS 0xE3
@@ -179,6 +179,7 @@ protected:
   sfe_KX13X::QwIDeviceBus *_sfeBus;
   uint8_t _i2cAddress;
   uint8_t _cs;
+  int _range = -1; // Keep a local copy of the range. Default to "unknown" (-1).
 };
 
 class QwDevKX132 : public QwDevKX13X

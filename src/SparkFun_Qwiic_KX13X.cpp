@@ -49,14 +49,29 @@ bool QwDevKX13X::initialize(uint8_t settings)
   if (!enableAccel(true))
     return false;
 
+  sfe_kx13x_cntl1_bitfield_t cntl1;
+  cntl1.all = 0; // Reset Value
+
   if (settings == DEFAULT_SETTINGS)
+  {
     retVal = writeRegisterByte(SFE_KX13X_CNTL1, DEFAULT_SETTINGS);
+    if (retVal == 0) // Check the write was successful
+    {
+      cntl1.all = DEFAULT_SETTINGS;
+      _range = cntl1.bits.gsel; // Record the G-range
+    }
+  }
 
   if (settings == INT_SETTINGS)
   {
     enablePhysInterrupt();
     routeHardwareInterrupt(0x10);
     retVal = writeRegisterByte(SFE_KX13X_CNTL1, INT_SETTINGS);
+    if (retVal == 0) // Check the write was successful
+    {
+      cntl1.all = INT_SETTINGS;
+      _range = cntl1.bits.gsel; // Record the G-range
+    }
   }
 
   if (settings == BUFFER_SETTINGS)
@@ -66,6 +81,11 @@ bool QwDevKX13X::initialize(uint8_t settings)
     enableSampleBuffer();         // Enable buffer
     setBufferOperationMode(0x00); // FIFO
     retVal = writeRegisterByte(SFE_KX13X_CNTL1, INT_SETTINGS);
+    if (retVal == 0) // Check the write was successful
+    {
+      cntl1.all = INT_SETTINGS;
+      _range = cntl1.bits.gsel; // Record the G-range
+    }
   }
 
   if (retVal != 0)
@@ -79,9 +99,10 @@ bool QwDevKX13X::initialize(uint8_t settings)
 //
 // Resets the accelerometer
 //
+// To change the value of the SRST bit, the PC1 bit in CNTL1 register must first be set to 0.
+//
 bool QwDevKX13X::softwareReset()
 {
-
   sfe_kx13x_cntl2_bitfield_t cntl2;
   cntl2.all = 0;
   cntl2.bits.srst = 1; // This is a long winded, but definitive way of setting the software reset bit
@@ -125,6 +146,7 @@ bool QwDevKX13X::enableAccel(bool enable)
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal;
   cntl1.bits.pc1 = enable; // This is a long winded but definitive way of setting/clearing the operating mode bit
+  _range = cntl1.bits.gsel; // Update the G-range
   tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
@@ -154,6 +176,7 @@ int8_t QwDevKX13X::getOperatingMode()
 
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal; // This is a long winded but definitive way of getting the operating mode bit
+  _range = cntl1.bits.gsel; // Update the G-range
 
   return (cntl1.bits.pc1); // Return the operating mode bit
 }
@@ -192,6 +215,8 @@ bool QwDevKX13X::setRange(uint8_t range)
   if (retVal != 0)
     return false;
 
+  _range = range; // Update our local copy
+
   return true;
 }
 
@@ -216,6 +241,7 @@ bool QwDevKX13X::enableDataEngine(bool enable)
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal;
   cntl1.bits.drdye =  enable; // This is a long winded but definitive way of setting/clearing the data ready engine bit
+  _range = cntl1.bits.gsel; // Update the G-range
   tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
@@ -247,6 +273,7 @@ bool QwDevKX13X::enableTapEngine(bool enable)
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal;
   cntl1.bits.tdte =  enable; // This is a long winded but definitive way of setting/clearing the tap engine bit
+  _range = cntl1.bits.gsel; // Update the G-range
   tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
@@ -278,6 +305,7 @@ bool QwDevKX13X::enableTiltEngine(bool enable)
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal;
   cntl1.bits.tpe =  enable; // This is a long winded but definitive way of setting/clearing the tilt engine bit
+  _range = cntl1.bits.gsel; // Update the G-range
   tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
@@ -1621,21 +1649,23 @@ bool QwDevKX132::getAccelData(outputData *userData)
 //
 bool QwDevKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelData)
 {
-  uint8_t regVal;
-  uint8_t range;
-  int retVal;
+  if (_range < 0) // If the G-range is unknown, read it
+  {
+    uint8_t regVal;
+    int retVal;
 
-  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
+    retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
 
-  if (retVal != 0)
-    return false;
+    if (retVal != 0)
+      return false;
 
-  sfe_kx13x_cntl1_bitfield_t cntl1;
-  cntl1.all = regVal;
+    sfe_kx13x_cntl1_bitfield_t cntl1;
+    cntl1.all = regVal;
 
-  range = cntl1.bits.gsel;
+    _range = cntl1.bits.gsel; // Record the range
+  }
 
-  switch (range)
+  switch (_range)
   {
   case SFE_KX132_RANGE2G:
     userAccel->xData = (float)rawAccelData->xData * convRange2G;
@@ -1720,21 +1750,23 @@ bool QwDevKX134::getAccelData(outputData *userData)
 //
 bool QwDevKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelData)
 {
-  uint8_t regVal;
-  uint8_t range;
-  int retVal;
+  if (_range < 0) // If the G-range is unknown, read it
+  {
+    uint8_t regVal;
+    int retVal;
 
-  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
+    retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
 
-  if (retVal != 0)
-    return false;
+    if (retVal != 0)
+      return false;
 
-  sfe_kx13x_cntl1_bitfield_t cntl1;
-  cntl1.all = regVal;
+    sfe_kx13x_cntl1_bitfield_t cntl1;
+    cntl1.all = regVal;
 
-  range = cntl1.bits.gsel;
+    _range = cntl1.bits.gsel; // Record the range
+  }
 
-  switch (range)
+  switch (_range)
   {
   case SFE_KX134_RANGE8G:
     userAccel->xData = (float)rawAccelData->xData * convRange8G;
