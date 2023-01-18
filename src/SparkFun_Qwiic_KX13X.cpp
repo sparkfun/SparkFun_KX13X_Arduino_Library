@@ -1315,9 +1315,18 @@ bool QwDevKX13X::runCommandTest()
 //////////////////////////////////////////////////
 // getRawAccelData()
 //
-// Retrieves the raw register values representing accelerometer data.
+// Retrieves the raw register or buffer values representing accelerometer data.
 //
-// Paramater:
+// This method is 'slow' in that it checks first if the buffer is being used - every time -
+// and then calls the appropriate method to read data from the buffer or the regular
+// output registers. You can speed up the read by calling the read method directly,
+// if you already know if the buffer is being used or not.
+//
+// Note: these methods do not check if the buffer / registers contain valid data.
+// The user needs to do that externally by calling getSampleLevel or dataReady
+// or using the INT pins to indicate that data is ready.
+//
+// Parameter:
 // *rawAccelData - a pointer to the data struct that holds acceleromter X/Y/Z data.
 //
 bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData)
@@ -1325,7 +1334,6 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData)
 
   int retVal;
   uint8_t tempVal;
-  uint8_t tempRegData[6] = {0};
 
   retVal = readRegisterRegion(SFE_KX13X_BUF_CNTL2, &tempVal, 1); // bufCntl2.bits.bufe indicates if the buffer is enabled
 
@@ -1335,29 +1343,98 @@ bool QwDevKX13X::getRawAccelData(rawOutputData *rawAccelData)
   sfe_kx13x_buf_cntl2_bitfield_t bufCntl2;
   bufCntl2.all = tempVal;
 
-  bool is16bit = true;
-
   if (bufCntl2.bits.bufe) // If Buffer is enabled, read there.
+    return (getRawAccelBufferData(rawAccelData, (int)bufCntl2.bits.bres));
+  else
+    return (getRawAccelRegisterData(rawAccelData));
+}
+
+//////////////////////////////////////////////////
+// getRawAccelRegisterData()
+//
+// Retrieves the raw register values representing accelerometer data.
+//
+// Note: this method does not check if the registers contain valid data.
+// The user needs to do that externally by calling dataReady
+// or using the INT pins to indicate that data is ready.
+//
+// Parameter:
+// *rawAccelData - a pointer to the data struct that holds acceleromter X/Y/Z data.
+//
+bool QwDevKX13X::getRawAccelRegisterData(rawOutputData *rawAccelData)
+{
+
+  int retVal;
+  uint8_t tempRegData[6] = {0};
+
+  retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, TOTAL_ACCEL_DATA_16BIT); // Read 3 * 16-bit
+
+  if (retVal != 0)
+    return false;
+
+  rawAccelData->xData = tempRegData[XLSB];
+  rawAccelData->xData |= (uint16_t)tempRegData[XMSB] << 8;
+  rawAccelData->yData = tempRegData[YLSB];
+  rawAccelData->yData |= (uint16_t)tempRegData[YMSB] << 8;
+  rawAccelData->zData = tempRegData[ZLSB];
+  rawAccelData->zData |= (uint16_t)tempRegData[ZMSB] << 8;
+
+  return true;
+}
+
+//////////////////////////////////////////////////
+// getRawAccelBufferData()
+//
+// Retrieves the raw buffer values representing accelerometer data.
+// 
+// If sixteenBit is -1 (the default), the code reads the Buffer Control Register 2 bres
+// bit to determine if the buffer data is 8-bit or 16-bit. You can speed up the code
+// by setting sixteenBit to: 0 for 8-bit data; 1 for 16-bit data.
+//
+// Note: theis method does not check if the buffer contains valid data.
+// The user needs to do that externally by calling getSampleLevel
+// or using the INT pins to indicate that data is ready.
+//
+// Parameter:
+// *rawAccelData - a pointer to the data struct that holds acceleromter X/Y/Z data.
+// sixteenBit - defaults to -1. Set to 0 to read 8-bit data. Set to 1 to read 16-bit data.
+//
+bool QwDevKX13X::getRawAccelBufferData(rawOutputData *rawAccelData, int sixteenBit)
+{
+
+  int retVal;
+  uint8_t tempRegData[6] = {0};
+  bool is16bit;
+
+  if (sixteenBit == 0) // Do we know the data is 8-bit?
   {
-    if (getSampleLevel() > 0) // Check the buffer contains data
-    {
-      if (bufCntl2.bits.bres) // If the buffer contains 16-bit samples
-        retVal = readRegisterRegion(SFE_KX13X_BUF_READ, tempRegData, 6); // Read 3 * 16-bit
-      else
-      {
-        retVal = readRegisterRegion(SFE_KX13X_BUF_READ, tempRegData, 3); // Read 3 * 8-bit
-        is16bit = false;
-      }
-    }
-    else
-      // No buffer data to read!
-      // We can either:
+    is16bit = false;
+  }
+  else if (sixteenBit == 1) // Do we know the data is 16-bit?
+  {
+    is16bit = true;
+  }
+  else if (sixteenBit == -1) // Need to manually check the resolution
+  {
+    uint8_t tempVal;
+    retVal = readRegisterRegion(SFE_KX13X_BUF_CNTL2, &tempVal, 1);
+
+    if (retVal != 0)
       return false;
-      // Or, be kind and read the normal registers
-      //retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, 6); // Read 3 * 16-bit
+
+    sfe_kx13x_buf_cntl2_bitfield_t bufCntl2;
+    bufCntl2.all = tempVal;
+    is16bit = bufCntl2.bits.bres; // bufCntl2.bits.bufe indicates if the buffer is enabled
   }
   else
-    retVal = readRegisterRegion(SFE_KX13X_XOUT_L, tempRegData, 6); // Read 3 * 16-bit
+  {
+    return false; // Can't determine the resolution
+  }
+
+  if (is16bit) // If the buffer contains 16-bit samples
+    retVal = readRegisterRegion(SFE_KX13X_BUF_READ, tempRegData, TOTAL_ACCEL_DATA_16BIT); // Read 3 * 16-bit
+  else
+    retVal = readRegisterRegion(SFE_KX13X_BUF_READ, tempRegData, TOTAL_ACCEL_DATA_8BIT); // Read 3 * 8-bit
 
   if (retVal != 0)
     return false;
@@ -1512,7 +1589,7 @@ bool QwDevKX132::init(void)
 //
 // Retrieves the raw accelerometer data and calls a conversion function to convert the raw values.
 //
-// Paramater:
+// Parameter:
 // *userData - a pointer to the user's data struct that will hold acceleromter data.
 //
 bool QwDevKX132::getAccelData(outputData *userData)
@@ -1538,7 +1615,7 @@ bool QwDevKX132::getAccelData(outputData *userData)
 //
 // Converts raw acceleromter data with the current accelerometer's range settings.
 //
-// Paramater:
+// Parameter:
 // *userData - a pointer to the user's data struct that will hold acceleromter data.
 // *rawAccelData - a pointer to the data struct that holds acceleromter X/Y/Z data.
 //
@@ -1611,7 +1688,7 @@ bool QwDevKX134::init(void)
 //
 // Retrieves the raw accelerometer data and calls a conversion function to convert the raw values.
 //
-// Paramater:
+// Parameter:
 // *userData - a pointer to the user's data struct that will hold acceleromter data.
 //
 bool QwDevKX134::getAccelData(outputData *userData)
@@ -1637,7 +1714,7 @@ bool QwDevKX134::getAccelData(outputData *userData)
 //
 // Converts raw acceleromter data with the current accelerometer's range settings.
 //
-// Paramater:
+// Parameter:
 // *userData - a pointer to the user's data struct that will hold acceleromter data.
 // *rawAccelData - a pointer to the data struct that holds acceleromter X/Y/Z data.
 //

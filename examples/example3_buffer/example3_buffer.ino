@@ -82,6 +82,7 @@ void setup()
 
   kxAccel.setBufferResolution(); //  Change sample resolution to 16 bit, 8 bit by default.
                                  //  This will change how many samples can be held in buffer.
+                                 //  Comment the above line if you want to try using 8-bit data.
 
   // kxAccel.clearBuffer();                    //  Clear the buffer
   // kxAccel.getSampleLevel();                 //  Get the number of samples in the buffer. This number
@@ -97,16 +98,47 @@ void setup()
 void loop()
 {
 
-  // getAccelData will return false if there is no data in the buffer
-  if (kxAccel.getAccelData(&myData) == true)
+  // We could use the KX13X interrupt pin and dataReadyPin to indicate when data is ready.
+  // But we can also use getSampleLevel. getSampleLevel will return how much data is in the buffer.
+  if (kxAccel.getSampleLevel() > 0)
   {
+/*    
+    // getAccelData is slow as it manually checks if the buffer is being used
+    // and if the data resolution is 16-bit or 8-bit.
+    if (kxAccel.getAccelData(&myData) == true)
+    {
+      Serial.println();
+      Serial.print("X: ");
+      Serial.print(myData.xData, 4);
+      Serial.print(" Y: ");
+      Serial.print(myData.yData, 4);
+      Serial.print(" Z: ");
+      Serial.print(myData.zData, 4);
+      Serial.println();
+    }
+*/
 
-    Serial.print("X: ");
-    Serial.print(myData.xData, 4);
-    Serial.print(" Y: ");
-    Serial.print(myData.yData, 4);
-    Serial.print(" Z: ");
-    Serial.print(myData.zData, 4);
-    Serial.println();
+    // We can read the data more quickly by calling getRawAccelBufferData because we know
+    // the buffer is being used and what the data resolution is.
+    // The default buffer resolution is 8-bit. It will be 16-bit because we called setBufferResolution above.
+    // If you comment setBufferResolution, change the '1' to a '0' for 8-bit data.
+    rawOutputData myRawData;
+    if (kxAccel.getRawAccelBufferData(&myRawData, 1) == true) // Change the '1' to a '0' for 8-bit data.
+    {
+      kxAccel.convAccelData(&myData, &myRawData); // Manually convert the raw data to floating point
+      Serial.println();
+      Serial.print("X: ");
+      Serial.print(myData.xData, 4);
+      Serial.print(" Y: ");
+      Serial.print(myData.yData, 4);
+      Serial.print(" Z: ");
+      Serial.print(myData.zData, 4);
+      Serial.println();
+    }
+  }
+  else
+  {
+    Serial.print("."); // If the data rate is 50Hz (default), we'll expect to see ~20 dots between samples
+    delay(1); // Wait 1ms
   }
 }

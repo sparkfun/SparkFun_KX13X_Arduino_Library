@@ -68,6 +68,7 @@
 #define SFE_KX134_RANGE64G 0x03
 
 #define TOTAL_ACCEL_DATA_8BIT 3
+#define TOTAL_ACCEL_DATA_16BIT 6
 
 #define XLSB 0
 #define XMSB 1
@@ -125,6 +126,8 @@ public:
   bool runCommandTest();
   uint8_t readAccelState();
   bool getRawAccelData(rawOutputData *);
+  bool getRawAccelRegisterData(rawOutputData *);
+  bool getRawAccelBufferData(rawOutputData *, int sixteenBit = -1); // Set sixteenBit to 0 to read 8-bit data. Set to 1 to read 16-bit data.
   float readOutputDataRate();
 
   // Tap/Double settings
