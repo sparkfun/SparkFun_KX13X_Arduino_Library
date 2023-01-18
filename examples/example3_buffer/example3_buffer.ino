@@ -24,10 +24,10 @@
 */
 
 #include <Wire.h>
-#include "SparkFun_KX13X.h"
+#include <SparkFun_KX13X.h> // Click here to get the library: http://librarymanager/All#SparkFun_KX13X
 
 SparkFun_KX132 kxAccel;
-//SparkFun_KX134 kxAccel; // For the KX134, uncomment this and comment line above
+// SparkFun_KX134 kxAccel; // For the KX134, uncomment this and comment line above
 
 outputData myData;     //  Struct for the accelerometer's data
 byte dataReadyPin = 2; //  Change to fit your project.
@@ -102,21 +102,21 @@ void loop()
   // But we can also use getSampleLevel. getSampleLevel will return how much data is in the buffer.
   if (kxAccel.getSampleLevel() > 0)
   {
-/*    
-    // getAccelData is slow as it manually checks if the buffer is being used
-    // and if the data resolution is 16-bit or 8-bit.
-    if (kxAccel.getAccelData(&myData) == true)
-    {
-      Serial.println();
-      Serial.print("X: ");
-      Serial.print(myData.xData, 4);
-      Serial.print(" Y: ");
-      Serial.print(myData.yData, 4);
-      Serial.print(" Z: ");
-      Serial.print(myData.zData, 4);
-      Serial.println();
-    }
-*/
+    /*
+        // getAccelData is slow as it manually checks if the buffer is being used
+        // and if the data resolution is 16-bit or 8-bit.
+        if (kxAccel.getAccelData(&myData) == true)
+        {
+          Serial.println();
+          Serial.print("X: ");
+          Serial.print(myData.xData, 4);
+          Serial.print(" Y: ");
+          Serial.print(myData.yData, 4);
+          Serial.print(" Z: ");
+          Serial.print(myData.zData, 4);
+          Serial.println();
+        }
+    */
 
     // We can read the data more quickly by calling getRawAccelBufferData because we know
     // the buffer is being used and what the data resolution is.
@@ -139,6 +139,6 @@ void loop()
   else
   {
     Serial.print("."); // If the data rate is 50Hz (default), we'll expect to see ~20 dots between samples
-    delay(1); // Wait 1ms
+    delay(1);          // Wait 1ms
   }
 }
