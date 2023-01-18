@@ -48,6 +48,9 @@
 #include "sfe_bus.h"
 #include <Arduino.h>
 
+namespace sfe_KX13X
+{
+
 #define kMaxTransferBuffer 32
 #define SPI_READ 0x80
 
@@ -361,5 +364,7 @@ int SfeSPI::readRegisterRegion(uint8_t addr, uint8_t reg, uint8_t *data, uint16_
 		digitalWrite(_cs, HIGH);
     _spiPort->endTransaction();
 		return 0; 
+
+}
 
 }

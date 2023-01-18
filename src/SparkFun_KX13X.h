@@ -101,7 +101,7 @@ public:
 
 private:
   // I2C bus class
-  QwI2C _i2cBus;
+  sfe_KX13X::QwI2C _i2cBus;
 };
 
 class SparkFun_KX132_SPI : public QwDevKX132
@@ -159,7 +159,7 @@ public:
 
 private:
   // SPI bus class
-  SfeSPI _spiBus;
+  sfe_KX13X::SfeSPI _spiBus;
 };
 
 class SparkFun_KX134 : public QwDevKX134
@@ -216,7 +216,7 @@ public:
 
 private:
   // I2C bus class
-  QwI2C _i2cBus;
+  sfe_KX13X::QwI2C _i2cBus;
 };
 
 class SparkFun_KX134_SPI : public QwDevKX134
@@ -274,5 +274,5 @@ public:
 
 private:
   // SPI bus class
-  SfeSPI _spiBus;
+  sfe_KX13X::SfeSPI _spiBus;
 };

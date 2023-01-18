@@ -19,7 +19,7 @@ uint8_t QwDevKX13X::getUniqueID()
 //  Parameter:
 //  theBus-The communication bus object
 //  i2cAddress-I2C address for the 6DoF
-void QwDevKX13X::setCommunicationBus(QwIDeviceBus &theBus, uint8_t i2cAddress)
+void QwDevKX13X::setCommunicationBus(sfe_KX13X::QwIDeviceBus &theBus, uint8_t i2cAddress)
 {
   _sfeBus = &theBus;
   _i2cAddress = i2cAddress;
@@ -33,7 +33,7 @@ void QwDevKX13X::setCommunicationBus(QwIDeviceBus &theBus, uint8_t i2cAddress)
 //  Parameter:
 //  theBus-The communication bus object
 //
-void QwDevKX13X::setCommunicationBus(QwIDeviceBus &theBus)
+void QwDevKX13X::setCommunicationBus(sfe_KX13X::QwIDeviceBus &theBus)
 {
   _sfeBus = &theBus;
 }

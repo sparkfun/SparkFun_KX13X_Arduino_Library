@@ -106,8 +106,8 @@ public:
   int writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t length);
   int writeRegisterByte(uint8_t reg, uint8_t data);
   int readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t length);
-  void setCommunicationBus(QwIDeviceBus &theBus, uint8_t i2cAddress);
-  void setCommunicationBus(QwIDeviceBus &theBus);
+  void setCommunicationBus(sfe_KX13X::QwIDeviceBus &theBus, uint8_t i2cAddress);
+  void setCommunicationBus(sfe_KX13X::QwIDeviceBus &theBus);
 
   uint8_t getUniqueID();
   bool initialize(uint8_t settings = DEFAULT_SETTINGS);
@@ -173,7 +173,7 @@ public:
   rawOutputData rawAccelData;
 
 protected:
-  QwIDeviceBus *_sfeBus;
+  sfe_KX13X::QwIDeviceBus *_sfeBus;
   uint8_t _i2cAddress;
   uint8_t _cs;
 };
