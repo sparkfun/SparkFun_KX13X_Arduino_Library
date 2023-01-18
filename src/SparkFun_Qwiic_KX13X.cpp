@@ -1590,7 +1590,9 @@ int QwDevKX13X::writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 //
 int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t data)
 {
-  return (int)_sfeBus->writeRegisterByte(_i2cAddress, reg, data);
+  if (_sfeBus->writeRegisterByte(_i2cAddress, reg, data))
+    return 0;
+  return -1;
 }
 
 //***************************************** KX132 *********************************************************
