@@ -103,6 +103,8 @@ bool QwDevKX13X::initialize(uint8_t settings)
 //
 bool QwDevKX13X::softwareReset()
 {
+  enableAccel(false); // Clear the PC1 bit in CNTL1
+
   sfe_kx13x_cntl2_bitfield_t cntl2;
   cntl2.all = 0;
   cntl2.bits.srst = 1; // This is a long winded, but definitive way of setting the software reset bit
@@ -123,7 +125,7 @@ bool QwDevKX13X::softwareReset()
 //////////////////////////////////////////////////
 // enableAccel()
 //
-// Enables acceleromter data. In addition
+// Enables accelerometer data. In addition
 // some settings can only be set when the accelerometer is
 // powered down
 //
@@ -571,7 +573,7 @@ bool QwDevKX13X::configureInterruptPin(uint8_t pinVal)
 //
 bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
 {
-  int retVal;
+  int retVal = -1;
   uint8_t tempVal;
 
   if (pin > 2)
@@ -589,7 +591,7 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
     inc1.bits.ien1 = enable; // This is a long winded but definitive way of setting/clearing the enable bit
     tempVal = inc1.all;
 
-    writeRegisterByte(SFE_KX13X_INC1, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
 
   if (pin == 2)
@@ -604,10 +606,10 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
     inc5.bits.ien2 = enable; // This is a long winded but definitive way of setting/clearing the enable bit
     tempVal = inc5.all;
 
-    writeRegisterByte(SFE_KX13X_INC5, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
 
-  return true;
+  return (retVal == 0);
 }
 
 //////////////////////////////////////////////////
@@ -621,7 +623,7 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
 //
 bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
 {
-  int retVal;
+  int retVal = -1;
   uint8_t tempVal;
 
   if (pin > 2)
@@ -639,7 +641,7 @@ bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
     inc1.bits.iea1 = activeHigh; // This is a long winded but definitive way of setting/clearing the level bit
     tempVal = inc1.all;
 
-    writeRegisterByte(SFE_KX13X_INC1, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
 
   if (pin == 2)
@@ -654,10 +656,10 @@ bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
     inc5.bits.iea2 = activeHigh; // This is a long winded but definitive way of setting/clearing the level bit
     tempVal = inc5.all;
 
-    writeRegisterByte(SFE_KX13X_INC5, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
 
-  return true;
+  return (retVal == 0);
 }
 
 //////////////////////////////////////////////////
@@ -672,7 +674,7 @@ bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
 //
 bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
 {
-  int retVal;
+  int retVal = -1;
   uint8_t tempVal;
 
   if (pin > 2)
@@ -690,7 +692,7 @@ bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
     inc1.bits.iel1 = pulsed; // This is a long winded but definitive way of setting/clearing the latch bit
     tempVal = inc1.all;
 
-    writeRegisterByte(SFE_KX13X_INC1, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
 
   if (pin == 2)
@@ -705,10 +707,10 @@ bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
     inc5.bits.iel2 = pulsed; // This is a long winded but definitive way of setting/clearing the latch bit
     tempVal = inc5.all;
 
-    writeRegisterByte(SFE_KX13X_INC5, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
 
-  return true;
+  return (retVal == 0);
 }
 
 //////////////////////////////////////////////////
@@ -722,7 +724,7 @@ bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
 //
 bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
 {
-  int retVal;
+  int retVal = -1;
   uint8_t tempVal;
 
   if ((width > 3) || (pin > 2))
@@ -740,7 +742,7 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
     inc1.bits.pw1 = width; // This is a long winded but definitive way of setting the pulse width
     tempVal = inc1.all;
 
-    writeRegisterByte(SFE_KX13X_INC1, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
 
   if (pin == 2)
@@ -755,10 +757,10 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
     inc5.bits.pw2 = width; // This is a long winded but definitive way of setting the pulse width
     tempVal = inc5.all;
 
-    writeRegisterByte(SFE_KX13X_INC5, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
 
-  return true;
+  return (retVal == 0);
 }
 
 //////////////////////////////////////////////////
@@ -1558,7 +1560,7 @@ bool QwDevKX13X::forceWake()
 //
 int QwDevKX13X::readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 {
-  return (int)_sfeBus->readRegisterRegion(_i2cAddress, reg, data, len);
+  return (_sfeBus->readRegisterRegion(_i2cAddress, reg, data, len));
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1574,7 +1576,7 @@ int QwDevKX13X::readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 //
 int QwDevKX13X::writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 {
-  return (int)_sfeBus->writeRegisterRegion(_i2cAddress, reg, data, len);
+  return (_sfeBus->writeRegisterRegion(_i2cAddress, reg, data, len));
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1590,9 +1592,7 @@ int QwDevKX13X::writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 //
 int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t data)
 {
-  if (_sfeBus->writeRegisterByte(_i2cAddress, reg, data))
-    return 0;
-  return -1;
+  return (_sfeBus->writeRegisterByte(_i2cAddress, reg, data));
 }
 
 //***************************************** KX132 *********************************************************

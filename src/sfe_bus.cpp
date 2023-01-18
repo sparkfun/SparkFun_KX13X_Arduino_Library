@@ -121,16 +121,16 @@ bool QwI2C::ping(uint8_t i2c_address)
 //
 // Write a byte to a register
 
-bool QwI2C::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataToWrite)
+int QwI2C::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataToWrite)
 {
 
     if (!_i2cPort)
-        return false;
+        return -1;
 
     _i2cPort->beginTransmission(i2c_address);
     _i2cPort->write(offset);
     _i2cPort->write(dataToWrite);
-    return _i2cPort->endTransmission() == 0;
+    return _i2cPort->endTransmission() == 0 ? 0 : -1; // 0 = success, -1 = error
 }
 
 
@@ -143,11 +143,14 @@ bool QwI2C::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataT
 int QwI2C::writeRegisterRegion(uint8_t i2c_address, uint8_t offset, const uint8_t *data, uint16_t length)
 {
 
+    if (!_i2cPort)
+        return -1;
+
     _i2cPort->beginTransmission(i2c_address);
     _i2cPort->write(offset);
     _i2cPort->write(data, (int)length);
 
-    return _i2cPort->endTransmission() ? -1 : 0; // -1 = error, 0 = success
+    return _i2cPort->endTransmission() == 0 ? 0 : -1; // 0 = success, -1 = error
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -282,11 +285,11 @@ bool SfeSPI::ping(uint8_t i2c_address)
 //
 // Write a byte to a register
 
-bool SfeSPI::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataToWrite)
+int SfeSPI::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataToWrite)
 {
 
     if( !_spiPort )
-        return false;
+        return -1;
 
 		// Apply settings
     _spiPort->beginTransaction(_sfeSPISettings);
@@ -300,7 +303,7 @@ bool SfeSPI::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t data
 		digitalWrite(_cs, HIGH);
     _spiPort->endTransaction();
 
-		return true;
+		return 0;
 }
 
 
@@ -311,6 +314,9 @@ bool SfeSPI::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t data
 
 int SfeSPI::writeRegisterRegion(uint8_t i2c_address, uint8_t offset, const uint8_t *data, uint16_t length)
 {
+
+    if( !_spiPort )
+        return -1;
 
 		int i;
 
@@ -328,6 +334,7 @@ int SfeSPI::writeRegisterRegion(uint8_t i2c_address, uint8_t offset, const uint8
 		// End communication
 		digitalWrite(_cs, HIGH);
     _spiPort->endTransaction();
+
 		return 0; 
 }
 
@@ -363,6 +370,7 @@ int SfeSPI::readRegisterRegion(uint8_t addr, uint8_t reg, uint8_t *data, uint16_
 		// End transaction
 		digitalWrite(_cs, HIGH);
     _spiPort->endTransaction();
+
 		return 0; 
 
 }
