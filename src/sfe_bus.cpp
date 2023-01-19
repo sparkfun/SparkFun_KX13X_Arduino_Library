@@ -163,10 +163,10 @@ namespace sfe_KX13X
     if (!_i2cPort)
       return -1;
 
-    int i;                   // counter in loop
+    int i;             // counter in loop
     int failCount = 0; // Keep track of how many times nReturned is != nChunk
 
-    while ((numBytes > 0) && (failCount < 5)) // Give up after 5 bad requests
+    while ((numBytes > 0) && (failCount < 2)) // Give up after 2 bad requests
     {
       _i2cPort->beginTransmission(addr);
       _i2cPort->write(reg); // Write the register address we want to read from
@@ -175,7 +175,7 @@ namespace sfe_KX13X
 
       // We're chunking in data - keeping the max chunk to kMaxI2CBufferLength
       // The register address counts as one byte so limit nChunk to kChunkSize -1
-      nChunk = numBytes > (kChunkSize -1) ? (kChunkSize -1) : numBytes;
+      nChunk = numBytes > (kChunkSize - 1) ? (kChunkSize - 1) : numBytes;
 
       nReturned = _i2cPort->requestFrom((int)addr, (int)nChunk, (int)true); // Always send a stop
 
@@ -201,7 +201,7 @@ namespace sfe_KX13X
 
     } // end while
 
-    return 0; // Success
+    return (numBytes == 0 ? 0 : -1); // 0 = success (all bytes read), -1 = error
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
