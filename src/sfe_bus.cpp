@@ -163,30 +163,29 @@ namespace sfe_KX13X
     if (!_i2cPort)
       return -1;
 
-    int i;                   // counter in loop
-    bool bFirstInter = true; // Flag for first iteration - used to send register
+    int i;             // counter in loop
+    int failCount = 0; // Keep track of how many times nReturned is != nChunk
 
-    while (numBytes > 0)
+    while ((numBytes > 0) && (failCount < 2)) // Give up after 2 bad requests
     {
       _i2cPort->beginTransmission(addr);
-
-      if (bFirstInter)
-      {
-        _i2cPort->write(reg);
-        bFirstInter = false;
-      }
-
+      _i2cPort->write(reg); // Write the register address we want to read from
       if (_i2cPort->endTransmission() != 0)
-        return -1; // error with the end transmission
+        return -1; // Fail immediately if the transmission isn't successful
 
       // We're chunking in data - keeping the max chunk to kMaxI2CBufferLength
       nChunk = numBytes > kChunkSize ? kChunkSize : numBytes;
 
-      nReturned = _i2cPort->requestFrom((int)addr, (int)nChunk, (int)true);
+      nReturned = _i2cPort->requestFrom((int)addr, (int)nChunk, (int)true); // Always send a stop
 
       // No data returned, no dice
       if (nReturned == 0)
         return -1; // error
+
+      // Check we got back as much data as was requested.
+      // (Fringe case. This should never happen... But, you know, it _could_...)
+      if (nReturned != nChunk)
+        failCount++; // Increment the failCount
 
       // Copy the retrieved data chunk to the current index in the data segment
       for (i = 0; i < nReturned; i++)
@@ -197,9 +196,12 @@ namespace sfe_KX13X
       // Decrement the amount of data recieved from the overall data request amount
       numBytes = numBytes - nReturned;
 
+      // Increment reg by the same ammount
+      reg += nReturned;
+
     } // end while
 
-    return 0; // Success
+    return (numBytes == 0 ? 0 : -1); // 0 = success (all bytes read), -1 = error
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
