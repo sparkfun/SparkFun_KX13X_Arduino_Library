@@ -174,8 +174,7 @@ namespace sfe_KX13X
         return -1; // Fail immediately if the transmission isn't successful
 
       // We're chunking in data - keeping the max chunk to kMaxI2CBufferLength
-      // The register address counts as one byte so limit nChunk to kChunkSize -1
-      nChunk = numBytes > (kChunkSize - 1) ? (kChunkSize - 1) : numBytes;
+      nChunk = numBytes > kChunkSize ? kChunkSize : numBytes;
 
       nReturned = _i2cPort->requestFrom((int)addr, (int)nChunk, (int)true); // Always send a stop
 
@@ -183,7 +182,8 @@ namespace sfe_KX13X
       if (nReturned == 0)
         return -1; // error
 
-      // Check we got back as much data as was requested
+      // Check we got back as much data as was requested.
+      // (Fringe case. This should never happen... But, you know, it _could_...)
       if (nReturned != nChunk)
         failCount++; // Increment the failCount
 
