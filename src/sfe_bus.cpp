@@ -121,7 +121,7 @@ bool QwI2C::ping(uint8_t i2c_address)
 //
 // Write a byte to a register
 
-int QwI2C::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataToWrite)
+bool QwI2C::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataToWrite)
 {
 
     if (!_i2cPort)
@@ -130,7 +130,7 @@ int QwI2C::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataTo
     _i2cPort->beginTransmission(i2c_address);
     _i2cPort->write(offset);
     _i2cPort->write(dataToWrite);
-    return _i2cPort->endTransmission() == 0 ? 0 : -1; // 0 = success, -1 = error
+    return (_i2cPort->endTransmission() == 0); // true = success, false = error
 }
 
 
@@ -285,11 +285,11 @@ bool SfeSPI::ping(uint8_t i2c_address)
 //
 // Write a byte to a register
 
-int SfeSPI::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataToWrite)
+bool SfeSPI::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataToWrite)
 {
 
     if( !_spiPort )
-        return -1;
+        return false;
 
 		// Apply settings
     _spiPort->beginTransaction(_sfeSPISettings);
@@ -303,7 +303,7 @@ int SfeSPI::writeRegisterByte(uint8_t i2c_address, uint8_t offset, uint8_t dataT
 		digitalWrite(_cs, HIGH);
     _spiPort->endTransaction();
 
-		return 0;
+		return true;
 }
 
 
