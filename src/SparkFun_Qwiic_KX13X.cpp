@@ -134,7 +134,7 @@ bool QwDevKX13X::softwareReset()
   cntl2.all = 0;
   cntl2.bits.srst = 1; // This is a long winded, but definitive way of setting the software reset bit
 
-  retVal = writeRegisterByte(SFE_KX13X_CNTL2, cntl2.all); // Do the reset
+  writeRegisterByte(SFE_KX13X_CNTL2, cntl2.all); // Do the reset
 
   uint8_t loopCount = 0;
   while (loopCount < 10) // Reset takes about 2ms. Timeout after 10ms
@@ -1351,23 +1351,34 @@ bool QwDevKX13X::runCommandTest()
   cntl2.bits.cotc = 1; // This is a long winded, but definitive way of setting the COTC bit
   tempVal = cntl2.all;
 
-  // Going to assume that communication is working at this point.
-  writeRegisterByte(SFE_KX13X_CNTL2, tempVal);
+  retVal = writeRegisterByte(SFE_KX13X_CNTL2, tempVal); // Start the test
 
-  readRegisterRegion(SFE_KX13X_COTR, &tempVal, 1);
+  if (retVal != 0)
+    return false;
+
+  retVal = readRegisterRegion(SFE_KX13X_COTR, &tempVal, 1); // Check COTR is 0xAA
+
+  if (retVal != 0)
+    return false;
 
   if (tempVal != 0xAA)
     return false;
 
-  readRegisterRegion(SFE_KX13X_CNTL2, &tempVal, 1);
+  retVal = readRegisterRegion(SFE_KX13X_CNTL2, &tempVal, 1);
 
-  cntl2.all = tempVal;
-  if (cntl2.bits.cotc != 0)
+  if (retVal != 0)
     return false;
 
-  readRegisterRegion(SFE_KX13X_COTR, &tempVal, 1);
+  cntl2.all = tempVal;
+  if (cntl2.bits.cotc != 0) // Check the COTC bit has been cleared
+    return false;
 
-  if (tempVal != 0x55)
+  retVal = readRegisterRegion(SFE_KX13X_COTR, &tempVal, 1);
+
+  if (retVal != 0)
+    return false;
+
+  if (tempVal != 0x55) // Check COTR is 0x55
     return false;
 
   return true;
