@@ -49,14 +49,29 @@ bool QwDevKX13X::initialize(uint8_t settings)
   if (!enableAccel(true))
     return false;
 
+  sfe_kx13x_cntl1_bitfield_t cntl1;
+  cntl1.all = 0; // Reset Value
+
   if (settings == DEFAULT_SETTINGS)
+  {
     retVal = writeRegisterByte(SFE_KX13X_CNTL1, DEFAULT_SETTINGS);
+    if (retVal == 0) // Check the write was successful
+    {
+      cntl1.all = DEFAULT_SETTINGS;
+      _range = cntl1.bits.gsel; // Record the G-range
+    }
+  }
 
   if (settings == INT_SETTINGS)
   {
     enablePhysInterrupt();
     routeHardwareInterrupt(0x10);
     retVal = writeRegisterByte(SFE_KX13X_CNTL1, INT_SETTINGS);
+    if (retVal == 0) // Check the write was successful
+    {
+      cntl1.all = INT_SETTINGS;
+      _range = cntl1.bits.gsel; // Record the G-range
+    }
   }
 
   if (settings == BUFFER_SETTINGS)
@@ -66,6 +81,11 @@ bool QwDevKX13X::initialize(uint8_t settings)
     enableSampleBuffer();         // Enable buffer
     setBufferOperationMode(0x00); // FIFO
     retVal = writeRegisterByte(SFE_KX13X_CNTL1, INT_SETTINGS);
+    if (retVal == 0) // Check the write was successful
+    {
+      cntl1.all = INT_SETTINGS;
+      _range = cntl1.bits.gsel; // Record the G-range
+    }
   }
 
   if (retVal != 0)
@@ -79,30 +99,64 @@ bool QwDevKX13X::initialize(uint8_t settings)
 //
 // Resets the accelerometer
 //
+// Kionix Technical Reference Manual says:
+// "To change the value of the SRST bit, the PC1 bit in CNTL1 register must first be set to 0."
+//
+// Kionix TN027 "Power On Procedure" says to:
+//   Write 0x00 to register 0x7F
+//   Write 0x00 to CNTL2
+//   Write 0x80 (SRST) to CNTL2
+//
+// Kionix Technical Reference Manual says:
+// "For I2C Communication: Setting SRST = 1 will NOT result in an ACK, since the part immediately
+//  enters the RAM reboot routine. NACK may be used to confirm this command."
+// However, we've not seen the NACK when writing the SRST bit. That write always seems to be ACK'd as normal.
+// But, the _next_ I2C transaction _does_ get NACK'd...
+// The solution seems to be to keep trying to read CNTL2 and wait for the SRST bit to be cleared.
+
 bool QwDevKX13X::softwareReset()
 {
+  enableAccel(false); // Clear the PC1 bit in CNTL1
+
+  int retVal;
+
+  retVal = writeRegisterByte(0x7F, 0);
+
+  if (retVal != 0)
+    return false;
+
+  retVal = writeRegisterByte(SFE_KX13X_CNTL2, 0);
+
+  if (retVal != 0)
+    return false;
 
   sfe_kx13x_cntl2_bitfield_t cntl2;
   cntl2.all = 0;
   cntl2.bits.srst = 1; // This is a long winded, but definitive way of setting the software reset bit
 
-  int retVal;
+  writeRegisterByte(SFE_KX13X_CNTL2, cntl2.all); // Do the reset
 
-  retVal = writeRegisterByte(SFE_KX13X_CNTL2, cntl2.all);
+  uint8_t loopCount = 0;
+  while (loopCount < 10) // Reset takes about 2ms. Timeout after 10ms
+  {
+    retVal = readRegisterRegion(SFE_KX13X_CNTL2, &cntl2.all, 1); // Try to read CNTL2 (the first read gets NACK'd)
 
-  // Logic is inverted here - if we reset using I2C the
-  // accelerometer immediately shuts off which results
-  // in a NACK.
-  if (retVal != 0)
-    return true;
+    if ((retVal == 0) && (cntl2.bits.srst == 0)) // Check if the software reset bit has been cleared
+      loopCount = 10; // Exit the loop if it has
+    else
+    {
+      loopCount++; // Increment the count and repeat
+      delay(1); // Delay for 1ms: important for SPI
+    }
+  }
 
-  return false;
+  return ((retVal == 0) && (cntl2.bits.srst == 0));
 }
 
 //////////////////////////////////////////////////
 // enableAccel()
 //
-// Enables acceleromter data. In addition
+// Enables accelerometer data. In addition
 // some settings can only be set when the accelerometer is
 // powered down
 //
@@ -125,6 +179,7 @@ bool QwDevKX13X::enableAccel(bool enable)
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal;
   cntl1.bits.pc1 = enable; // This is a long winded but definitive way of setting/clearing the operating mode bit
+  _range = cntl1.bits.gsel; // Update the G-range
   tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
@@ -154,6 +209,7 @@ int8_t QwDevKX13X::getOperatingMode()
 
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal; // This is a long winded but definitive way of getting the operating mode bit
+  _range = cntl1.bits.gsel; // Update the G-range
 
   return (cntl1.bits.pc1); // Return the operating mode bit
 }
@@ -192,6 +248,8 @@ bool QwDevKX13X::setRange(uint8_t range)
   if (retVal != 0)
     return false;
 
+  _range = range; // Update our local copy
+
   return true;
 }
 
@@ -216,6 +274,7 @@ bool QwDevKX13X::enableDataEngine(bool enable)
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal;
   cntl1.bits.drdye =  enable; // This is a long winded but definitive way of setting/clearing the data ready engine bit
+  _range = cntl1.bits.gsel; // Update the G-range
   tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
@@ -247,6 +306,7 @@ bool QwDevKX13X::enableTapEngine(bool enable)
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal;
   cntl1.bits.tdte =  enable; // This is a long winded but definitive way of setting/clearing the tap engine bit
+  _range = cntl1.bits.gsel; // Update the G-range
   tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
@@ -278,6 +338,7 @@ bool QwDevKX13X::enableTiltEngine(bool enable)
   sfe_kx13x_cntl1_bitfield_t cntl1;
   cntl1.all = tempVal;
   cntl1.bits.tpe =  enable; // This is a long winded but definitive way of setting/clearing the tilt engine bit
+  _range = cntl1.bits.gsel; // Update the G-range
   tempVal = cntl1.all;
 
   retVal = writeRegisterByte(SFE_KX13X_CNTL1, tempVal);
@@ -543,7 +604,7 @@ bool QwDevKX13X::configureInterruptPin(uint8_t pinVal)
 //
 bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
 {
-  int retVal;
+  int retVal = -1;
   uint8_t tempVal;
 
   if (pin > 2)
@@ -561,7 +622,7 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
     inc1.bits.ien1 = enable; // This is a long winded but definitive way of setting/clearing the enable bit
     tempVal = inc1.all;
 
-    writeRegisterByte(SFE_KX13X_INC1, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
 
   if (pin == 2)
@@ -576,10 +637,10 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
     inc5.bits.ien2 = enable; // This is a long winded but definitive way of setting/clearing the enable bit
     tempVal = inc5.all;
 
-    writeRegisterByte(SFE_KX13X_INC5, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
 
-  return true;
+  return (retVal == 0);
 }
 
 //////////////////////////////////////////////////
@@ -593,7 +654,7 @@ bool QwDevKX13X::enablePhysInterrupt(bool enable, uint8_t pin)
 //
 bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
 {
-  int retVal;
+  int retVal = -1;
   uint8_t tempVal;
 
   if (pin > 2)
@@ -611,7 +672,7 @@ bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
     inc1.bits.iea1 = activeHigh; // This is a long winded but definitive way of setting/clearing the level bit
     tempVal = inc1.all;
 
-    writeRegisterByte(SFE_KX13X_INC1, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
 
   if (pin == 2)
@@ -626,10 +687,10 @@ bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
     inc5.bits.iea2 = activeHigh; // This is a long winded but definitive way of setting/clearing the level bit
     tempVal = inc5.all;
 
-    writeRegisterByte(SFE_KX13X_INC5, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
 
-  return true;
+  return (retVal == 0);
 }
 
 //////////////////////////////////////////////////
@@ -644,7 +705,7 @@ bool QwDevKX13X::setPinMode(bool activeHigh, uint8_t pin)
 //
 bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
 {
-  int retVal;
+  int retVal = -1;
   uint8_t tempVal;
 
   if (pin > 2)
@@ -662,7 +723,7 @@ bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
     inc1.bits.iel1 = pulsed; // This is a long winded but definitive way of setting/clearing the latch bit
     tempVal = inc1.all;
 
-    writeRegisterByte(SFE_KX13X_INC1, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
 
   if (pin == 2)
@@ -677,10 +738,10 @@ bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
     inc5.bits.iel2 = pulsed; // This is a long winded but definitive way of setting/clearing the latch bit
     tempVal = inc5.all;
 
-    writeRegisterByte(SFE_KX13X_INC5, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
 
-  return true;
+  return (retVal == 0);
 }
 
 //////////////////////////////////////////////////
@@ -694,7 +755,7 @@ bool QwDevKX13X::setLatchControl(bool pulsed, uint8_t pin)
 //
 bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
 {
-  int retVal;
+  int retVal = -1;
   uint8_t tempVal;
 
   if ((width > 3) || (pin > 2))
@@ -712,7 +773,7 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
     inc1.bits.pw1 = width; // This is a long winded but definitive way of setting the pulse width
     tempVal = inc1.all;
 
-    writeRegisterByte(SFE_KX13X_INC1, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC1, tempVal);
   }
 
   if (pin == 2)
@@ -727,10 +788,10 @@ bool QwDevKX13X::setPulseWidth(uint8_t width, uint8_t pin)
     inc5.bits.pw2 = width; // This is a long winded but definitive way of setting the pulse width
     tempVal = inc5.all;
 
-    writeRegisterByte(SFE_KX13X_INC5, tempVal);
+    retVal = writeRegisterByte(SFE_KX13X_INC5, tempVal);
   }
 
-  return true;
+  return (retVal == 0);
 }
 
 //////////////////////////////////////////////////
@@ -1290,23 +1351,34 @@ bool QwDevKX13X::runCommandTest()
   cntl2.bits.cotc = 1; // This is a long winded, but definitive way of setting the COTC bit
   tempVal = cntl2.all;
 
-  // Going to assume that communication is working at this point.
-  writeRegisterByte(SFE_KX13X_CNTL2, tempVal);
+  retVal = writeRegisterByte(SFE_KX13X_CNTL2, tempVal); // Start the test
 
-  readRegisterRegion(SFE_KX13X_COTR, &tempVal, 1);
+  if (retVal != 0)
+    return false;
+
+  retVal = readRegisterRegion(SFE_KX13X_COTR, &tempVal, 1); // Check COTR is 0xAA
+
+  if (retVal != 0)
+    return false;
 
   if (tempVal != 0xAA)
     return false;
 
-  readRegisterRegion(SFE_KX13X_CNTL2, &tempVal, 1);
+  retVal = readRegisterRegion(SFE_KX13X_CNTL2, &tempVal, 1);
 
-  cntl2.all = tempVal;
-  if (cntl2.bits.cotc != 0)
+  if (retVal != 0)
     return false;
 
-  readRegisterRegion(SFE_KX13X_COTR, &tempVal, 1);
+  cntl2.all = tempVal;
+  if (cntl2.bits.cotc != 0) // Check the COTC bit has been cleared
+    return false;
 
-  if (tempVal != 0x55)
+  retVal = readRegisterRegion(SFE_KX13X_COTR, &tempVal, 1);
+
+  if (retVal != 0)
+    return false;
+
+  if (tempVal != 0x55) // Check COTR is 0x55
     return false;
 
   return true;
@@ -1530,7 +1602,7 @@ bool QwDevKX13X::forceWake()
 //
 int QwDevKX13X::readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 {
-  return (int)_sfeBus->readRegisterRegion(_i2cAddress, reg, data, len);
+  return (_sfeBus->readRegisterRegion(_i2cAddress, reg, data, len));
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1546,7 +1618,7 @@ int QwDevKX13X::readRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 //
 int QwDevKX13X::writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 {
-  return (int)_sfeBus->writeRegisterRegion(_i2cAddress, reg, data, len);
+  return (_sfeBus->writeRegisterRegion(_i2cAddress, reg, data, len));
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1562,7 +1634,7 @@ int QwDevKX13X::writeRegisterRegion(uint8_t reg, uint8_t *data, uint16_t len)
 //
 int QwDevKX13X::writeRegisterByte(uint8_t reg, uint8_t data)
 {
-  return (int)_sfeBus->writeRegisterByte(_i2cAddress, reg, data);
+  return (_sfeBus->writeRegisterByte(_i2cAddress, reg, data) ? 0 : -1);
 }
 
 //***************************************** KX132 *********************************************************
@@ -1621,21 +1693,23 @@ bool QwDevKX132::getAccelData(outputData *userData)
 //
 bool QwDevKX132::convAccelData(outputData *userAccel, rawOutputData *rawAccelData)
 {
-  uint8_t regVal;
-  uint8_t range;
-  int retVal;
+  if (_range < 0) // If the G-range is unknown, read it
+  {
+    uint8_t regVal;
+    int retVal;
 
-  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
+    retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
 
-  if (retVal != 0)
-    return false;
+    if (retVal != 0)
+      return false;
 
-  sfe_kx13x_cntl1_bitfield_t cntl1;
-  cntl1.all = regVal;
+    sfe_kx13x_cntl1_bitfield_t cntl1;
+    cntl1.all = regVal;
 
-  range = cntl1.bits.gsel;
+    _range = cntl1.bits.gsel; // Record the range
+  }
 
-  switch (range)
+  switch (_range)
   {
   case SFE_KX132_RANGE2G:
     userAccel->xData = (float)rawAccelData->xData * convRange2G;
@@ -1720,21 +1794,23 @@ bool QwDevKX134::getAccelData(outputData *userData)
 //
 bool QwDevKX134::convAccelData(outputData *userAccel, rawOutputData *rawAccelData)
 {
-  uint8_t regVal;
-  uint8_t range;
-  int retVal;
+  if (_range < 0) // If the G-range is unknown, read it
+  {
+    uint8_t regVal;
+    int retVal;
 
-  retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
+    retVal = readRegisterRegion(SFE_KX13X_CNTL1, &regVal, 1);
 
-  if (retVal != 0)
-    return false;
+    if (retVal != 0)
+      return false;
 
-  sfe_kx13x_cntl1_bitfield_t cntl1;
-  cntl1.all = regVal;
+    sfe_kx13x_cntl1_bitfield_t cntl1;
+    cntl1.all = regVal;
 
-  range = cntl1.bits.gsel;
+    _range = cntl1.bits.gsel; // Record the range
+  }
 
-  switch (range)
+  switch (_range)
   {
   case SFE_KX134_RANGE8G:
     userAccel->xData = (float)rawAccelData->xData * convRange8G;
