@@ -88,8 +88,8 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW); // Turn the LED off
 
-  Wire.begin(); // Initialize I2C communication
-  Wire.setClock(400000); // Increase the bus clock speed to 400kHz
+  myWire.begin(); // Initialize I2C communication
+  myWire.setClock(400000); // Increase the bus clock speed to 400kHz
 
   delay(1000);
 
@@ -134,7 +134,7 @@ void setup() {
     while (1)
       ;
   }
-  Wire.setClock(400000);
+  myWire.setClock(400000);
   kxAccel.initialize(INT_SETTINGS);     // This is the only way to set the KX13x to high-performance mode (through the library)
   kxAccel.enableAccel(false);           // Disable the accelerometer while we continue to configure it
   kxAccel.setRange(SFE_KX134_RANGE64G); // Set the tange to 64g
