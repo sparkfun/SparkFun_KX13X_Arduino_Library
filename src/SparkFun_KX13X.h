@@ -258,6 +258,7 @@ class SparkFun_KX134_SPI : public QwDevKX134
 
         // Initialize the system - return results
         return this->QwDevKX134::init();
+
     }
 
     bool begin(SPIClass &spiPort, SPISettings kxSettings, uint8_t cs)

@@ -62,7 +62,7 @@ bool QwDevKX13X::initialize(uint8_t settings)
         }
     }
 
-    if (settings == INT_SETTINGS)
+    else if (settings == INT_SETTINGS)
     {
         enablePhysInterrupt();
         routeHardwareInterrupt(0x10);
@@ -74,7 +74,7 @@ bool QwDevKX13X::initialize(uint8_t settings)
         }
     }
 
-    if (settings == BUFFER_SETTINGS)
+    else if (settings == BUFFER_SETTINGS)
     {
         enablePhysInterrupt();
         routeHardwareInterrupt(0x40); // Buffer full interrupt
@@ -86,6 +86,10 @@ bool QwDevKX13X::initialize(uint8_t settings)
             cntl1.all = INT_SETTINGS;
             _range = cntl1.bits.gsel; // Record the G-range
         }
+    }
+    else 
+    {
+        return false; 
     }
 
     if (retVal != 0)

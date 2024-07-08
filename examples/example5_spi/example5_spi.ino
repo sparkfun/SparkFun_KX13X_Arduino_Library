@@ -23,33 +23,32 @@
 #include <SPI.h>
 #include <SparkFun_KX13X.h> // Click here to get the library: http://librarymanager/All#SparkFun_KX13X
 
-SparkFun_KX132_SPI kxAccel;
-// SparkFun_KX134_SPI kxAccel; // For the KX134, uncomment this and comment line above
+//SparkFun_KX132_SPI kxAccel;
+SparkFun_KX134_SPI kxAccel; // For the KX134, uncomment this and comment line above
 
 outputData myData;   // Struct for the accelerometer's data
-byte chipSelect = 1; // Change to fit your project.
+const int chipSelect = A2; // Change to fit your project.
 
 void setup()
 {
 
+  Serial.begin(115200);
   // Get the chip select pin ready.
   pinMode(chipSelect, OUTPUT);
   digitalWrite(chipSelect, HIGH);
 
   SPI.begin();
 
-  Serial.begin(115200);
-  Serial.println("Welcome.");
-
   // Wait for the Serial monitor to be opened.
   while (!Serial)
     delay(50);
 
-  if (!kxAccel.begin(chipSelect))
+  while (!kxAccel.begin(chipSelect))
   {
+    Serial.print("Unique ID: 0x");
+    Serial.println(kxAccel.getUniqueID(), HEX);
     Serial.println("Could not communicate with the the KX13X. Freezing.");
-    while (1)
-      ;
+    delay(1000);
   }
 
   Serial.println("Ready.");
@@ -84,11 +83,11 @@ void loop()
   {
     kxAccel.getAccelData(&myData);
     Serial.print("X: ");
-    Serial.print(myData.xData, 4);
+    Serial.print(myData.xData, 3);
     Serial.print(" Y: ");
-    Serial.print(myData.yData, 4);
+    Serial.print(myData.yData, 3);
     Serial.print(" Z: ");
-    Serial.print(myData.zData, 4);
+    Serial.print(myData.zData, 3);
     Serial.println();
   }
   delay(20); // Delay should be 1/ODR (Output Data Rate), default is 1/50ODR
