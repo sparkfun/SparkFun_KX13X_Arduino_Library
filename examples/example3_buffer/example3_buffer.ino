@@ -26,8 +26,8 @@
 #include <Wire.h>
 #include <SparkFun_KX13X.h> // Click here to get the library: http://librarymanager/All#SparkFun_KX13X
 
-SparkFun_KX132 kxAccel;
-// SparkFun_KX134 kxAccel; // For the KX134, uncomment this and comment line above
+SfeKX132ArdI2C kxAccel;
+// SfeKX134ArdI2C kxAccel; // For the KX134, uncomment this and comment line above
 
 outputData myData;     //  Struct for the accelerometer's data
 byte dataReadyPin = 2; //  Change to fit your project.
@@ -88,7 +88,7 @@ void setup()
   // kxAccel.getSampleLevel();                 //  Get the number of samples in the buffer. This number
                                                //   Changes depending on the resolution, see datasheet for more info.
 
-  kxAccel.setRange(SFE_KX132_RANGE2G); // 2g Range
+  kxAccel.setRange (SFE_KX132_RANGE2G); // 2g Range
   // kxAccel.setRange(SFE_KX134_RANGE8G);      // 8g for the KX134
 
   // kxAccel.setOutputDataRate(); //  Default is 50Hz

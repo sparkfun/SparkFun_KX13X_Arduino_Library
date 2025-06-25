@@ -23,8 +23,8 @@
 #include <SPI.h>
 #include <SparkFun_KX13X.h> // Click here to get the library: http://librarymanager/All#SparkFun_KX13X
 
-//SparkFun_KX132_SPI kxAccel;
-SparkFun_KX134_SPI kxAccel; // For the KX134, uncomment this and comment line above
+SfeKX132ArdSPI kxAccel;
+//SfeKX134ArdSPI kxAccel; // For the KX134, uncomment this and comment line above
 
 outputData myData;   // Struct for the accelerometer's data
 const int chipSelect = A2; // Change to fit your project.

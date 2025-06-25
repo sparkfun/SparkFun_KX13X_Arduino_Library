@@ -26,8 +26,8 @@
 #include <SPI.h>
 #include <SparkFun_KX13X.h> // Click here to get the library: http://librarymanager/All#SparkFun_KX13X
 
-SparkFun_KX132 kxAccel;
-// SparkFun_KX134 kxAccel; // For the KX134, uncomment this and comment line above
+SfeKX132ArdI2C kxAccel;
+// SfeKX134ArdI2C kxAccel; // For the KX134, uncomment this and comment line above
 
 outputData myData;     //  Struct for the accelerometer's data
 byte dataReadyPin = 2; //  Change to fit your project.

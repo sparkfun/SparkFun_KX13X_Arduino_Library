@@ -1,279 +1,265 @@
-// SparkFun_KX13X.h
-//
-// This is a library written for the SparkFun Triple Axis Accelerometer - KX132/KX134
-//
-// SparkFun sells these boards at its website: www.sparkfun.com
-//
-// Do you like this library? Help support SparkFun. Buy a board!
-//
-// Written by Elias Santistevan @ SparkFun Electronics, October 2022
-//
-// Product:
-// SparkFun Triple Axis Accelerometer - KX132/KX134 (Qwiic)
-//	* KX132 - https://www.sparkfun.com/products/17871
-//	* KX134 - https://www.sparkfun.com/products/17589
-//
-//  Repository:
-//		https://github.com/sparkfun/SparkFun_KX13X_Arduino_Library
-//
-// SparkFun code, firmware, and software is released under the MIT
-// License(http://opensource.org/licenses/MIT).
-//
-// SPDX-License-Identifier: MIT
-//
-//    The MIT License (MIT)
-//
-//    Copyright (c) 2022 SparkFun Electronics
-//    Permission is hereby granted, free of charge, to any person obtaining a
-//    copy of this software and associated documentation files (the "Software"),
-//    to deal in the Software without restriction, including without limitation
-//    the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//    and/or sell copies of the Software, and to permit persons to whom the
-//    Software is furnished to do so, subject to the following conditions: The
-//    above copyright notice and this permission notice shall be included in all
-//    copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
-//    "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-//    NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-//    PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-//    HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-//    ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-//    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-// The following class implements the	Arduino Interface for the SparkFun Triple
-// Axis Acceleromters - KX132/KX134.
+/**
+ * @file sfDevKX13X.h
+ * @brief Arduino-specific implementation for the SparkFun KX13X Sensor family.
+ *
+ * @details
+ * This file provides the Arduino-specific implementation of the KX13X driver
+ * classes. The SfeKX134ArdI2C, SfeKX132ArdI2C, SfeKX134ArdSPI, and SfeKX132ArdSPI
+ * classes inherit from the base driver classes and implement the I2C or SPI
+ * communication interfaces using Arduino's Wire and SPI libraries.
+ *
+ * Key features:
+ * - Arduino I2C and SPI initialization
+ * - Connection verification
+ * - Toolkit integration
+ *
+ * @section Classes
+ * - SfeKX134ArdI2C: I2C implementation for KX134
+ * - SfeKX132ArdI2C: I2C implementation for KX132
+ * - SfeKX134ArdSPI: SPI implementation for KX134
+ * - SfeKX132ArdSPI: SPI implementation for KX132
+ *
+ * @section Dependencies
+ * - Arduino.h
+ * - SparkFun_Toolkit.h
+ * - sfTk/sfDevKX13X.h
+ *
+ * @author Elias Santistevan @SparkFun Electronics
+ * @date October 2022
+ * @copyright Copyright (c) 2022-2025, SparkFun Electronics Inc. All rights reserved.
+ *
+ * @section License
+ * SPDX-License-Identifier: MIT
+ *
+ * @section Product_Links
+ * - Qwiic KX134: https://www.sparkfun.com/sparkfun-triple-axis-accelerometer-breakout-kx134-qwiic.html
+ * - Qwiic KX132: https://www.sparkfun.com/sparkfun-triple-axis-accelerometer-breakout-kx132-qwiic.html
+ *
+ * @see https://github.com/sparkfun/SparkFun_KX13X_Arduino_Library
+ */
 
 #pragma once
-#include "SparkFun_Qwiic_KX13X.h"
-#include <SPI.h>
-#include <Wire.h>
 
-class SparkFun_KX132 : public QwDevKX132
+// clang-format off
+#include <SparkFun_Toolkit.h>
+#include "sfTk/sfDevKX13X.h"
+#include <Arduino.h>
+// clang-format on
+
+/**
+ * @class SfeKX134ArdI2C
+ * @brief Arduino I2C implementation for the KX134 sensor.
+ *
+ * This class provides Arduino-specific I2C communication for the KX134 sensor.
+ * It inherits from the base driver and implements the I2C interface using Arduino's Wire library.
+ * The class manages device addressing and connection verification.
+ *
+ * Example usage:
+ * @code
+ * SfeKX134ArdI2C sensor;
+ * if (sensor.begin()) {
+ *     // Sensor initialized successfully
+ * }
+ * @endcode
+ *
+ * @note Uses the Arduino Wire library for I2C communication.
+ */
+class SfeKX134ArdI2C : public sfDevKX134
 {
+public:
+    SfeKX134ArdI2C() {}
 
-  public:
-    SparkFun_KX132(){};
-
-    ///////////////////////////////////////////////////////////////////////
-    // begin()
-    //
-    // This method is called to initialize the ISM330DHCX library and connect to
-    // the ISM330DHCX device. This method must be called before calling any other method
-    // that interacts with the device.
-    //
-    // This method follows the standard startup pattern in SparkFun Arduino
-    // libraries.
-    //
-    //  Parameter   Description
-    //  ---------   ----------------------------
-    //  wirePort    optional. The Wire port. If not provided, the default port is used
-    //  address     optional. I2C Address. If not provided, the default address is used.
-    //  retval      true on success, false on startup failure
-    //
-    // This methond is overridden, implementing two versions.
-    //
-    // Version 1:
-    // User skips passing in an I2C object which then defaults to Wire.
-    bool begin(uint8_t deviceAddress = KX13X_ADDRESS_HIGH)
+    /**
+     * @brief Initializes the KX134 sensor with I2C communication.
+     * @param address I2C address of the sensor.
+     * @param wirePort Reference to the Wire port.
+     * @return True if initialization succeeds, false otherwise.
+     */
+    bool begin(const uint8_t &address = KX13X_ADDRESS_HIGH, TwoWire &wirePort = Wire)
     {
-        // Setup  I2C object and pass into the superclass
-        setCommunicationBus(_i2cBus, deviceAddress);
+        if (_theI2CBus.init(wirePort, address) != ksfTkErrOk)
+            return false;
 
-        // Initialize the I2C buss class i.e. setup default Wire port
-        _i2cBus.init();
+        setCommunicationBus(&_theI2CBus);
 
-        // Initialize the system - return results
-        return this->QwDevKX132::init();
+        if (!isConnected())
+            return false;
+
+        return true;
     }
 
-    // Version 2:
-    //  User passes in an I2C object and an address (optional).
-    bool begin(TwoWire &wirePort, uint8_t deviceAddress = KX13X_ADDRESS_HIGH)
+    /**
+     * @brief Checks if the KX134 sensor is connected and responding.
+     * @return True if connected, false otherwise.
+     */
+    bool isConnected(void)
     {
-        // Setup  I2C object and pass into the superclass
-        setCommunicationBus(_i2cBus, deviceAddress);
+        if (_theI2CBus.ping() != ksfTkErrOk)
+            return false;
 
-        // Give the I2C port provided by the user to the I2C bus class.
-        _i2cBus.init(wirePort, true);
-
-        // Initialize the system - return results
-        return this->QwDevKX132::init();
+        // Check the device ID
+        return (getUniqueID() == KX134_WHO_AM_I);
     }
 
-  private:
-    // I2C bus class
-    sfe_KX13X::QwI2C _i2cBus;
+    /**
+     * @brief Returns the I2C device address.
+     * @return The I2C address.
+     */
+    uint8_t getDeviceAddress(void)
+    {
+        return _theI2CBus.address();
+    }
+
+private:
+    sfTkArdI2C _theI2CBus;
 };
 
-class SparkFun_KX132_SPI : public QwDevKX132
+/**
+ * @class SfeKX132ArdI2C
+ * @brief Arduino I2C implementation for the KX132 sensor.
+ *
+ * This class provides Arduino-specific I2C communication for the KX132 sensor.
+ * It inherits from the base driver and implements the I2C interface using Arduino's Wire library.
+ * The class manages device addressing and connection verification.
+ */
+class SfeKX132ArdI2C : public sfDevKX132
 {
-  public:
-    SparkFun_KX132_SPI(){};
+public:
+    SfeKX132ArdI2C() {}
 
-    ///////////////////////////////////////////////////////////////////////
-    // begin()
-    //
-    // This method is called to initialize the ISM330DHCX library and connect to
-    // the ISM330DHCX device. This method must be called before calling any other method
-    // that interacts with the device.
-    //
-    // This method follows the standard startup pattern in SparkFun Arduino
-    // libraries.
-    //
-    //  Parameter   Description
-    //  ---------   ----------------------------
-    //  spiPort     optional. The SPI port. If not provided, the default port is used
-    //  SPISettings optional. SPI "transaction" settings are need for every data transfer.
-    //												Default used if not provided.
-    //  Chip Select mandatory. The chip select pin ("CS") can't be guessed, so must be provided.
-    //  retval      true on success, false on startup failure
-    //
-    // This methond is overridden, implementing two versions.
-    //
-    // Version 1:
-    // User skips passing in an SPI object which then defaults to SPI.
+    /**
+     * @brief Initializes the KX132 sensor with I2C communication.
+     * @param address I2C address of the sensor.
+     * @param wirePort Reference to the Wire port.
+     * @return True if initialization succeeds, false otherwise.
+     */
+    bool begin(const uint8_t &address = KX13X_ADDRESS_HIGH, TwoWire &wirePort = Wire)
+    {
+        if (_theI2CBus.init(wirePort, address) != ksfTkErrOk)
+            return false;
 
-    bool begin(uint8_t cs)
+        setCommunicationBus(&_theI2CBus);
+
+        if (!isConnected())
+            return false;
+        return true;
+    }
+
+    /**
+     * @brief Checks if the KX132 sensor is connected and responding.
+     * @return True if connected, false otherwise.
+     */
+    bool isConnected(void)
+    {
+        if (_theI2CBus.ping() != ksfTkErrOk)
+            return false;
+
+        // Check the device ID
+        return (getUniqueID() == KX132_WHO_AM_I);
+    }
+
+    /**
+     * @brief Returns the I2C device address.
+     * @return The I2C address.
+     */
+    uint8_t getDeviceAddress(void)
+    {
+        return _theI2CBus.address();
+    }
+
+private:
+    sfTkArdI2C _theI2CBus;
+};
+
+
+/**
+ * @class SfeKX134ArdSPI
+ * @brief Arduino SPI implementation for the KX134 sensor.
+ *
+ * This class provides SPI communication for the KX134 sensor using Arduino's SPI library.
+ * It inherits from the base driver and manages SPI initialization and connection verification.
+ */
+class SfeKX134ArdSPI : public sfDevKX134
+{
+public:
+    /**
+     * @brief Initializes the KX134 sensor with SPI communication.
+     * @param csPin Chip select pin.
+     */
+    bool begin(uint8_t csPin)
+    {
+        setCommunicationBus(&_theSPIBus);
+        _theSPIBus.init(csPin, true);
+        return isConnected();
+    }
+
+    bool begin(SPIClass &spiPort, SPISettings kxSettings, uint8_t csPin)
+    {
+        setCommunicationBus(&_theSPIBus);
+        _theSPIBus.init(spiPort, kxSettings, csPin, true);
+        return isConnected();
+    }
+
+    /**
+     * @brief Checks if the KX134 sensor is connected and responding.
+     * @return True if connected, false otherwise.
+     */
+    bool isConnected(void)
+    {
+        return (getUniqueID() == KX134_WHO_AM_I);
+    }
+
+private:
+    sfTkArdSPI _theSPIBus;
+};
+
+/**
+ * @class SfeKX132ArdSPI
+ * @brief Arduino SPI implementation for the KX132 sensor.
+ *
+ * This class provides SPI communication for the KX132 sensor using Arduino's SPI library.
+ * It inherits from the base driver and manages SPI initialization and connection verification.
+ */
+class SfeKX132ArdSPI : public sfDevKX132
+{
+public:
+    /**
+     * @brief Initializes the KX132 sensor with SPI communication.
+     * @param csPin Chip select pin.
+     */
+    bool begin(uint8_t csPin)
     {
         // Setup a SPI object and pass into the superclass
-        setCommunicationBus(_spiBus);
+        setCommunicationBus(&_theSPIBus);
 
         // Initialize the SPI bus class with the chip select pin, SPI port defaults to SPI,
         // and SPI settings are set to class defaults.
-        _spiBus.init(cs, true);
+        _theSPIBus.init(csPin, true);
 
-        // Initialize the system - return results
-        return this->QwDevKX132::init();
+        return isConnected();
     }
 
-    bool begin(SPIClass &spiPort, SPISettings kxSettings, uint8_t cs)
+    bool begin(SPIClass &spiPort, SPISettings kxSettings, uint8_t csPin)
     {
         // Setup a SPI object and pass into the superclass
-        setCommunicationBus(_spiBus);
+        setCommunicationBus(&_theSPIBus);
 
         // Initialize the SPI bus class with provided SPI port, SPI setttings, and chip select pin.
-        _spiBus.init(spiPort, kxSettings, cs, true);
+        _theSPIBus.init(spiPort, kxSettings, csPin, true);
 
-        // Initialize the system - return results
-        return this->QwDevKX132::init();
+        return isConnected();
     }
 
-  private:
-    // SPI bus class
-    sfe_KX13X::SfeSPI _spiBus;
-};
-
-class SparkFun_KX134 : public QwDevKX134
-{
-
-  public:
-    SparkFun_KX134(){};
-
-    ///////////////////////////////////////////////////////////////////////
-    // begin()
-    //
-    // This method is called to initialize the ISM330DHCX library and connect to
-    // the ISM330DHCX device. This method must be called before calling any other method
-    // that interacts with the device.
-    //
-    // This method follows the standard startup pattern in SparkFun Arduino
-    // libraries.
-    //
-    //  Parameter   Description
-    //  ---------   ----------------------------
-    //  wirePort    optional. The Wire port. If not provided, the default port is used
-    //  address     optional. I2C Address. If not provided, the default address is used.
-    //  retval      true on success, false on startup failure
-    //
-    // This methond is overridden, implementing two versions.
-    //
-    // Version 1:
-    // User skips passing in an I2C object which then defaults to Wire.
-    bool begin(uint8_t deviceAddress = KX13X_ADDRESS_HIGH)
+    /**
+     * @brief Checks if the KX132 sensor is connected and responding.
+     * @return True if connected, false otherwise.
+     */
+    bool isConnected(void)
     {
-        // Setup  I2C object and pass into the superclass
-        setCommunicationBus(_i2cBus, deviceAddress);
-
-        // Initialize the I2C buss class i.e. setup default Wire port
-        _i2cBus.init();
-
-        // Initialize the system - return results
-        return this->QwDevKX134::init();
+        // Check the device ID
+        return (getUniqueID() == KX132_WHO_AM_I);
     }
 
-    // Version 2:
-    //  User passes in an I2C object and an address (optional).
-    bool begin(TwoWire &wirePort, uint8_t deviceAddress = KX13X_ADDRESS_HIGH)
-    {
-        // Setup  I2C object and pass into the superclass
-        setCommunicationBus(_i2cBus, deviceAddress);
-
-        // Give the I2C port provided by the user to the I2C bus class.
-        _i2cBus.init(wirePort, true);
-
-        // Initialize the system - return results
-        return this->QwDevKX134::init();
-    }
-
-  private:
-    // I2C bus class
-    sfe_KX13X::QwI2C _i2cBus;
-};
-
-class SparkFun_KX134_SPI : public QwDevKX134
-{
-  public:
-    SparkFun_KX134_SPI(){};
-
-    ///////////////////////////////////////////////////////////////////////
-    // begin()
-    //
-    // This method is called to initialize the ISM330DHCX library and connect to
-    // the ISM330DHCX device. This method must be called before calling any other method
-    // that interacts with the device.
-    //
-    // This method follows the standard startup pattern in SparkFun Arduino
-    // libraries.
-    //
-    //  Parameter   Description
-    //  ---------   ----------------------------
-    //  spiPort     optional. The SPI port. If not provided, the default port is used
-    //  SPISettings optional. SPI "transaction" settings are need for every data transfer.
-    //												Default used if not provided.
-    //  Chip Select mandatory. The chip select pin ("CS") can't be guessed, so must be provided.
-    //  retval      true on success, false on startup failure
-    //
-    // This methond is overridden, implementing two versions.
-    //
-    // Version 1:
-    // User skips passing in an SPI object which then defaults to SPI.
-
-    bool begin(uint8_t cs)
-    {
-        // Setup a SPI object and pass into the superclass
-        setCommunicationBus(_spiBus);
-
-        // Initialize the SPI bus class with the chip select pin, SPI port defaults to SPI,
-        // and SPI settings are set to class defaults.
-        _spiBus.init(cs, true);
-
-        // Initialize the system - return results
-        return this->QwDevKX134::init();
-
-    }
-
-    bool begin(SPIClass &spiPort, SPISettings kxSettings, uint8_t cs)
-    {
-        // Setup a SPI object and pass into the superclass
-        setCommunicationBus(_spiBus);
-
-        // Initialize the SPI bus class with provided SPI port, SPI setttings, and chip select pin.
-        _spiBus.init(spiPort, kxSettings, cs, true);
-
-        // Initialize the system - return results
-        return this->QwDevKX134::init();
-    }
-
-  private:
-    // SPI bus class
-    sfe_KX13X::SfeSPI _spiBus;
+    private:
+        sfTkArdSPI _theSPIBus;
 };
