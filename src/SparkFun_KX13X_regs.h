@@ -40,9 +40,11 @@
 //    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file holds the bit fields for the KX132/KX134 registers.
-#ifndef ARDUINO_ARCH_AVR
+#ifdef __AVR__
+#include "stdint.h"
+#else
 #include <cstdint>
-#endif //
+#endif
 
 #define SFE_KX13X_MAN_ID 0x00 //      Retuns "KION" in ASCII
 
