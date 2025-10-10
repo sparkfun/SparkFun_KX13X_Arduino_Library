@@ -40,7 +40,7 @@
 //    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file holds the bit fields for the KX132/KX134 registers.
-#ifndef AVR
+#ifndef ARDUINO_ARCH_AVR
 #include <cstdint>
 #endif //
 
